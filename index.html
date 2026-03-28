@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="PharmaPath helps patients compare nearby pharmacy prescription availability by medication, dose, formulation, and stock status."
+      content="PharmaPath helps patients and care teams compare nearby pharmacy prescription availability by medication, dose, formulation, and stock status."
     />
-    <title>PharmaPath | Prescription Availability, Clarified</title>
+    <title>PharmaPath | Route Prescriptions to the Right Pharmacy</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,278 +18,516 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="#top" aria-label="PharmaPath home">
-        <span class="brand-mark" aria-hidden="true">
+    <header class="site-header" data-header>
+      <div class="header-shell">
+        <a class="brand" href="#top" aria-label="PharmaPath home">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span>
+          </span>
+          <span class="brand-copy">
+            <span class="brand-name">PharmaPath</span>
+            <span class="brand-subtitle">Prescription access routing</span>
+          </span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          <span class="sr-only">Toggle navigation</span>
           <span></span>
-        </span>
-        <span class="brand-text">PharmaPath</span>
-      </a>
-      <nav class="top-nav" aria-label="Primary">
-        <a href="#demo">Demo</a>
-        <a href="#how-it-works">How it works</a>
-        <a href="#why-it-matters">Why it matters</a>
-        <a class="button button-nav" href="#demo">Start demo</a>
-      </nav>
+          <span></span>
+        </button>
+
+        <nav class="top-nav" id="site-nav" aria-label="Primary">
+          <a href="#demo" data-nav-link>Demo</a>
+          <a href="#how-it-works" data-nav-link>Workflow</a>
+          <a href="#why-it-matters" data-nav-link>Value</a>
+          <a class="button button-nav" href="#close" data-nav-link>Pitch close</a>
+        </nav>
+      </div>
     </header>
 
     <main id="top">
       <section class="hero">
-        <div class="hero-shell">
+        <div class="content-shell hero-shell">
           <div class="hero-copy">
             <p class="eyebrow" data-reveal style="--delay: 0.05s">
-              Prescription availability, clarified
+              Prescription access, clarified
             </p>
             <h1 data-reveal style="--delay: 0.12s">
-              Find the pharmacy that can actually fill the prescription today.
+              Route one prescription to the pharmacy most likely to fill it
+              today.
             </h1>
-            <p class="hero-description" data-reveal style="--delay: 0.19s">
-              PharmaPath compares nearby pharmacies by medication, dose,
-              formulation, and stock status so patients stop guessing and start
-              calling the right place.
+            <p class="hero-description" data-reveal style="--delay: 0.18s">
+              PharmaPath compares nearby pharmacies at the exact medication,
+              dose, and formulation level so patients, clinics, and pharmacies
+              can move past phone trees and toward the right handoff.
             </p>
-            <div class="hero-actions" data-reveal style="--delay: 0.26s">
-              <a class="button button-primary" href="#demo">Start live demo</a>
+            <div class="hero-actions" data-reveal style="--delay: 0.24s">
+              <a class="button button-primary" href="#demo">Run live demo</a>
               <a class="button button-secondary" href="#how-it-works"
-                >See the flow</a
+                >See the workflow</a
               >
             </div>
-            <ul class="hero-notes" data-reveal style="--delay: 0.33s">
-              <li>Medication</li>
-              <li>Dosage</li>
-              <li>Formulation</li>
-              <li>Availability</li>
+
+            <div class="hero-proof-grid" data-reveal style="--delay: 0.32s">
+              <article class="proof-card">
+                <span>Exact-match routing</span>
+                <p>Medication, dose, and formulation stay visible from search to result.</p>
+              </article>
+              <article class="proof-card">
+                <span>Nearby stock context</span>
+                <p>Distance, neighborhood, freshness, and fill status in one view.</p>
+              </article>
+              <article class="proof-card">
+                <span>Clear next action</span>
+                <p>Call, transfer, or reserve paths are obvious enough for a live demo.</p>
+              </article>
+            </div>
+          </div>
+
+          <div class="hero-stage" data-reveal style="--delay: 0.16s">
+            <img
+              class="hero-network"
+              src="assets/pharmapath-network.svg"
+              alt=""
+              aria-hidden="true"
+            />
+            <div class="stage-panel">
+              <div class="stage-topline">
+                <span class="stage-label">Today&apos;s shortage scenario</span>
+                <span class="stage-status">Live mock inventory</span>
+              </div>
+
+              <div class="stage-query">
+                <span>Adderall XR</span>
+                <span>20 mg</span>
+                <span>XR capsule</span>
+              </div>
+
+              <div class="stage-summary">
+                <div>
+                  <strong>1 full-fill match</strong>
+                  <span>within 2 miles</span>
+                </div>
+                <div>
+                  <strong>2 backup routes</strong>
+                  <span>before the patient leaves the call</span>
+                </div>
+              </div>
+
+              <div class="stage-results">
+                <article class="stage-result stage-result-primary">
+                  <div>
+                    <p>Greenline Community Pharmacy</p>
+                    <span>Williamsburg • 0.7 mi • updated 8 min ago</span>
+                  </div>
+                  <span class="status-badge status-in-stock">Ready now</span>
+                </article>
+                <article class="stage-result">
+                  <div>
+                    <p>Walgreens</p>
+                    <span>Park Slope • 1.4 mi • 14 capsules available</span>
+                  </div>
+                  <span class="status-badge status-limited-fill">Partial fill</span>
+                </article>
+                <article class="stage-result">
+                  <div>
+                    <p>Neighborhood Rx</p>
+                    <span>Chelsea • 1.8 mi • nearby alternative dose</span>
+                  </div>
+                  <span class="status-badge status-suggestion">Backup route</span>
+                </article>
+              </div>
+
+              <div class="stage-footer">
+                <p>Exact-dose routing replaces generic “call around” workflows.</p>
+                <div class="stage-actions" aria-hidden="true">
+                  <span>Call</span>
+                  <span>Transfer</span>
+                  <span>Reserve</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-shell">
+          <div class="credibility-strip" data-reveal style="--delay: 0.38s">
+            <p>Built for the handoff between patients, clinics, and pharmacies.</p>
+            <ul>
+              <li>Patients stop guessing which pharmacy to call next.</li>
+              <li>Care teams surface likely fills while the patient is still on the line.</li>
+              <li>Pharmacies get cleaner inbound requests tied to real inventory context.</li>
             </ul>
           </div>
-
-          <div class="hero-visual" data-reveal style="--delay: 0.18s">
-            <img
-              src="assets/pharmapath-network.svg"
-              alt="Stylized network map connecting nearby pharmacies"
-            />
-            <div class="hero-caption">
-              <p>Nearby fill paths surfaced in one lookup.</p>
-              <span>Demo-ready pharmacy availability routing</span>
-            </div>
-          </div>
         </div>
       </section>
 
-      <section class="search-section" id="demo">
-        <div class="section-heading">
-          <p class="section-label">Live demo</p>
-          <h2>Search the exact prescription details and compare nearby stock in one view.</h2>
-          <p>
-            This page uses polished mock data for demo day. The workflow mirrors
-            the real patient question: who has this medication, at this dose, in
-            this formulation, right now?
-          </p>
-        </div>
-
-        <div class="search-shell">
-          <form class="search-toolbar" id="search-form">
-            <div class="field">
-              <label for="medication-input">Medication</label>
-              <input
-                id="medication-input"
-                name="medication"
-                list="medication-options"
-                placeholder="Search medication"
-                autocomplete="off"
-              />
-              <datalist id="medication-options"></datalist>
-            </div>
-
-            <div class="field">
-              <label for="dosage-select">Dosage</label>
-              <select id="dosage-select" name="dosage">
-                <option value="">All doses</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="formulation-select">Formulation</label>
-              <select id="formulation-select" name="formulation">
-                <option value="">All formulations</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="location-input">Location</label>
-              <input
-                id="location-input"
-                name="location"
-                placeholder="Zip code or city"
-                autocomplete="off"
-              />
-            </div>
-
-            <div class="toolbar-actions">
-              <button class="button button-primary" type="submit">
-                Find availability
-              </button>
-              <button class="button button-ghost" type="button" id="reset-demo">
-                Reset demo
-              </button>
-            </div>
-          </form>
-
-          <div class="quick-picks" aria-label="Popular demo searches">
-            <span>Popular demo paths</span>
-            <button
-              class="quick-pick"
-              type="button"
-              data-medication="Adderall XR"
-              data-dosage="20 mg"
-              data-formulation="XR capsule"
-            >
-              Adderall XR 20 mg
-            </button>
-            <button
-              class="quick-pick"
-              type="button"
-              data-medication="Ozempic"
-              data-dosage="1 mg"
-              data-formulation="Injectable pen"
-            >
-              Ozempic 1 mg
-            </button>
-            <button
-              class="quick-pick"
-              type="button"
-              data-medication="Amoxicillin"
-              data-dosage="500 mg"
-              data-formulation="Capsule"
-            >
-              Amoxicillin 500 mg
-            </button>
-            <button
-              class="quick-pick"
-              type="button"
-              data-medication="Sertraline"
-              data-dosage="50 mg"
-              data-formulation="Tablet"
-            >
-              Sertraline 50 mg
-            </button>
-          </div>
-
-          <div class="results-meta">
-            <p id="results-summary">Loading demo inventory...</p>
-          </div>
-
-          <div class="results-table" aria-live="polite">
-            <div class="results-head" role="presentation">
-              <span>Pharmacy</span>
-              <span>Prescription</span>
-              <span>Status</span>
-              <span>Confidence</span>
-              <span>Updated</span>
-            </div>
-            <div id="results-body"></div>
-          </div>
-
-          <div class="empty-state" id="empty-state" hidden>
-            <p>No matching pharmacies in the current demo dataset.</p>
-            <span>Try a popular demo path or clear one of the filters.</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="process-section" id="how-it-works">
-        <div class="section-heading narrow">
-          <p class="section-label">How it works</p>
-          <h2>Three quick steps from prescription details to a likely fill.</h2>
-        </div>
-
-        <ol class="process-list">
-          <li>
-            <span class="process-number">01</span>
-            <div>
-              <h3>Capture the exact prescription</h3>
-              <p>
-                Search by medication, then narrow by dose and formulation so the
-                lookup reflects the real fill request, not a generic substitute.
-              </p>
-            </div>
-          </li>
-          <li>
-            <span class="process-number">02</span>
-            <div>
-              <h3>Compare nearby pharmacy snapshots</h3>
-              <p>
-                Surface neighborhood, distance, stock state, and last refresh in
-                one clean list instead of forcing patients to call locations one
-                at a time.
-              </p>
-            </div>
-          </li>
-          <li>
-            <span class="process-number">03</span>
-            <div>
-              <h3>Route the patient to the best next move</h3>
-              <p>
-                Highlight likely full fills first, keep partial fills visible,
-                and make the availability story obvious enough for a quick demo
-                or real triage conversation.
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <section class="impact-section" id="why-it-matters">
-        <div class="impact-copy">
-          <p class="section-label">Why it matters</p>
-          <h2>Medication access fails in the details.</h2>
-          <p class="impact-lead">
-            Shortages rarely break at the brand level. They break at the exact
-            dosage, release type, and nearby inventory level patients actually
-            need.
-          </p>
-        </div>
-        <div class="impact-points">
-          <div>
-            <h3>Less phone-tree chaos</h3>
+      <section class="demo-section section-anchor" id="demo" data-section>
+        <div class="content-shell">
+          <div class="section-heading">
+            <p class="section-label">Live demo</p>
+            <h2>Show one prescription, several nearby outcomes, and the best next step.</h2>
             <p>
-              Patients and caregivers should not have to bounce across five
-              pharmacies to learn that the XR version is out while the standard
-              tablet is available.
+              The frontend runs on realistic demo inventory today, but the UI is
+              organized around the real product decision: who can likely fill
+              this prescription, how close are they, and what should the care
+              team do next?
             </p>
           </div>
-          <div>
-            <h3>Better handoffs for care teams</h3>
-            <p>
-              Nurses, pharmacists, and office staff need a fast answer they can
-              relay with confidence while the patient is still on the line.
-            </p>
-          </div>
-          <div>
-            <h3>Demo-friendly clarity</h3>
-            <p>
-              In a hackathon pitch, judges can understand the pain and the
-              product value in one screen: one prescription, several locations,
-              clearly different outcomes.
-            </p>
+
+          <div class="demo-shell">
+            <aside class="demo-sidebar">
+              <section class="demo-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-eyebrow">Search controls</p>
+                    <h3>Prescription lookup</h3>
+                  </div>
+                  <span class="panel-hint">Mock data, integration-ready</span>
+                </div>
+
+                <form class="search-form" id="search-form">
+                  <div class="field field-wide">
+                    <label for="medication-input">Medication</label>
+                    <input
+                      id="medication-input"
+                      name="medication"
+                      list="medication-options"
+                      placeholder="Search medication or brand"
+                      autocomplete="off"
+                    />
+                    <datalist id="medication-options"></datalist>
+                    <p class="field-hint">
+                      Brand or generic keyword. Exact dose and formulation still
+                      drive the recommendation.
+                    </p>
+                  </div>
+
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="dosage-select">Dosage</label>
+                      <select id="dosage-select" name="dosage">
+                        <option value="">All doses</option>
+                      </select>
+                      <p class="field-hint">
+                        Keep the requested dose visible to avoid generic matches.
+                      </p>
+                    </div>
+
+                    <div class="field">
+                      <label for="formulation-select">Formulation</label>
+                      <select id="formulation-select" name="formulation">
+                        <option value="">All formulations</option>
+                      </select>
+                      <p class="field-hint">
+                        Distinguish XR, tablet, inhaler, pen, or liquid in one click.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="availability-select">Availability focus</label>
+                      <select id="availability-select" name="availability">
+                        <option value="all">Show all nearby statuses</option>
+                        <option value="viable">Hide out-of-stock locations</option>
+                        <option value="ready">Only show ready-now fills</option>
+                      </select>
+                      <p class="field-hint">
+                        Switch from complete story to only the strongest near-term options.
+                      </p>
+                    </div>
+
+                    <div class="field">
+                      <label for="radius-select">Search radius</label>
+                      <select id="radius-select" name="radius">
+                        <option value="2">Within 2 miles</option>
+                        <option value="5" selected>Within 5 miles</option>
+                        <option value="10">Within 10 miles</option>
+                      </select>
+                      <p class="field-hint">
+                        Keep the demo local or widen the route when inventory gets thin.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="field-grid field-grid-bottom">
+                    <div class="field">
+                      <label for="sort-select">Sort results</label>
+                      <select id="sort-select" name="sort">
+                        <option value="smart">Best match first</option>
+                        <option value="closest">Closest distance</option>
+                        <option value="freshest">Most recently updated</option>
+                      </select>
+                    </div>
+
+                    <label class="toggle-field" for="alternatives-toggle">
+                      <span class="toggle-copy">
+                        <span class="toggle-title">Show backup routes</span>
+                        <span class="toggle-help">
+                          Surface nearby alternative dose or formulation options
+                          when exact inventory is limited.
+                        </span>
+                      </span>
+                      <span class="toggle-switch">
+                        <input
+                          id="alternatives-toggle"
+                          name="alternatives"
+                          type="checkbox"
+                          checked
+                        />
+                        <span class="toggle-slider" aria-hidden="true"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <div class="toolbar-actions">
+                    <button class="button button-primary" type="submit">
+                      Find availability
+                    </button>
+                    <button class="button button-ghost" type="button" id="reset-demo">
+                      Reset demo
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section class="demo-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-eyebrow">Judge-ready paths</p>
+                    <h3>Switch scenarios fast</h3>
+                  </div>
+                </div>
+                <div class="scenario-list" id="scenario-list"></div>
+              </section>
+
+              <section class="demo-panel demo-panel-muted">
+                <p class="panel-eyebrow">Pitch guide</p>
+                <ul class="demo-guidance">
+                  <li>Lead with an exact-dose shortage example, not a generic pharmacy search.</li>
+                  <li>Point to the recommended location first, then show why the other results fall behind.</li>
+                  <li>Use the backup route panel to explain how clinics can save the handoff when the exact fill is thin.</li>
+                </ul>
+              </section>
+            </aside>
+
+            <div class="demo-workspace">
+              <section class="summary-bar">
+                <div class="summary-copy">
+                  <p class="query-chip" id="query-chip">Adderall XR • 20 mg • XR capsule</p>
+                  <h3 id="results-headline">Loading nearby pharmacy inventory...</h3>
+                  <p id="results-summary"></p>
+                  <p class="scenario-context" id="scenario-context"></p>
+                </div>
+                <div class="summary-metrics" id="summary-metrics"></div>
+              </section>
+
+              <div class="action-feedback" id="action-feedback" aria-live="polite"></div>
+
+              <div class="workspace-grid">
+                <section
+                  class="recommended-card"
+                  id="recommended-card"
+                  aria-live="polite"
+                ></section>
+
+                <aside class="workspace-note">
+                  <p class="panel-eyebrow">What changed</p>
+                  <div class="digest-list" id="outcome-digest"></div>
+                </aside>
+              </div>
+
+              <section class="results-shell">
+                <div class="results-toolbar">
+                  <div>
+                    <p class="results-toolbar-title">Nearby exact-match results</p>
+                    <p class="results-toolbar-copy" id="results-toolbar-copy"></p>
+                  </div>
+                </div>
+
+                <div class="results-list" id="results-body" aria-live="polite"></div>
+
+                <div class="empty-state" id="empty-state" hidden>
+                  <p class="empty-state-title" id="empty-state-title"></p>
+                  <p class="empty-state-copy" id="empty-state-copy"></p>
+                  <p class="empty-state-suggestion" id="empty-state-suggestion"></p>
+                </div>
+              </section>
+
+              <section class="alternatives-section" id="alternatives-section" hidden>
+                <div class="results-toolbar">
+                  <div>
+                    <p class="results-toolbar-title">Backup routes</p>
+                    <p class="results-toolbar-copy" id="alternatives-copy"></p>
+                  </div>
+                </div>
+                <div class="alternative-list" id="alternatives-body"></div>
+              </section>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="final-cta">
-        <p class="section-label">Demo close</p>
-        <h2>Walk judges from problem to proof in under a minute.</h2>
-        <p>
-          Start with Adderall XR or Ozempic, change the formulation or dose, and
-          show how the availability picture changes instantly.
-        </p>
-        <a class="button button-primary" href="#demo">Run the PharmaPath demo</a>
+      <section class="workflow-section section-anchor" id="how-it-works" data-section>
+        <div class="content-shell">
+          <div class="section-heading workflow-heading">
+            <p class="section-label">Workflow</p>
+            <h2>Medication access fails in the details. PharmaPath makes those details usable.</h2>
+            <p>
+              Shortages rarely break at the brand-name level. They break at the
+              exact dose, release type, and nearby inventory situation patients
+              actually need.
+            </p>
+          </div>
+
+          <div class="workflow-grid">
+            <div class="workflow-statement">
+              <p class="workflow-lead">
+                Instead of “Who has this medication?” the care team can ask “Who
+                has this exact prescription, how close are they, and what should
+                we do next?”
+              </p>
+              <div class="workflow-callout">
+                <strong>That is the product story judges need to see.</strong>
+                <p>
+                  One query, multiple nearby outcomes, and a recommendation that
+                  feels operationally useful instead of decorative.
+                </p>
+              </div>
+            </div>
+
+            <ol class="workflow-steps">
+              <li>
+                <span class="workflow-number">01</span>
+                <div>
+                  <h3>Capture the exact prescription</h3>
+                  <p>
+                    Search by medication, then narrow by dose and formulation so
+                    the lookup reflects the actual fill request, not a rough
+                    brand-level proxy.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="workflow-number">02</span>
+                <div>
+                  <h3>Compare the nearby availability story</h3>
+                  <p>
+                    Surface stock status, neighborhood, distance, and freshness
+                    together so the best likely fill stands out immediately.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="workflow-number">03</span>
+                <div>
+                  <h3>Route the handoff with confidence</h3>
+                  <p>
+                    Promote the exact best match first, keep backup routes
+                    visible, and make the transfer or call decision feel obvious.
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="value-section section-anchor" id="why-it-matters" data-section>
+        <div class="content-shell">
+          <div class="section-heading">
+            <p class="section-label">Value</p>
+            <h2>Designed for the three people stuck in the prescription handoff.</h2>
+            <p>
+              Patients need confidence, clinics need speed, and pharmacies need
+              inbound requests that already reflect real inventory context.
+            </p>
+          </div>
+
+          <div class="value-grid">
+            <article class="value-card">
+              <p class="panel-eyebrow">For patients</p>
+              <h3>Less wasted time and fewer dead ends</h3>
+              <p>
+                Patients stop calling five pharmacies just to learn the XR
+                version is unavailable while a nearby independent can likely fill it.
+              </p>
+            </article>
+
+            <article class="value-card">
+              <p class="panel-eyebrow">For clinics</p>
+              <h3>Faster handoffs while the patient is still on the line</h3>
+              <p>
+                Nurses and office staff can recommend the most likely next move
+                without bouncing between tabs, voicemail trees, and guesswork.
+              </p>
+            </article>
+
+            <article class="value-card">
+              <p class="panel-eyebrow">For pharmacies</p>
+              <h3>Cleaner inbound demand tied to the real prescription</h3>
+              <p>
+                Pharmacies receive better-directed calls and transfer attempts
+                because the request already includes the right dose and formulation context.
+              </p>
+            </article>
+          </div>
+
+          <div class="capability-strip">
+            <div>
+              <span>Exact prescription matching</span>
+              <p>Medication, dosage, and formulation stay anchored throughout the flow.</p>
+            </div>
+            <div>
+              <span>Nearby stock visibility</span>
+              <p>Distance, neighborhood, freshness, and status are visible at a glance.</p>
+            </div>
+            <div>
+              <span>Fallback routing</span>
+              <p>Backup routes surface when the best exact fill is unavailable or partial.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="closing-section section-anchor" id="close" data-section>
+        <div class="content-shell">
+          <div class="closing-card">
+            <p class="section-label">Demo close</p>
+            <h2>Show the problem, the better route, and the business value in one pass.</h2>
+            <p>
+              Open with a shortage scenario, highlight the recommended pharmacy,
+              and finish by showing how backup routes keep the handoff moving
+              when exact inventory is thin.
+            </p>
+
+            <div class="closing-actions">
+              <a class="button button-primary" href="#demo">Run the PharmaPath demo</a>
+              <a class="button button-secondary" href="#top">Back to top</a>
+            </div>
+
+            <div class="closing-points">
+              <span>One search instead of call trees</span>
+              <span>Better patient outcomes through faster access</span>
+              <span>Cleaner routing for clinics and pharmacies</span>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p>PharmaPath MVP for RamHack 2026. Static frontend built for GitHub Pages.</p>
+      <div class="content-shell footer-shell">
+        <p>PharmaPath for RamHack 2026. Static frontend, realistic mock data, integration-ready search adapter.</p>
+      </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>

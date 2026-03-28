@@ -1,36 +1,48 @@
 # PharmaPath
 
-Static hackathon MVP for RamHack 2026. PharmaPath helps patients compare nearby
-pharmacies by medication, dosage, formulation, and stock status so they can
-find a likely fill faster.
+PharmaPath is a demo-ready pharmacy access frontend for RamHack 2026. It shows
+how one prescription can be routed to the most likely nearby fill by keeping
+medication, dosage, formulation, and stock visibility in the same flow.
 
-## Local preview
+## Run locally
 
-Run any static file server from the repo root, for example:
+This is a static frontend. From the repo root, run any static server:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open `http://localhost:8000`.
+Then open [http://localhost:8000](http://localhost:8000).
 
-## GitHub Pages deployment
+## Demo data
 
-This repo includes `.github/workflows/deploy.yml` for GitHub Pages deployment
-through GitHub Actions.
+- Mock inventory and preset scenarios live in `data/demo-data.js`
+- Search and ranking behavior live in `services/pharmapath-client.js`
+- UI rendering and interactions live in `script.js`
 
-Required GitHub setting:
+The current demo uses realistic mock data only. No API keys or environment
+variables are required to run the frontend.
 
-- `Settings -> Pages -> Build and deployment -> Source` should be set to
-  `GitHub Actions`
+## Swapping in real integrations later
 
-Expected live URL:
+Keep the DOM/UI layer in `script.js` and replace the mock adapter in
+`services/pharmapath-client.js`.
 
-- `https://ivyz0.github.io/RamHack2026/`
+The frontend expects an adapter with methods to:
 
-## Files of note
+- list medications
+- return dose/formulation filter options
+- search prescription availability and return ranked results
+- optionally expose preset demo scenarios
 
-- `index.html`: landing page and demo experience
-- `styles.css`: full visual styling and responsive layout
-- `script.js`: mock inventory data and search/filter behavior
-- `.github/workflows/deploy.yml`: GitHub Pages deployment workflow
+That lets teammates plug in live pharmacy or inventory data without rewriting
+the page structure.
+
+## Deployment notes
+
+The site is Vercel-friendly as a static project with no build step and no
+required env vars for the mock demo. Point Vercel at the repo root and deploy
+the default output directly.
+
+There is also a GitHub Pages workflow in `.github/workflows/deploy.yml` if that
+path is still useful for the team.

@@ -1,348 +1,80 @@
-// ── API Configuration ────────────────────────────────────────────────────────
-const API_BASE = "http://localhost:8000";
+import { demoScenarios } from "./data/demo-data.js";
+import { createPharmaPathClient } from "./services/pharmapath-client.js";
 
-// ── Mock inventory (fallback when backend is offline) ────────────────────────
-const inventory = [
-  {
-    pharmacy: "Greenline Community Pharmacy",
-    neighborhood: "Williamsburg",
-    distance: 0.7,
-    medication: "Adderall XR",
-    dosage: "20 mg",
-    formulation: "XR capsule",
-    status: "In stock",
-    note: "30-day fill ready now",
-    updated: "8 min ago",
-  },
-  {
-    pharmacy: "Walgreens",
-    neighborhood: "Park Slope",
-    distance: 1.4,
-    medication: "Adderall XR",
-    dosage: "20 mg",
-    formulation: "XR capsule",
-    status: "Limited fill",
-    note: "14 capsules available",
-    updated: "16 min ago",
-  },
-  {
-    pharmacy: "CVS Pharmacy",
-    neighborhood: "Brooklyn Heights",
-    distance: 2.1,
-    medication: "Adderall XR",
-    dosage: "20 mg",
-    formulation: "XR capsule",
-    status: "Low stock",
-    note: "Call before transfer",
-    updated: "11 min ago",
-  },
-  {
-    pharmacy: "CityCare Rx",
-    neighborhood: "SoHo",
-    distance: 4.3,
-    medication: "Adderall XR",
-    dosage: "20 mg",
-    formulation: "XR capsule",
-    status: "Out of stock",
-    note: "Backorder flagged",
-    updated: "27 min ago",
-  },
-  {
-    pharmacy: "Neighborhood Rx",
-    neighborhood: "Chelsea",
-    distance: 1.8,
-    medication: "Adderall XR",
-    dosage: "10 mg",
-    formulation: "XR capsule",
-    status: "In stock",
-    note: "Full 30-day fill confirmed",
-    updated: "7 min ago",
-  },
-  {
-    pharmacy: "Union Square Drug",
-    neighborhood: "Union Square",
-    distance: 2.4,
-    medication: "Adderall XR",
-    dosage: "10 mg",
-    formulation: "XR capsule",
-    status: "Limited fill",
-    note: "10 capsules on shelf",
-    updated: "14 min ago",
-  },
-  {
-    pharmacy: "Harborview Pharmacy",
-    neighborhood: "Long Island City",
-    distance: 1.1,
-    medication: "Ozempic",
-    dosage: "1 mg",
-    formulation: "Injectable pen",
-    status: "Limited fill",
-    note: "One pen reserved today",
-    updated: "5 min ago",
-  },
-  {
-    pharmacy: "CareHub Uptown",
-    neighborhood: "Upper West Side",
-    distance: 3.8,
-    medication: "Ozempic",
-    dosage: "1 mg",
-    formulation: "Injectable pen",
-    status: "In stock",
-    note: "Two pens available",
-    updated: "12 min ago",
-  },
-  {
-    pharmacy: "Walgreens",
-    neighborhood: "Astoria",
-    distance: 2.6,
-    medication: "Ozempic",
-    dosage: "1 mg",
-    formulation: "Injectable pen",
-    status: "Out of stock",
-    note: "Next shipment pending",
-    updated: "18 min ago",
-  },
-  {
-    pharmacy: "Lenox Apothecary",
-    neighborhood: "Harlem",
-    distance: 4.2,
-    medication: "Ozempic",
-    dosage: "1 mg",
-    formulation: "Injectable pen",
-    status: "Low stock",
-    note: "Confirm before sending script",
-    updated: "9 min ago",
-  },
-  {
-    pharmacy: "Prospect Pharmacy",
-    neighborhood: "Prospect Heights",
-    distance: 0.9,
-    medication: "Amoxicillin",
-    dosage: "500 mg",
-    formulation: "Capsule",
-    status: "In stock",
-    note: "Same-day fill window open",
-    updated: "6 min ago",
-  },
-  {
-    pharmacy: "Brooklyn Family Rx",
-    neighborhood: "Bushwick",
-    distance: 2.2,
-    medication: "Amoxicillin",
-    dosage: "500 mg",
-    formulation: "Capsule",
-    status: "In stock",
-    note: "Plenty of inventory",
-    updated: "13 min ago",
-  },
-  {
-    pharmacy: "Grand Street Drug",
-    neighborhood: "Lower East Side",
-    distance: 3.1,
-    medication: "Amoxicillin",
-    dosage: "500 mg",
-    formulation: "Capsule",
-    status: "Low stock",
-    note: "Last few bottles on hold",
-    updated: "15 min ago",
-  },
-  {
-    pharmacy: "Midtown Scripts",
-    neighborhood: "Midtown East",
-    distance: 5,
-    medication: "Amoxicillin",
-    dosage: "500 mg",
-    formulation: "Capsule",
-    status: "Limited fill",
-    note: "Partial course ready",
-    updated: "20 min ago",
-  },
-  {
-    pharmacy: "Parkview Rx",
-    neighborhood: "Cobble Hill",
-    distance: 0.6,
-    medication: "Sertraline",
-    dosage: "50 mg",
-    formulation: "Tablet",
-    status: "In stock",
-    note: "90-day supply available",
-    updated: "4 min ago",
-  },
-  {
-    pharmacy: "East River Pharmacy",
-    neighborhood: "DUMBO",
-    distance: 1.7,
-    medication: "Sertraline",
-    dosage: "50 mg",
-    formulation: "Tablet",
-    status: "In stock",
-    note: "Generic ready for pickup",
-    updated: "10 min ago",
-  },
-  {
-    pharmacy: "Clinton Wellness Pharmacy",
-    neighborhood: "Hell's Kitchen",
-    distance: 4.5,
-    medication: "Sertraline",
-    dosage: "50 mg",
-    formulation: "Tablet",
-    status: "Low stock",
-    note: "48 tablets left",
-    updated: "17 min ago",
-  },
-  {
-    pharmacy: "CVS Pharmacy",
-    neighborhood: "Murray Hill",
-    distance: 5.2,
-    medication: "Sertraline",
-    dosage: "50 mg",
-    formulation: "Tablet",
-    status: "Out of stock",
-    note: "Transfer recommended",
-    updated: "22 min ago",
-  },
-  {
-    pharmacy: "Atlantic Pharmacy",
-    neighborhood: "Downtown Brooklyn",
-    distance: 1.2,
-    medication: "Metformin",
-    dosage: "500 mg",
-    formulation: "ER tablet",
-    status: "In stock",
-    note: "Full refill available",
-    updated: "9 min ago",
-  },
-  {
-    pharmacy: "Flatiron Care Rx",
-    neighborhood: "Flatiron",
-    distance: 4.6,
-    medication: "Metformin",
-    dosage: "500 mg",
-    formulation: "ER tablet",
-    status: "In stock",
-    note: "Ready within 30 minutes",
-    updated: "19 min ago",
-  },
-  {
-    pharmacy: "Queens Community Pharmacy",
-    neighborhood: "Sunnyside",
-    distance: 5.8,
-    medication: "Metformin",
-    dosage: "500 mg",
-    formulation: "ER tablet",
-    status: "Limited fill",
-    note: "Two-week supply available",
-    updated: "21 min ago",
-  },
-  {
-    pharmacy: "Rite Aid",
-    neighborhood: "Harlem",
-    distance: 7.1,
-    medication: "Metformin",
-    dosage: "500 mg",
-    formulation: "ER tablet",
-    status: "Out of stock",
-    note: "Awaiting wholesaler restock",
-    updated: "24 min ago",
-  },
-  {
-    pharmacy: "Northside Pharmacy",
-    neighborhood: "Greenpoint",
-    distance: 1.9,
-    medication: "Albuterol",
-    dosage: "90 mcg",
-    formulation: "Inhaler",
-    status: "In stock",
-    note: "Metered dose inhaler available",
-    updated: "8 min ago",
-  },
-  {
-    pharmacy: "CityMed Pharmacy",
-    neighborhood: "Gramercy",
-    distance: 4.1,
-    medication: "Albuterol",
-    dosage: "90 mcg",
-    formulation: "Inhaler",
-    status: "Limited fill",
-    note: "One inhaler left",
-    updated: "13 min ago",
-  },
-];
+const client = createPharmaPathClient();
 
-let liveResults = null; // holds API results when backend is available
-let backendAvailable = false;
+const initialFilters = { ...demoScenarios[0].filters };
 
-const initialFilters = {
-  medication: "Adderall XR",
-  dosage: "20 mg",
-  formulation: "XR capsule",
-};
-
-const statusRank = {
-  "In stock": 0,
-  "Limited fill": 1,
-  "Low stock": 2,
-  "Out of stock": 3,
-};
-
+const header = document.querySelector("[data-header]");
+const navToggle = document.querySelector(".nav-toggle");
+const navLinks = Array.from(document.querySelectorAll("[data-nav-link]"));
 const medicationInput = document.querySelector("#medication-input");
+const medicationOptions = document.querySelector("#medication-options");
 const dosageSelect = document.querySelector("#dosage-select");
 const formulationSelect = document.querySelector("#formulation-select");
-const medicationOptions = document.querySelector("#medication-options");
+const availabilitySelect = document.querySelector("#availability-select");
+const radiusSelect = document.querySelector("#radius-select");
+const sortSelect = document.querySelector("#sort-select");
+const alternativesToggle = document.querySelector("#alternatives-toggle");
 const searchForm = document.querySelector("#search-form");
 const resetButton = document.querySelector("#reset-demo");
-const resultsBody = document.querySelector("#results-body");
+const scenarioList = document.querySelector("#scenario-list");
+const queryChip = document.querySelector("#query-chip");
+const resultsHeadline = document.querySelector("#results-headline");
 const resultsSummary = document.querySelector("#results-summary");
+const scenarioContext = document.querySelector("#scenario-context");
+const summaryMetrics = document.querySelector("#summary-metrics");
+const recommendedCard = document.querySelector("#recommended-card");
+const outcomeDigest = document.querySelector("#outcome-digest");
+const resultsToolbarCopy = document.querySelector("#results-toolbar-copy");
+const resultsBody = document.querySelector("#results-body");
 const emptyState = document.querySelector("#empty-state");
-const quickPicks = Array.from(document.querySelectorAll(".quick-pick"));
+const emptyStateTitle = document.querySelector("#empty-state-title");
+const emptyStateCopy = document.querySelector("#empty-state-copy");
+const emptyStateSuggestion = document.querySelector("#empty-state-suggestion");
+const alternativesSection = document.querySelector("#alternatives-section");
+const alternativesCopy = document.querySelector("#alternatives-copy");
+const alternativesBody = document.querySelector("#alternatives-body");
+const actionFeedback = document.querySelector("#action-feedback");
+const revealNodes = Array.from(document.querySelectorAll("[data-reveal]"));
 
-function uniqueValues(items, key) {
-  return [...new Set(items.map((item) => item[key]))].sort((a, b) =>
-    a.localeCompare(b),
-  );
-}
+let actionFeedbackTimer;
 
-function normalize(value) {
-  return value.trim().toLowerCase();
+function escapeHtml(value = "") {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function populateMedicationList() {
-  medicationOptions.innerHTML = uniqueValues(inventory, "medication")
-    .map((medication) => `<option value="${medication}"></option>`)
+  medicationOptions.innerHTML = client
+    .listMedications()
+    .map((medication) => `<option value="${escapeHtml(medication)}"></option>`)
     .join("");
 }
 
 function populateSelect(select, values, label, keepValue = "") {
-  const options = [`<option value="">${label}</option>`]
+  select.innerHTML = [`<option value="">${label}</option>`]
     .concat(
       values.map(
         (value) =>
-          `<option value="${value}" ${
+          `<option value="${escapeHtml(value)}" ${
             value === keepValue ? "selected" : ""
-          }>${value}</option>`,
+          }>${escapeHtml(value)}</option>`,
       ),
     )
     .join("");
-
-  select.innerHTML = options;
 }
 
 function updateFilterOptions() {
-  const medication = normalize(medicationInput.value);
-  const scopedInventory = medication
-    ? inventory.filter((item) => normalize(item.medication).includes(medication))
-    : inventory;
-
-  populateSelect(
-    dosageSelect,
-    uniqueValues(scopedInventory, "dosage"),
-    "All doses",
-    dosageSelect.value,
-  );
-
+  const options = client.getFilterOptions({ medication: medicationInput.value });
+  populateSelect(dosageSelect, options.dosages, "All doses", dosageSelect.value);
   populateSelect(
     formulationSelect,
-    uniqueValues(scopedInventory, "formulation"),
+    options.formulations,
     "All formulations",
     formulationSelect.value,
   );
@@ -353,119 +85,11 @@ function getFilters() {
     medication: medicationInput.value.trim(),
     dosage: dosageSelect.value,
     formulation: formulationSelect.value,
+    availabilityMode: availabilitySelect.value,
+    radiusMiles: Number(radiusSelect.value),
+    sortBy: sortSelect.value,
+    includeAlternatives: alternativesToggle.checked,
   };
-}
-
-function filterInventory(filters) {
-  const medication = normalize(filters.medication);
-  const dosage = normalize(filters.dosage);
-  const formulation = normalize(filters.formulation);
-
-  return inventory
-    .filter((item) => {
-      const matchesMedication = medication
-        ? normalize(item.medication).includes(medication)
-        : true;
-      const matchesDosage = dosage
-        ? normalize(item.dosage) === dosage
-        : true;
-      const matchesFormulation = formulation
-        ? normalize(item.formulation) === formulation
-        : true;
-
-      return matchesMedication && matchesDosage && matchesFormulation;
-    })
-    .sort((left, right) => {
-      const rankDiff = statusRank[left.status] - statusRank[right.status];
-      return rankDiff === 0 ? left.distance - right.distance : rankDiff;
-    });
-}
-
-function summaryText(results, filters) {
-  if (!results.length) {
-    return "No pharmacies match the current prescription details in this demo snapshot.";
-  }
-
-  const inStock = results.filter((item) => item.status === "In stock").length;
-  const limited = results.filter((item) => item.status === "Limited fill").length;
-  const low = results.filter((item) => item.status === "Low stock").length;
-  const context = [filters.medication, filters.dosage, filters.formulation]
-    .filter(Boolean)
-    .join(" • ");
-
-  const coverage = [];
-  if (inStock) coverage.push(`${inStock} ready now`);
-  if (limited) coverage.push(`${limited} partial`);
-  if (low) coverage.push(`${low} low stock`);
-
-  const descriptor = context ? ` for ${context}` : "";
-  return `Showing ${results.length} pharmacy snapshots${descriptor}. ${coverage.join(
-    ", ",
-  )}.`;
-}
-
-function confidenceHTML(item) {
-  const conf = item.confidence;
-  if (conf == null) return '<span class="updated-time">—</span>';
-
-  const pct = Math.round(conf * 100);
-  const tier =
-    pct >= 70 ? "high" : pct >= 45 ? "medium" : pct >= 25 ? "low" : "none";
-
-  return `
-    <div class="confidence-cell">
-      <span class="confidence-label">${pct}% likely</span>
-      <div class="confidence-bar">
-        <div class="confidence-bar-fill ${tier}" style="width:${pct}%"></div>
-      </div>
-    </div>`;
-}
-
-function renderResults(results, filters) {
-  resultsSummary.textContent = summaryText(results, filters);
-
-  if (!results.length) {
-    resultsBody.innerHTML = "";
-    emptyState.hidden = false;
-    return;
-  }
-
-  emptyState.hidden = true;
-  const bestMatchIndex = results.findIndex((item) => item.status === "In stock");
-
-  resultsBody.innerHTML = results
-    .map((item, index) => {
-      const statusClass = `status-${item.status
-        .toLowerCase()
-        .replaceAll(" ", "-")}`;
-
-      return `
-        <article class="result-row">
-          <div class="result-stack">
-            <span class="pharmacy-title">${item.pharmacy}</span>
-            <span class="result-subline">${item.neighborhood} • ${item.distance.toFixed(
-              1,
-            )} mi away</span>
-            ${
-              index === bestMatchIndex
-                ? '<span class="best-match">Best nearby match</span>'
-                : ""
-            }
-          </div>
-          <div class="result-stack">
-            <span class="prescription-title">${item.medication}</span>
-            <span class="result-subline">${item.dosage} • ${item.formulation}</span>
-          </div>
-          <div class="result-stack">
-            <span class="status-badge ${statusClass}">${item.status}</span>
-            <span class="status-note">${item.note}</span>
-          </div>
-          ${confidenceHTML(item)}
-          <span class="updated-time">${item.updated}</span>
-        </article>
-      `;
-    })
-    .join("");
 }
 
 function setFilters(filters) {
@@ -473,110 +97,395 @@ function setFilters(filters) {
   updateFilterOptions();
   dosageSelect.value = filters.dosage || "";
   formulationSelect.value = filters.formulation || "";
-  quickPicks.forEach((button) => {
-    const active =
-      button.dataset.medication === (filters.medication || "") &&
-      button.dataset.dosage === (filters.dosage || "") &&
-      button.dataset.formulation === (filters.formulation || "");
-
-    button.classList.toggle("active", active);
-  });
+  availabilitySelect.value = filters.availabilityMode || "all";
+  radiusSelect.value = String(filters.radiusMiles || 5);
+  sortSelect.value = filters.sortBy || "smart";
+  alternativesToggle.checked = filters.includeAlternatives ?? true;
 }
 
-function applyFilters(filters = getFilters()) {
-  renderResults(filterInventory(filters), filters);
+function renderScenarios(activeScenarioId = "") {
+  scenarioList.innerHTML = client
+    .listScenarios()
+    .map((scenario) => {
+      const activeClass = scenario.id === activeScenarioId ? " is-active" : "";
+      return `
+        <button
+          class="scenario-card${activeClass}"
+          type="button"
+          data-scenario-id="${escapeHtml(scenario.id)}"
+        >
+          <span>${escapeHtml(scenario.label)}</span>
+          <strong>${escapeHtml(scenario.title)}</strong>
+          <p>${escapeHtml(scenario.description)}</p>
+        </button>
+      `;
+    })
+    .join("");
 }
 
-// ── API integration ──────────────────────────────────────────────────────────
+function buildActionMarkup(item) {
+  return item.actions
+    .map(
+      (action) => `
+        <button
+          class="action-pill"
+          type="button"
+          data-action="${escapeHtml(action.label)}"
+          data-pharmacy="${escapeHtml(item.pharmacy)}"
+        >
+          ${escapeHtml(action.label)}
+        </button>
+      `,
+    )
+    .join("");
+}
 
-const locationInput = document.querySelector("#location-input");
+function renderMetrics(metrics) {
+  summaryMetrics.innerHTML = metrics
+    .map(
+      (metric) => `
+        <div class="metric-pill">
+          <span>${escapeHtml(metric.label)}</span>
+          <strong>${escapeHtml(metric.value)}</strong>
+        </div>
+      `,
+    )
+    .join("");
+}
 
-async function checkBackend() {
-  try {
-    const resp = await fetch(`${API_BASE}/api/health`, { signal: AbortSignal.timeout(2000) });
-    if (resp.ok) {
-      backendAvailable = true;
-      resultsSummary.textContent = "Backend connected. Enter a location to search live pharmacies.";
-    }
-  } catch {
-    backendAvailable = false;
+function renderRecommended(response) {
+  const recommended = response.recommended || response.alternateRecommendation;
+
+  if (!recommended) {
+    recommendedCard.innerHTML = `
+      <p class="panel-eyebrow">Recommended next step</p>
+      <p class="recommended-copy">No nearby recommendation is available in the current demo snapshot.</p>
+    `;
+    return;
   }
+
+  const isAlternate = Boolean(!response.recommended && response.alternateRecommendation);
+  const badgeClass = isAlternate ? "status-suggestion" : recommended.statusClass;
+  const introLabel = isAlternate ? "Nearest backup route" : "Recommended next step";
+
+  recommendedCard.innerHTML = `
+    <div class="recommended-head">
+      <div>
+        <p class="panel-eyebrow">${escapeHtml(introLabel)}</p>
+        <h3 class="recommended-title">${escapeHtml(recommended.pharmacy)}</h3>
+        <p class="recommended-subtitle">
+          ${escapeHtml(recommended.neighborhood)} • ${escapeHtml(
+            recommended.distanceLabel,
+          )} away • ${escapeHtml(recommended.hours)}
+        </p>
+      </div>
+      <span class="status-badge ${escapeHtml(badgeClass)}">${escapeHtml(
+        isAlternate ? "Backup route" : recommended.status,
+      )}</span>
+    </div>
+
+    <p class="recommended-copy">${escapeHtml(
+      isAlternate ? response.summary.alternativeBody : response.summary.recommendedBody,
+    )}</p>
+
+    <div class="highlight-grid">
+      <div class="highlight-block">
+        <span>Prescription fit</span>
+        <strong>${escapeHtml(
+          `${recommended.medication} • ${recommended.dosage} • ${recommended.formulation}`,
+        )}</strong>
+      </div>
+      <div class="highlight-block">
+        <span>Fill outlook</span>
+        <strong>${escapeHtml(recommended.fulfillment)}</strong>
+      </div>
+      <div class="highlight-block">
+        <span>Next handoff</span>
+        <strong>${escapeHtml(recommended.nextStep)}</strong>
+      </div>
+    </div>
+
+    <div class="tag-row">
+      ${recommended.tags
+        .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
+        .join("")}
+    </div>
+
+    <div class="card-actions">
+      ${buildActionMarkup(recommended)}
+    </div>
+  `;
 }
 
-async function searchAPI(filters) {
-  const location = locationInput ? locationInput.value.trim() : "";
-  if (!location) return null;
+function renderDigest(digestItems) {
+  outcomeDigest.innerHTML = digestItems
+    .map((item) => `<div class="digest-item">${escapeHtml(item)}</div>`)
+    .join("");
+}
 
-  const params = new URLSearchParams({
-    medication: filters.medication,
-    location,
-    dosage: filters.dosage || "",
-    formulation: filters.formulation || "",
-  });
+function renderResultCard(item, label = "") {
+  const labelMarkup = label
+    ? `<span class="inline-badge inline-badge-highlight">${escapeHtml(label)}</span>`
+    : "";
 
-  try {
-    resultsSummary.textContent = "Searching pharmacies...";
-    const resp = await fetch(`${API_BASE}/api/search?${params}`, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      return data.results || [];
-    }
-  } catch {
-    // Backend unreachable — fall back to mock
+  return `
+    <article class="result-card${label ? " is-recommended" : ""}">
+      <div class="result-card-top">
+        <div class="result-copy">
+          <div class="result-badges">
+            ${labelMarkup}
+            <span class="inline-badge">${escapeHtml(item.pharmacyType)}</span>
+            <span class="inline-badge">${escapeHtml(item.distanceLabel)} away</span>
+          </div>
+          <h4 class="result-title">${escapeHtml(item.pharmacy)}</h4>
+          <p class="result-subtitle">
+            ${escapeHtml(item.neighborhood)} • ${escapeHtml(item.hours)}
+          </p>
+        </div>
+        <div class="result-status">
+          <span class="status-badge ${escapeHtml(item.statusClass)}">${escapeHtml(
+            item.status,
+          )}</span>
+          <span class="updated-label">Updated ${escapeHtml(item.updatedLabel)}</span>
+        </div>
+      </div>
+
+      <div class="result-meta">
+        <div class="result-meta-block">
+          <span>Prescription fit</span>
+          <strong>${escapeHtml(
+            `${item.medication} • ${item.dosage} • ${item.formulation}`,
+          )}</strong>
+        </div>
+        <div class="result-meta-block">
+          <span>Fill outlook</span>
+          <strong>${escapeHtml(item.fulfillment)}</strong>
+        </div>
+        <div class="result-meta-block">
+          <span>Next handoff</span>
+          <strong>${escapeHtml(item.nextStep)}</strong>
+        </div>
+      </div>
+
+      <p class="result-note">${escapeHtml(item.stockDetail)}</p>
+
+      <div class="result-footer">
+        <div class="tag-row">
+          ${item.tags
+            .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
+            .join("")}
+        </div>
+        <div class="card-actions">
+          ${buildActionMarkup(item)}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderResults(response) {
+  resultsToolbarCopy.textContent = response.summary.toolbarCopy;
+  resultsBody.innerHTML = response.results
+    .map((item, index) =>
+      renderResultCard(
+        item,
+        item.id === response.recommended?.id ? "Best exact match" : "",
+      ),
+    )
+    .join("");
+
+  if (response.results.length) {
+    emptyState.hidden = true;
+    return;
   }
-  return null;
+
+  emptyState.hidden = false;
+  emptyStateTitle.textContent = response.summary.emptyTitle;
+  emptyStateCopy.textContent = response.summary.emptyBody;
+  emptyStateSuggestion.textContent = response.summary.emptySuggestion;
 }
 
-// ── Initialization ───────────────────────────────────────────────────────────
+function renderAlternatives(response) {
+  if (!response.alternativeMatches.length) {
+    alternativesSection.hidden = true;
+    alternativesBody.innerHTML = "";
+    return;
+  }
+
+  alternativesSection.hidden = false;
+  alternativesCopy.textContent = response.summary.alternativeCopy;
+  alternativesBody.innerHTML = response.alternativeMatches
+    .map((item, index) =>
+      renderResultCard(item, index === 0 ? "Nearest backup route" : "Backup route"),
+    )
+    .join("");
+}
+
+function renderResponse(response) {
+  queryChip.textContent = response.summary.queryLabel;
+  resultsHeadline.textContent = response.summary.headline;
+  resultsSummary.textContent = response.summary.body;
+  scenarioContext.textContent = response.scenario
+    ? `Demo story: ${response.scenario.description}`
+    : "Manual search mode. Use the results to show how the best route changes with the prescription details.";
+
+  renderMetrics(response.summary.metrics);
+  renderRecommended(response);
+  renderDigest(response.summary.digest);
+  renderResults(response);
+  renderAlternatives(response);
+}
+
+function runSearch(filters = getFilters()) {
+  const activeScenario = client.findScenario(filters);
+  const response = client.searchPrescription(filters);
+  renderScenarios(activeScenario?.id);
+  renderResponse(response);
+}
+
+function showActionFeedback(action, pharmacy) {
+  if (actionFeedbackTimer) {
+    clearTimeout(actionFeedbackTimer);
+  }
+
+  actionFeedback.textContent = `Demo action: ${action} at ${pharmacy}. Placeholder only until live integrations are connected.`;
+
+  actionFeedbackTimer = window.setTimeout(() => {
+    actionFeedback.textContent = "";
+  }, 2800);
+}
+
+function setHeaderState() {
+  header.classList.toggle("is-scrolled", window.scrollY > 24);
+}
+
+function toggleNav(forceState) {
+  const shouldOpen =
+    typeof forceState === "boolean"
+      ? forceState
+      : !header.classList.contains("is-open");
+
+  header.classList.toggle("is-open", shouldOpen);
+  document.body.classList.toggle("is-nav-open", shouldOpen);
+  navToggle.setAttribute("aria-expanded", String(shouldOpen));
+}
+
+function observeSections() {
+  const sections = Array.from(document.querySelectorAll("[data-section]"));
+
+  const navObserver = new IntersectionObserver(
+    (entries) => {
+      const visibleEntry = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+
+      if (!visibleEntry) {
+        return;
+      }
+
+      const activeId = visibleEntry.target.id;
+      navLinks.forEach((link) => {
+        const isActive = link.getAttribute("href") === `#${activeId}`;
+        link.classList.toggle("is-active", isActive);
+      });
+    },
+    {
+      threshold: [0.25, 0.45, 0.65],
+      rootMargin: "-20% 0px -45% 0px",
+    },
+  );
+
+  sections.forEach((section) => navObserver.observe(section));
+}
+
+function observeReveals() {
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        entry.target.classList.add("is-visible");
+        revealObserver.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.2 },
+  );
+
+  revealNodes.forEach((node) => revealObserver.observe(node));
+}
 
 populateMedicationList();
 setFilters(initialFilters);
-applyFilters(initialFilters);
-checkBackend();
+renderScenarios(demoScenarios[0].id);
+runSearch(initialFilters);
+setHeaderState();
+observeSections();
+observeReveals();
 
-searchForm.addEventListener("submit", async (event) => {
+searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  quickPicks.forEach((button) => button.classList.remove("active"));
-
-  const filters = getFilters();
-
-  // Try live API if a location was entered
-  if (backendAvailable && locationInput && locationInput.value.trim()) {
-    const apiResults = await searchAPI(filters);
-    if (apiResults) {
-      liveResults = apiResults;
-      renderResults(apiResults, filters);
-      return;
-    }
-  }
-
-  // Fall back to mock data
-  liveResults = null;
-  applyFilters();
+  runSearch();
 });
 
 medicationInput.addEventListener("input", () => {
   updateFilterOptions();
 });
 
-resetButton.addEventListener("click", () => {
-  setFilters(initialFilters);
-  applyFilters(initialFilters);
+scenarioList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-scenario-id]");
+
+  if (!button) {
+    return;
+  }
+
+  const scenario = client
+    .listScenarios()
+    .find((item) => item.id === button.dataset.scenarioId);
+
+  if (!scenario) {
+    return;
+  }
+
+  setFilters(scenario.filters);
+  runSearch(scenario.filters);
 });
 
-quickPicks.forEach((button) => {
-  button.addEventListener("click", () => {
-    const filters = {
-      medication: button.dataset.medication,
-      dosage: button.dataset.dosage,
-      formulation: button.dataset.formulation,
-    };
+resetButton.addEventListener("click", () => {
+  setFilters(initialFilters);
+  runSearch(initialFilters);
+});
 
-    setFilters(filters);
-    applyFilters(filters);
+window.addEventListener("scroll", setHeaderState, { passive: true });
+
+navToggle.addEventListener("click", () => {
+  toggleNav();
+});
+
+navLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    toggleNav(false);
   });
+});
+
+document.addEventListener("click", (event) => {
+  const actionButton = event.target.closest("[data-action]");
+
+  if (actionButton) {
+    showActionFeedback(actionButton.dataset.action, actionButton.dataset.pharmacy);
+    return;
+  }
+
+  if (header.classList.contains("is-open") && !event.target.closest(".header-shell")) {
+    toggleNav(false);
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    toggleNav(false);
+  }
 });
 
 window.addEventListener("DOMContentLoaded", () => {
