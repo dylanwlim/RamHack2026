@@ -133,13 +133,27 @@ function buildResultActions(place) {
   return actions.join("");
 }
 
-function buildResultCard(place, medication, label = "") {
+function buildResultCard(place, medication, guidance = {}, label = "") {
   const status = getOpenStatus(place);
   const labelMarkup = label
     ? `<span class="inline-badge inline-badge-highlight">${escapeHtml(label)}</span>`
     : "";
   const ratingLabel = formatRating(place.rating, place.user_ratings_total);
   const businessStatus = place.business_status ? ` • ${escapeHtml(place.business_status)}` : "";
+  const nextStep =
+    place.next_step ||
+    guidance.recommended_action ||
+    "Call to confirm availability before sending the prescription.";
+  const matchReason =
+    place.match_reason ||
+    guidance.summary ||
+    `Use this pharmacy as part of the ${medication} search workflow.`;
+  const inventoryNote =
+    place.inventory_note ||
+    guidance.demo_boundary ||
+    `Real-time inventory for ${medication} is not yet verified in this demo.`;
+  const workflowLabel =
+    place.workflow_label || guidance.ranking_focus_label || "Medication guidance";
 
   return `
     <article class="result-card${label ? " is-recommended" : ""}">
@@ -165,27 +179,28 @@ function buildResultCard(place, medication, label = "") {
 
       <div class="result-meta">
         <div class="result-meta-block">
-          <span>Medication context</span>
-          <strong>${escapeHtml(medication)}</strong>
+          <span>Lookup source</span>
+          <strong>Real Google Places pharmacy</strong>
         </div>
         <div class="result-meta-block">
-          <span>Google signal</span>
-          <strong>${escapeHtml(ratingLabel)}</strong>
+          <span>Why try this one</span>
+          <strong>${escapeHtml(matchReason)}</strong>
         </div>
         <div class="result-meta-block">
-          <span>Next step</span>
-          <strong>Call to confirm availability before sending the prescription.</strong>
+          <span>Next question</span>
+          <strong>${escapeHtml(nextStep)}</strong>
         </div>
       </div>
 
       <p class="result-note">
-        Real-time inventory for <strong>${escapeHtml(medication)}</strong> is not yet verified in this demo. Use PharmaPath to decide which pharmacy to contact first, then confirm stock directly.
+        ${escapeHtml(inventoryNote)}
       </p>
 
       <div class="result-footer">
         <div class="tag-row">
           <span class="tag-pill">${escapeHtml(place.review_label)}</span>
           <span class="tag-pill">${escapeHtml(status.label)}</span>
+          <span class="tag-pill">${escapeHtml(workflowLabel)}</span>
           <span class="tag-pill">Google Places result</span>
         </div>
         <div class="card-actions">
@@ -302,6 +317,22 @@ function setSearchingState(isSearching) {
 
 function renderRecommended(payload) {
   const recommended = payload.recommended;
+  const guidance = payload.guidance || {};
+  const guidanceTags = Array.isArray(guidance.tags)
+    ? guidance.tags
+        .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
+        .join("")
+    : "";
+  const questionMarkup =
+    Array.isArray(guidance.questions_to_ask) && guidance.questions_to_ask.length
+      ? `
+        <ul class="guidance-list">
+          ${guidance.questions_to_ask
+            .map((question) => `<li>${escapeHtml(question)}</li>`)
+            .join("")}
+        </ul>
+      `
+      : "";
 
   if (!recommended) {
     recommendedCard.innerHTML = `
@@ -309,6 +340,15 @@ function renderRecommended(payload) {
       <p class="recommended-copy">
         No nearby pharmacy results surfaced for this search. Try widening the radius or using a broader neighborhood or borough.
       </p>
+      <div class="guidance-panel">
+        <p class="panel-eyebrow">Medication-specific guidance</p>
+        <h4 class="guidance-title">${escapeHtml(guidance.title || "Availability guidance")}</h4>
+        <p class="guidance-summary">${escapeHtml(
+          guidance.summary ||
+            "PharmaPath separates the real pharmacy lookup from the medication guidance, even when no nearby result is available.",
+        )}</p>
+        <p class="guidance-footnote">${escapeHtml(guidance.demo_boundary || payload.disclaimer)}</p>
+      </div>
     `;
     return;
   }
@@ -334,7 +374,7 @@ function renderRecommended(payload) {
 
     <p class="recommended-copy">
       ${escapeHtml(
-        `${recommended.name} is the strongest first call for ${payload.query.medication} near ${payload.location.formatted_address}. ${payload.disclaimer}`,
+        `${recommended.name} is the first pharmacy to call for ${payload.query.medication} near ${payload.location.formatted_address}.`,
       )}
     </p>
 
@@ -346,13 +386,31 @@ function renderRecommended(payload) {
         )}</strong>
       </div>
       <div class="highlight-block">
-        <span>Google signal</span>
-        <strong>${escapeHtml(ratingLabel)}</strong>
+        <span>Ranking focus</span>
+        <strong>${escapeHtml(guidance.ranking_focus_label || ratingLabel)}</strong>
       </div>
       <div class="highlight-block">
         <span>Next handoff</span>
-        <strong>Call before sending or transferring the prescription.</strong>
+        <strong>${escapeHtml(
+          recommended.next_step ||
+            guidance.recommended_action ||
+            "Call before sending or transferring the prescription.",
+        )}</strong>
       </div>
+    </div>
+
+    <div class="guidance-panel">
+      <p class="panel-eyebrow">Medication-specific guidance</p>
+      <h4 class="guidance-title">${escapeHtml(guidance.title || "Availability guidance")}</h4>
+      <p class="guidance-summary">${escapeHtml(guidance.summary || payload.disclaimer)}</p>
+      <div class="tag-row">
+        ${guidanceTags}
+        <span class="tag-pill">Live pharmacy lookup</span>
+      </div>
+      ${questionMarkup}
+      <p class="guidance-footnote">${escapeHtml(
+        guidance.demo_boundary || payload.disclaimer,
+      )}</p>
     </div>
 
     <div class="tag-row">
@@ -368,10 +426,16 @@ function renderRecommended(payload) {
 }
 
 function renderDigest(payload) {
+  const guidance = payload.guidance || {};
   const digestItems = [
-    `Google Places resolved "${payload.query.location}" to ${payload.location.formatted_address}.`,
-    `Results are ranked by ${getSortLabel(payload.query.sort_by)} so the first recommendation is easier to explain in the demo.`,
-    `Real-time inventory for ${payload.query.medication} is not yet verified. PharmaPath is identifying the best pharmacies to contact first.`,
+    guidance.real_signal ||
+      `Google Places resolved "${payload.query.location}" to ${payload.location.formatted_address}.`,
+    guidance.ranking_focus ||
+      `Results are ranked by ${getSortLabel(payload.query.sort_by)} so the first recommendation is easier to explain in the demo.`,
+    guidance.recommended_action ||
+      `Use PharmaPath to decide who to call first for ${payload.query.medication}, then confirm stock directly.`,
+    guidance.demo_boundary ||
+      `Real-time inventory for ${payload.query.medication} is not yet verified. PharmaPath is identifying the best pharmacies to contact first.`,
   ];
 
   if (payload.query.only_open_now) {
@@ -394,7 +458,7 @@ function renderDigest(payload) {
 function renderPrimaryResults(payload) {
   const primaryResults = payload.results.slice(0, 3);
 
-  resultsToolbarCopy.textContent = `${payload.results.length} nearby pharmacies ranked by ${getSortLabel(
+  resultsToolbarCopy.textContent = `${payload.results.length} real Google pharmacy matches ranked by ${getSortLabel(
     payload.query.sort_by,
   )} within ${payload.query.radius_miles} miles of ${payload.location.formatted_address}.`;
 
@@ -403,6 +467,7 @@ function renderPrimaryResults(payload) {
       buildResultCard(
         place,
         payload.query.medication,
+        payload.guidance,
         index === 0 ? "Top recommendation" : "",
       ),
     )
@@ -432,9 +497,9 @@ function renderAdditionalResults(payload) {
 
   alternativesSection.hidden = false;
   alternativesCopy.textContent =
-    "Use these as backup calls if the top recommendation cannot confirm availability.";
+    "Use these real backup pharmacies if the top recommendation cannot confirm availability.";
   alternativesBody.innerHTML = overflowResults
-    .map((place) => buildResultCard(place, payload.query.medication, "Backup option"))
+    .map((place) => buildResultCard(place, payload.query.medication, payload.guidance, "Backup option"))
     .join("");
 }
 
@@ -459,8 +524,8 @@ function renderResponse(payload) {
     payload.results.length === 1 ? "acy" : "acies"
   } found for ${payload.query.medication}`;
   resultsSummary.textContent =
-    "Google Places is powering the nearby pharmacy list. PharmaPath keeps the medication search attached to the workflow, but real-time inventory still needs direct confirmation.";
-  scenarioContext.textContent = payload.disclaimer;
+    "Pharmacy names, addresses, ratings, and open-now signals come from Google Places. Medication-specific guidance below shapes the call workflow but does not verify stock.";
+  scenarioContext.textContent = payload.guidance?.summary || payload.disclaimer;
 
   renderMetrics([
     { label: "Nearby results", value: String(payload.counts.total) },
@@ -485,9 +550,9 @@ function renderLoadingState(filters) {
   }`;
   resultsHeadline.textContent = "Searching nearby pharmacies...";
   resultsSummary.textContent =
-    "Resolving the location and loading nearby Google Places results.";
+    "Resolving the location and loading real Google Places results.";
   scenarioContext.textContent =
-    "Real-time inventory availability is not yet verified in this demo.";
+    "Medication-specific guidance is prepared separately from the real pharmacy lookup.";
   renderMetrics([
     { label: "Nearby results", value: "--" },
     { label: "Open now", value: "--" },
@@ -497,10 +562,14 @@ function renderLoadingState(filters) {
   recommendedCard.innerHTML = `
     <p class="panel-eyebrow">Recommended first step</p>
     <p class="recommended-copy">Looking up nearby pharmacies and preparing the best first call.</p>
+    <div class="guidance-panel">
+      <p class="panel-eyebrow">Medication-specific guidance</p>
+      <p class="guidance-summary">The location is being geocoded first, then PharmaPath will layer medication-specific call guidance on top of the real pharmacy list.</p>
+    </div>
   `;
   outcomeDigest.innerHTML = `
     <div class="digest-item">The location is being geocoded before nearby pharmacy results are ranked.</div>
-    <div class="digest-item">Medication context stays attached so the handoff can stay specific and honest.</div>
+    <div class="digest-item">Medication-specific guidance is prepared separately from the live Google pharmacy lookup.</div>
   `;
   resultsToolbarCopy.textContent = "Loading nearby pharmacy results...";
   resultsBody.innerHTML = "";
@@ -516,7 +585,7 @@ function renderErrorState(message, filters) {
   resultsHeadline.textContent = "Search unavailable";
   resultsSummary.textContent = message;
   scenarioContext.textContent =
-    "PharmaPath is designed to keep the medication search honest. If pharmacy results fail, the UI should fail clearly instead of faking availability.";
+    "PharmaPath separates live pharmacy lookup from medication guidance. If the real lookup fails, the UI should fail clearly instead of faking availability.";
   renderMetrics([
     { label: "Nearby results", value: "--" },
     { label: "Open now", value: "--" },
@@ -526,6 +595,10 @@ function renderErrorState(message, filters) {
   recommendedCard.innerHTML = `
     <p class="panel-eyebrow">Recommended first step</p>
     <p class="recommended-copy">Adjust the medication or location and run the search again.</p>
+    <div class="guidance-panel">
+      <p class="panel-eyebrow">Medication-specific guidance</p>
+      <p class="guidance-summary">No medication guidance is shown as a substitute for the real pharmacy search when the backend returns an error.</p>
+    </div>
   `;
   outcomeDigest.innerHTML = `
     <div class="digest-item">No pharmacy results were shown because the backend returned an error.</div>

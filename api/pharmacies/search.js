@@ -62,6 +62,8 @@ module.exports = async function handler(req, res) {
       },
       location: resolvedLocation,
       disclaimer: searchResult.disclaimer,
+      medication_profile: searchResult.medication_profile,
+      guidance: searchResult.guidance,
       results: searchResult.results,
       recommended: searchResult.recommended,
       counts: searchResult.counts,

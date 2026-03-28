@@ -1117,6 +1117,42 @@ select:focus-visible,
   line-height: 1.55;
 }
 
+.guidance-panel {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(16, 33, 45, 0.08);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(25, 180, 161, 0.08), rgba(255, 255, 255, 0.72)),
+    rgba(255, 255, 255, 0.72);
+}
+
+.guidance-title {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.guidance-summary,
+.guidance-footnote {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.58;
+}
+
+.guidance-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--ink-soft);
+}
+
+.guidance-list li {
+  padding-left: 0.15rem;
+  line-height: 1.55;
+}
+
 .highlight-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -4,7 +4,7 @@ const sampleSearches = [
     label: "Brooklyn search",
     title: "Controlled-medication handoff in Brooklyn",
     description:
-      "Use a high-friction medication search to show how PharmaPath surfaces nearby pharmacies and honest next steps fast.",
+      "Shows a higher-friction medication search where the first outreach favors trusted nearby pharmacies and an honest stock disclaimer.",
     filters: {
       medication: "Adderall XR",
       location: "Brooklyn, NY",
@@ -14,38 +14,38 @@ const sampleSearches = [
     },
   },
   {
-    id: "queens-ozempic",
+    id: "queens-adderall",
     label: "Queens search",
-    title: "Chronic therapy search around Queens",
+    title: "Same medication, different borough",
     description:
-      "Good for showing higher-volume pharmacies, ranking by rating, and the reminder to verify inventory before sending the prescription.",
+      "Use the same medication as Brooklyn to prove the real Google pharmacy set changes materially with the location input.",
     filters: {
-      medication: "Ozempic",
-      location: "Astoria, Queens, NY",
+      medication: "Adderall XR",
+      location: "Queens, NY",
       radiusMiles: 5,
-      sortBy: "rating",
+      sortBy: "best_match",
       onlyOpenNow: false,
     },
   },
   {
-    id: "manhattan-sertraline",
-    label: "Manhattan search",
-    title: "Maintenance medication near Midtown",
+    id: "brooklyn-amoxicillin",
+    label: "Medication swap",
+    title: "Different medication, same borough",
     description:
-      "Demonstrates a steadier refill workflow with a tighter radius and closest-first sorting.",
+      "Keeps Brooklyn fixed while changing the medication so the ranking emphasis and pharmacy call guidance both shift.",
     filters: {
-      medication: "Sertraline",
-      location: "Midtown Manhattan, NY",
-      radiusMiles: 3,
-      sortBy: "distance",
-      onlyOpenNow: true,
+      medication: "Amoxicillin 500mg",
+      location: "Brooklyn, NY",
+      radiusMiles: 5,
+      sortBy: "best_match",
+      onlyOpenNow: false,
     },
   },
 ];
 
 const medicationSuggestions = [
   "Adderall XR",
-  "Amoxicillin",
+  "Amoxicillin 500mg",
   "Ozempic",
   "Sertraline",
   "Vyvanse",

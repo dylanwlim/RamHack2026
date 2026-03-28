@@ -79,7 +79,7 @@
               </article>
               <article class="proof-card">
                 <span>Medication context preserved</span>
-                <p>The prescription search stays visible so the next call starts with the right ask.</p>
+                <p>The medication changes the call guidance so the handoff stays specific even when stock is not live-verified.</p>
               </article>
               <article class="proof-card">
                 <span>Honest inventory messaging</span>
@@ -266,20 +266,6 @@
                     </label>
                   </div>
 
-                  <div class="field field-wide">
-                    <label for="location-input">Location (optional)</label>
-                    <input
-                      id="location-input"
-                      name="location"
-                      placeholder="Zip code or city for live pharmacy lookup"
-                      autocomplete="off"
-                    />
-                    <p class="field-hint">
-                      Enter a location to search real pharmacies via the live API.
-                      Leave blank to use demo data.
-                    </p>
-                  </div>
-
                   <div class="toolbar-actions">
                     <button class="button button-primary" type="submit">
                       Find pharmacies
@@ -305,7 +291,7 @@
                 <p class="panel-eyebrow">Pitch guide</p>
                 <ul class="demo-guidance">
                   <li>Lead with how fast PharmaPath narrows the first few pharmacies to contact.</li>
-                  <li>Point out that the medication stays visible from the query to the recommendation.</li>
+                  <li>Show that the location changes the live pharmacy list while the medication changes the guidance and first-call strategy.</li>
                   <li>Call out the disclaimer directly: nearby pharmacies are live, medication inventory is not yet verified.</li>
                 </ul>
               </section>
@@ -332,7 +318,7 @@
                 ></section>
 
                 <aside class="workspace-note">
-                  <p class="panel-eyebrow">What changed</p>
+                  <p class="panel-eyebrow">Medication guidance</p>
                   <div class="digest-list" id="outcome-digest"></div>
                 </aside>
               </div>
@@ -340,7 +326,7 @@
               <section class="results-shell">
                 <div class="results-toolbar">
                   <div>
-                    <p class="results-toolbar-title">Nearby pharmacies</p>
+                    <p class="results-toolbar-title">Real nearby pharmacies</p>
                     <p class="results-toolbar-copy" id="results-toolbar-copy"></p>
                   </div>
                 </div>
