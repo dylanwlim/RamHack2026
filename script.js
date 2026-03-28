@@ -1,3 +1,7 @@
+// ── API Configuration ────────────────────────────────────────────────────────
+const API_BASE = "http://localhost:8000";
+
+// ── Mock inventory (fallback when backend is offline) ────────────────────────
 const inventory = [
   {
     pharmacy: "Greenline Community Pharmacy",
@@ -265,6 +269,9 @@ const inventory = [
   },
 ];
 
+let liveResults = null; // holds API results when backend is available
+let backendAvailable = false;
+
 const initialFilters = {
   medication: "Adderall XR",
   dosage: "20 mg",
@@ -397,6 +404,23 @@ function summaryText(results, filters) {
   )}.`;
 }
 
+function confidenceHTML(item) {
+  const conf = item.confidence;
+  if (conf == null) return '<span class="updated-time">—</span>';
+
+  const pct = Math.round(conf * 100);
+  const tier =
+    pct >= 70 ? "high" : pct >= 45 ? "medium" : pct >= 25 ? "low" : "none";
+
+  return `
+    <div class="confidence-cell">
+      <span class="confidence-label">${pct}% likely</span>
+      <div class="confidence-bar">
+        <div class="confidence-bar-fill ${tier}" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+}
+
 function renderResults(results, filters) {
   resultsSummary.textContent = summaryText(results, filters);
 
@@ -436,6 +460,7 @@ function renderResults(results, filters) {
             <span class="status-badge ${statusClass}">${item.status}</span>
             <span class="status-note">${item.note}</span>
           </div>
+          ${confidenceHTML(item)}
           <span class="updated-time">${item.updated}</span>
         </article>
       `;
@@ -462,13 +487,73 @@ function applyFilters(filters = getFilters()) {
   renderResults(filterInventory(filters), filters);
 }
 
+// ── API integration ──────────────────────────────────────────────────────────
+
+const locationInput = document.querySelector("#location-input");
+
+async function checkBackend() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/health`, { signal: AbortSignal.timeout(2000) });
+    if (resp.ok) {
+      backendAvailable = true;
+      resultsSummary.textContent = "Backend connected. Enter a location to search live pharmacies.";
+    }
+  } catch {
+    backendAvailable = false;
+  }
+}
+
+async function searchAPI(filters) {
+  const location = locationInput ? locationInput.value.trim() : "";
+  if (!location) return null;
+
+  const params = new URLSearchParams({
+    medication: filters.medication,
+    location,
+    dosage: filters.dosage || "",
+    formulation: filters.formulation || "",
+  });
+
+  try {
+    resultsSummary.textContent = "Searching pharmacies...";
+    const resp = await fetch(`${API_BASE}/api/search?${params}`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.results || [];
+    }
+  } catch {
+    // Backend unreachable — fall back to mock
+  }
+  return null;
+}
+
+// ── Initialization ───────────────────────────────────────────────────────────
+
 populateMedicationList();
 setFilters(initialFilters);
 applyFilters(initialFilters);
+checkBackend();
 
-searchForm.addEventListener("submit", (event) => {
+searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   quickPicks.forEach((button) => button.classList.remove("active"));
+
+  const filters = getFilters();
+
+  // Try live API if a location was entered
+  if (backendAvailable && locationInput && locationInput.value.trim()) {
+    const apiResults = await searchAPI(filters);
+    if (apiResults) {
+      liveResults = apiResults;
+      renderResults(apiResults, filters);
+      return;
+    }
+  }
+
+  // Fall back to mock data
+  liveResults = null;
   applyFilters();
 });
 
