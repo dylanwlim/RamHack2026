@@ -1,42 +1,36 @@
+"""
+Vercel serverless function — exposes the FastAPI app.
+Vercel auto-discovers this file and routes /api/* requests to it.
+"""
+
 import os
 import math
-import random
 import hashlib
 import logging
 from pathlib import Path
 
-import requests
-from dotenv import load_dotenv
+import requests as http_requests
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
-# Auto-load .env from project root (one level up from backend/) for local dev
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("pharmapath")
 
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
-
-app = FastAPI(
-    title="PharmaPath API",
-    description="Prescription availability routing for nearby pharmacies",
-    version="1.0.0",
-)
+app = FastAPI(title="PharmaPath API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
 )
 
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 
+
 # ── Drug lookup via openFDA ──────────────────────────────────────────────────
 
 def search_drug_info(brand_name: str) -> dict:
-    """Fetch NDC data from openFDA for a brand-name drug."""
     url = "https://api.fda.gov/drug/ndc.json"
     params = {"search": f'brand_name:"{brand_name}"', "limit": 5}
     result = {
@@ -47,7 +41,7 @@ def search_drug_info(brand_name: str) -> dict:
         "strengths": [],
     }
     try:
-        resp = requests.get(url, params=params, timeout=8)
+        resp = http_requests.get(url, params=params, timeout=8)
         if resp.status_code == 200:
             items = resp.json().get("results", [])
             if items:
@@ -63,7 +57,7 @@ def search_drug_info(brand_name: str) -> dict:
                         desc = pkg.get("description", "")
                         if desc and desc not in result["strengths"]:
                             result["strengths"].append(desc)
-    except requests.exceptions.RequestException as exc:
+    except http_requests.exceptions.RequestException as exc:
         logger.warning("FDA API error for '%s': %s", brand_name, exc)
     return result
 
@@ -71,7 +65,6 @@ def search_drug_info(brand_name: str) -> dict:
 # ── Pharmacy lookup via Google Places ────────────────────────────────────────
 
 def get_nearby_pharmacies(location: str, limit: int = 6) -> list[dict]:
-    """Find real pharmacies near a location using Google Places Text Search."""
     if not GOOGLE_API_KEY:
         return []
 
@@ -80,7 +73,7 @@ def get_nearby_pharmacies(location: str, limit: int = 6) -> list[dict]:
     pharmacies = []
 
     try:
-        resp = requests.get(url, params=params, timeout=8)
+        resp = http_requests.get(url, params=params, timeout=8)
         if resp.status_code == 200:
             for place in resp.json().get("results", [])[:limit]:
                 loc = place.get("geometry", {}).get("location", {})
@@ -95,29 +88,24 @@ def get_nearby_pharmacies(location: str, limit: int = 6) -> list[dict]:
                     "rating": place.get("rating"),
                     "place_id": place.get("place_id"),
                 })
-    except requests.exceptions.RequestException as exc:
+    except http_requests.exceptions.RequestException as exc:
         logger.warning("Google Places error for '%s': %s", location, exc)
 
     return pharmacies
 
 
 def _extract_neighborhood(address: str) -> str:
-    """Pull a short area name from a full address string."""
     parts = [p.strip() for p in address.split(",")]
     if len(parts) >= 2:
-        return parts[1]  # typically city or neighborhood
+        return parts[1]
     return parts[0] if parts else "Nearby"
 
 
 # ── Prediction engine ────────────────────────────────────────────────────────
 
 CHAIN_BOOST = {
-    "cvs": 0.15,
-    "walgreens": 0.15,
-    "rite aid": 0.10,
-    "walmart": 0.12,
-    "costco": 0.10,
-    "kroger": 0.08,
+    "cvs": 0.15, "walgreens": 0.15, "rite aid": 0.10,
+    "walmart": 0.12, "costco": 0.10, "kroger": 0.08,
 }
 
 COMMON_DRUGS = {
@@ -136,98 +124,70 @@ SHORTAGE_DRUGS = {
 
 def predict_availability(pharmacy: dict, medication: str, dosage: str,
                          formulation: str) -> dict:
-    """
-    Produce a deterministic-ish availability prediction for a pharmacy+drug
-    combo.  Uses a seeded hash so the same inputs always give the same result
-    (no flickering on refresh) while still looking realistic.
-    """
+    import random
+
     med_lower = medication.lower()
     pharm_lower = pharmacy["name"].lower()
 
-    # Start with a base probability
     base = 0.55
 
-    # Boost for large chains
     for chain, boost in CHAIN_BOOST.items():
         if chain in pharm_lower:
             base += boost
             break
 
-    # Common generics are easier to find
     if any(drug in med_lower for drug in COMMON_DRUGS):
         base += 0.20
-
-    # Shortage drugs are harder
     if any(drug in med_lower for drug in SHORTAGE_DRUGS):
         base -= 0.25
 
-    # Higher ratings correlate with better-stocked pharmacies
     rating = pharmacy.get("rating")
     if rating and rating >= 4.0:
         base += 0.05
 
-    # XR / extended-release / injectable formulations are less common
     form_lower = (formulation or "").lower()
     if any(tag in form_lower for tag in ["xr", "extended", "injectable", "pen"]):
         base -= 0.10
 
-    # Clamp to [0.05, 0.95]
     base = max(0.05, min(0.95, base))
 
-    # Use a hash to create a deterministic but varied per-pharmacy score
     seed = hashlib.md5(
         f"{pharmacy['name']}|{medication}|{dosage}|{formulation}".encode()
     ).hexdigest()
-    noise = (int(seed[:8], 16) % 200 - 100) / 500  # ±0.20
+    noise = (int(seed[:8], 16) % 200 - 100) / 500
     score = max(0.05, min(0.95, base + noise))
 
-    # Map score to status
     if score >= 0.70:
         status = "In stock"
-        note = _stock_note(score, medication)
+        note = "Full 30-day fill confirmed" if score > 0.85 else "30-day fill ready now"
     elif score >= 0.45:
         status = "Limited fill"
-        note = _limited_note(seed, medication)
+        qty = (int(seed[4:8], 16) % 20) + 5
+        note = f"{qty} units available"
     elif score >= 0.25:
         status = "Low stock"
         note = "Call before transfer"
     else:
         status = "Out of stock"
         note = random.Random(seed).choice([
-            "Backorder flagged",
-            "Next shipment pending",
-            "Transfer recommended",
-            "Awaiting wholesaler restock",
+            "Backorder flagged", "Next shipment pending",
+            "Transfer recommended", "Awaiting wholesaler restock",
         ])
 
-    # Deterministic "updated X min ago" from hash
     minutes_ago = (int(seed[8:12], 16) % 25) + 3
-    updated = f"{minutes_ago} min ago"
 
     return {
         "status": status,
         "note": note,
         "confidence": round(score, 2),
-        "updated": updated,
+        "updated": f"{minutes_ago} min ago",
     }
-
-
-def _stock_note(score: float, medication: str) -> str:
-    if score > 0.85:
-        return "Full 30-day fill confirmed"
-    return "30-day fill ready now"
-
-
-def _limited_note(seed: str, medication: str) -> str:
-    qty = (int(seed[4:8], 16) % 20) + 5
-    return f"{qty} units available"
 
 
 # ── Distance helper ──────────────────────────────────────────────────────────
 
 def _haversine(lat1, lon1, lat2, lon2) -> float:
-    """Distance in miles between two lat/lng points."""
-    R = 3958.8  # Earth radius in miles
+    R = 3958.8
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = (math.sin(dlat / 2) ** 2
@@ -246,10 +206,6 @@ def search(
     dosage: str = Query("", description="Dosage string"),
     formulation: str = Query("", description="Formulation type"),
 ):
-    """
-    Main search: look up drug info, find nearby pharmacies, and predict
-    availability at each one.
-    """
     if not medication.strip() or not location.strip():
         raise HTTPException(status_code=400, detail="medication and location are required")
 
@@ -264,7 +220,6 @@ def search(
             "error": "No pharmacies found. Check your Google API key or location.",
         }
 
-    # Use the first pharmacy's coords as the center for distance calculation
     center_lat = pharmacies[0].get("lat", 0)
     center_lng = pharmacies[0].get("lng", 0)
 
@@ -274,8 +229,7 @@ def search(
 
         dist = 0.0
         if pharm.get("lat") and pharm.get("lng"):
-            dist = _haversine(center_lat, center_lng,
-                              pharm["lat"], pharm["lng"])
+            dist = _haversine(center_lat, center_lng, pharm["lat"], pharm["lng"])
 
         results.append({
             "pharmacy": pharm["name"],
@@ -291,7 +245,6 @@ def search(
             "updated": prediction["updated"],
         })
 
-    # Sort: in-stock first, then by distance
     status_rank = {"In stock": 0, "Limited fill": 1, "Low stock": 2, "Out of stock": 3}
     results.sort(key=lambda r: (status_rank.get(r["status"], 9), r["distance"]))
 
@@ -301,10 +254,3 @@ def search(
 @app.get("/api/health")
 def health():
     return {"status": "ok", "google_api_configured": bool(GOOGLE_API_KEY)}
-
-
-@app.on_event("startup")
-def startup():
-    logger.info("PharmaPath API starting")
-    logger.info("Google API key configured: %s", bool(GOOGLE_API_KEY))
-    logger.info("CORS origins: %s", ALLOWED_ORIGINS)

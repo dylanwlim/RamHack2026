@@ -1,7 +1,14 @@
 import { demoScenarios } from "./data/demo-data.js";
 import { createPharmaPathClient } from "./services/pharmapath-client.js";
+import { createLiveAdapter } from "./services/api-adapter.js";
 
+// ── Backend configuration ────────────────────────────────────────────────────
+// Uses same-origin Vercel serverless functions — no separate backend needed.
+const API_BASE = "";
+
+const liveAdapter = createLiveAdapter(API_BASE);
 const client = createPharmaPathClient();
+const locationInput = document.querySelector("#location-input");
 
 const initialFilters = { ...demoScenarios[0].filters };
 
@@ -336,7 +343,25 @@ function renderResponse(response) {
   renderAlternatives(response);
 }
 
-function runSearch(filters = getFilters()) {
+async function runSearch(filters = getFilters()) {
+  const location = locationInput ? locationInput.value.trim() : "";
+
+  // Try live API if a location was entered
+  if (location && filters.medication) {
+    liveAdapter.setLocation(location);
+    resultsHeadline.textContent = "Searching live pharmacies...";
+    resultsSummary.textContent = "";
+
+    const liveResponse = await liveAdapter.searchPrescriptionLive(filters);
+    if (liveResponse) {
+      const activeScenario = client.findScenario(filters);
+      renderScenarios(activeScenario?.id);
+      renderResponse(liveResponse);
+      return;
+    }
+  }
+
+  // Fall back to mock data
   const activeScenario = client.findScenario(filters);
   const response = client.searchPrescription(filters);
   renderScenarios(activeScenario?.id);
@@ -424,16 +449,16 @@ setHeaderState();
 observeSections();
 observeReveals();
 
-searchForm.addEventListener("submit", (event) => {
+searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  runSearch();
+  await runSearch();
 });
 
 medicationInput.addEventListener("input", () => {
   updateFilterOptions();
 });
 
-scenarioList.addEventListener("click", (event) => {
+scenarioList.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-scenario-id]");
 
   if (!button) {
@@ -449,12 +474,12 @@ scenarioList.addEventListener("click", (event) => {
   }
 
   setFilters(scenario.filters);
-  runSearch(scenario.filters);
+  await runSearch(scenario.filters);
 });
 
-resetButton.addEventListener("click", () => {
+resetButton.addEventListener("click", async () => {
   setFilters(initialFilters);
-  runSearch(initialFilters);
+  await runSearch(initialFilters);
 });
 
 window.addEventListener("scroll", setHeaderState, { passive: true });
