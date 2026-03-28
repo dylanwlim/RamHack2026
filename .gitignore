@@ -7,3 +7,7 @@ backend/.venv/
 .vercel
 .env*.local
 .playwright-cli/
+node_modules/
+.next/
+out/
+template/

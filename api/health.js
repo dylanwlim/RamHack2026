@@ -11,6 +11,7 @@ module.exports = function handler(req, res) {
   return sendJson(res, 200, {
     status: "ok",
     data_source: "openFDA",
+    google_api_configured: Boolean(process.env.GOOGLE_API_KEY),
     openfda_api_key_configured: Boolean(getOpenFdaApiKey()),
   });
 };
