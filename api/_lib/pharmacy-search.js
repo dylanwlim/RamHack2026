@@ -2,7 +2,7 @@
 
 const DEFAULT_RADIUS_MILES = 5;
 const MAX_RADIUS_MILES = 25;
-const MAX_RESULTS = 12;
+const DEFAULT_MAX_RESULTS = 12;
 const SEARCH_DISCLAIMER =
   "Showing nearby pharmacies for your medication search. Real-time inventory availability is not yet verified.";
 const REAL_RESULTS_LABEL =
@@ -598,8 +598,11 @@ async function searchNearbyPharmacies({ medication, center, radiusMiles, onlyOpe
         )
     : [];
 
+  // Scale result cap with radius so tighter searches feel more curated
+  const maxResults = radiusMiles <= 2 ? 5 : radiusMiles <= 5 ? 8 : DEFAULT_MAX_RESULTS;
+
   const sortedResults = sortResults(normalizedResults, sortBy, medicationProfile)
-    .slice(0, MAX_RESULTS)
+    .slice(0, maxResults)
     .map((place) => ({
       ...place,
       ...buildPlaceWorkflow(place, medicationProfile, medication),
