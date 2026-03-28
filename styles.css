@@ -1609,6 +1609,59 @@ button:disabled,
   }
 }
 
+.overflow-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.overflow-toggle:hover,
+.overflow-toggle:focus-visible {
+  border-color: rgba(25, 180, 161, 0.34);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+.overflow-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: rgba(16, 33, 45, 0.08);
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: transform 200ms ease;
+}
+
+.overflow-toggle.is-open .overflow-toggle-icon {
+  transform: rotate(45deg);
+}
+
+.alternative-list.overflow-collapsed {
+  display: none;
+}
+
+.alternative-list.overflow-expanded {
+  display: grid;
+  gap: 0.9rem;
+  animation: rise 260ms ease both;
+}
+
 @keyframes rise {
   from {
     opacity: 0;

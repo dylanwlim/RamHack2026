@@ -341,13 +341,11 @@
               </section>
 
               <section class="alternatives-section" id="alternatives-section" hidden>
-                <div class="results-toolbar">
-                  <div>
-                    <p class="results-toolbar-title">More nearby options</p>
-                    <p class="results-toolbar-copy" id="alternatives-copy"></p>
-                  </div>
-                </div>
-                <div class="alternative-list" id="alternatives-body"></div>
+                <button class="overflow-toggle" type="button" id="overflow-toggle">
+                  <span class="overflow-toggle-text" id="overflow-toggle-text">Show more pharmacies</span>
+                  <span class="overflow-toggle-icon" id="overflow-toggle-icon">+</span>
+                </button>
+                <div class="alternative-list overflow-collapsed" id="alternatives-body"></div>
               </section>
             </div>
           </div>

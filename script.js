@@ -30,7 +30,6 @@ const emptyStateTitle = document.querySelector("#empty-state-title");
 const emptyStateCopy = document.querySelector("#empty-state-copy");
 const emptyStateSuggestion = document.querySelector("#empty-state-suggestion");
 const alternativesSection = document.querySelector("#alternatives-section");
-const alternativesCopy = document.querySelector("#alternatives-copy");
 const alternativesBody = document.querySelector("#alternatives-body");
 const actionFeedback = document.querySelector("#action-feedback");
 const revealNodes = Array.from(document.querySelectorAll("[data-reveal]"));
@@ -488,6 +487,9 @@ function renderPrimaryResults(payload) {
 
 function renderAdditionalResults(payload) {
   const overflowResults = payload.results.slice(3);
+  const overflowToggle = document.querySelector("#overflow-toggle");
+  const overflowToggleText = document.querySelector("#overflow-toggle-text");
+  const overflowToggleIcon = document.querySelector("#overflow-toggle-icon");
 
   if (!overflowResults.length) {
     alternativesSection.hidden = true;
@@ -496,8 +498,14 @@ function renderAdditionalResults(payload) {
   }
 
   alternativesSection.hidden = false;
-  alternativesCopy.textContent =
-    "Use these real backup pharmacies if the top recommendation cannot confirm availability.";
+  alternativesBody.classList.remove("overflow-expanded");
+  alternativesBody.classList.add("overflow-collapsed");
+  overflowToggle.classList.remove("is-open");
+  overflowToggleText.textContent = `Show ${overflowResults.length} more nearby ${
+    overflowResults.length === 1 ? "pharmacy" : "pharmacies"
+  }`;
+  overflowToggleIcon.textContent = "+";
+
   alternativesBody.innerHTML = overflowResults
     .map((place) => buildResultCard(place, payload.query.medication, payload.guidance, "Backup option"))
     .join("");
@@ -769,6 +777,20 @@ document.addEventListener("click", (event) => {
 
   if (copyButton) {
     copyAddress(copyButton.dataset.copyAddress, copyButton.dataset.pharmacy);
+    return;
+  }
+
+  const overflowBtn = event.target.closest("#overflow-toggle");
+
+  if (overflowBtn) {
+    const isOpen = alternativesBody.classList.contains("overflow-expanded");
+    alternativesBody.classList.toggle("overflow-collapsed", isOpen);
+    alternativesBody.classList.toggle("overflow-expanded", !isOpen);
+    overflowBtn.classList.toggle("is-open", !isOpen);
+    const icon = overflowBtn.querySelector("#overflow-toggle-icon");
+    if (icon) icon.textContent = isOpen ? "+" : "−";
+    const text = overflowBtn.querySelector("#overflow-toggle-text");
+    if (text) text.textContent = isOpen ? text.textContent.replace("Hide", "Show") : text.textContent.replace("Show", "Hide");
     return;
   }
 
