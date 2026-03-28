@@ -1,29 +1,19 @@
-import { demoScenarios } from "./data/demo-data.js";
 import { createPharmaPathClient } from "./services/pharmapath-client.js";
-import { createLiveAdapter } from "./services/api-adapter.js";
 
-// ── Backend configuration ────────────────────────────────────────────────────
-// Uses same-origin Vercel serverless functions — no separate backend needed.
-const API_BASE = "";
-
-const liveAdapter = createLiveAdapter(API_BASE);
 const client = createPharmaPathClient();
-const locationInput = document.querySelector("#location-input");
-
-const initialFilters = { ...demoScenarios[0].filters };
+const initialFilters = client.getInitialFilters();
 
 const header = document.querySelector("[data-header]");
 const navToggle = document.querySelector(".nav-toggle");
 const navLinks = Array.from(document.querySelectorAll("[data-nav-link]"));
 const medicationInput = document.querySelector("#medication-input");
 const medicationOptions = document.querySelector("#medication-options");
-const dosageSelect = document.querySelector("#dosage-select");
-const formulationSelect = document.querySelector("#formulation-select");
-const availabilitySelect = document.querySelector("#availability-select");
+const locationInput = document.querySelector("#location-input");
 const radiusSelect = document.querySelector("#radius-select");
 const sortSelect = document.querySelector("#sort-select");
-const alternativesToggle = document.querySelector("#alternatives-toggle");
+const openNowToggle = document.querySelector("#open-now-toggle");
 const searchForm = document.querySelector("#search-form");
+const submitButton = searchForm.querySelector('button[type="submit"]');
 const resetButton = document.querySelector("#reset-demo");
 const scenarioList = document.querySelector("#scenario-list");
 const queryChip = document.querySelector("#query-chip");
@@ -48,7 +38,7 @@ const revealNodes = Array.from(document.querySelectorAll("[data-reveal]"));
 let actionFeedbackTimer;
 
 function escapeHtml(value = "") {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -56,95 +46,154 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#39;");
 }
 
-function populateMedicationList() {
-  medicationOptions.innerHTML = client
-    .listMedications()
-    .map((medication) => `<option value="${escapeHtml(medication)}"></option>`)
-    .join("");
+function formatDistance(distanceMiles) {
+  if (!Number.isFinite(distanceMiles)) {
+    return "Distance unavailable";
+  }
+
+  return `${distanceMiles.toFixed(1)} mi`;
 }
 
-function populateSelect(select, values, label, keepValue = "") {
-  select.innerHTML = [`<option value="">${label}</option>`]
-    .concat(
-      values.map(
-        (value) =>
-          `<option value="${escapeHtml(value)}" ${
-            value === keepValue ? "selected" : ""
-          }>${escapeHtml(value)}</option>`,
-      ),
-    )
-    .join("");
+function formatRating(rating, reviewCount) {
+  if (!Number.isFinite(rating)) {
+    return "Rating unavailable";
+  }
+
+  const reviewText =
+    Number.isFinite(reviewCount) && reviewCount > 0
+      ? ` from ${reviewCount} review${reviewCount === 1 ? "" : "s"}`
+      : "";
+
+  return `${rating.toFixed(1)} / 5${reviewText}`;
 }
 
-function updateFilterOptions() {
-  const options = client.getFilterOptions({ medication: medicationInput.value });
-  populateSelect(dosageSelect, options.dosages, "All doses", dosageSelect.value);
-  populateSelect(
-    formulationSelect,
-    options.formulations,
-    "All formulations",
-    formulationSelect.value,
-  );
+function getSortLabel(sortBy) {
+  if (sortBy === "distance") {
+    return "closest distance";
+  }
+
+  if (sortBy === "rating") {
+    return "highest Google rating";
+  }
+
+  return "best overall match";
 }
 
-function getFilters() {
+function getOpenStatus(place) {
+  if (place.open_now === true) {
+    return {
+      label: "Open now",
+      className: "status-in-stock",
+      detail: "Google currently marks this pharmacy open.",
+    };
+  }
+
+  if (place.open_now === false) {
+    return {
+      label: "Closed now",
+      className: "status-out-of-stock",
+      detail: "Google currently marks this pharmacy closed.",
+    };
+  }
+
   return {
-    medication: medicationInput.value.trim(),
-    dosage: dosageSelect.value,
-    formulation: formulationSelect.value,
-    availabilityMode: availabilitySelect.value,
-    radiusMiles: Number(radiusSelect.value),
-    sortBy: sortSelect.value,
-    includeAlternatives: alternativesToggle.checked,
+    label: "Hours unavailable",
+    className: "status-suggestion",
+    detail: "Open/closed status was not returned for this location.",
   };
 }
 
-function setFilters(filters) {
-  medicationInput.value = filters.medication || "";
-  updateFilterOptions();
-  dosageSelect.value = filters.dosage || "";
-  formulationSelect.value = filters.formulation || "";
-  availabilitySelect.value = filters.availabilityMode || "all";
-  radiusSelect.value = String(filters.radiusMiles || 5);
-  sortSelect.value = filters.sortBy || "smart";
-  alternativesToggle.checked = filters.includeAlternatives ?? true;
+function buildResultActions(place) {
+  const actions = [];
+
+  if (place.google_maps_url) {
+    actions.push(`
+      <a
+        class="action-pill"
+        href="${escapeHtml(place.google_maps_url)}"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Open in Maps
+      </a>
+    `);
+  }
+
+  actions.push(`
+    <button
+      class="action-pill"
+      type="button"
+      data-copy-address="${escapeHtml(place.address)}"
+      data-pharmacy="${escapeHtml(place.name)}"
+    >
+      Copy address
+    </button>
+  `);
+
+  return actions.join("");
 }
 
-function renderScenarios(activeScenarioId = "") {
-  scenarioList.innerHTML = client
-    .listScenarios()
-    .map((scenario) => {
-      const activeClass = scenario.id === activeScenarioId ? " is-active" : "";
-      return `
-        <button
-          class="scenario-card${activeClass}"
-          type="button"
-          data-scenario-id="${escapeHtml(scenario.id)}"
-        >
-          <span>${escapeHtml(scenario.label)}</span>
-          <strong>${escapeHtml(scenario.title)}</strong>
-          <p>${escapeHtml(scenario.description)}</p>
-        </button>
-      `;
-    })
-    .join("");
-}
+function buildResultCard(place, medication, label = "") {
+  const status = getOpenStatus(place);
+  const labelMarkup = label
+    ? `<span class="inline-badge inline-badge-highlight">${escapeHtml(label)}</span>`
+    : "";
+  const ratingLabel = formatRating(place.rating, place.user_ratings_total);
+  const businessStatus = place.business_status ? ` • ${escapeHtml(place.business_status)}` : "";
 
-function buildActionMarkup(item) {
-  return item.actions
-    .map(
-      (action) => `
-        <button
-          class="action-pill"
-          type="button"
-          data-action="${escapeHtml(action.label)}"
-          data-pharmacy="${escapeHtml(item.pharmacy)}"
-        >
-          ${escapeHtml(action.label)}
-        </button>
-      `,
-    )
-    .join("");
+  return `
+    <article class="result-card${label ? " is-recommended" : ""}">
+      <div class="result-card-top">
+        <div class="result-copy">
+          <div class="result-badges">
+            ${labelMarkup}
+            <span class="inline-badge">${escapeHtml(formatDistance(place.distance_miles))}</span>
+            <span class="inline-badge">${escapeHtml(ratingLabel)}</span>
+          </div>
+          <h4 class="result-title">${escapeHtml(place.name)}</h4>
+          <p class="result-subtitle">
+            ${escapeHtml(place.address)}${businessStatus}
+          </p>
+        </div>
+        <div class="result-status">
+          <span class="status-badge ${escapeHtml(status.className)}">${escapeHtml(
+            status.label,
+          )}</span>
+          <span class="updated-label">${escapeHtml(status.detail)}</span>
+        </div>
+      </div>
+
+      <div class="result-meta">
+        <div class="result-meta-block">
+          <span>Medication context</span>
+          <strong>${escapeHtml(medication)}</strong>
+        </div>
+        <div class="result-meta-block">
+          <span>Google signal</span>
+          <strong>${escapeHtml(ratingLabel)}</strong>
+        </div>
+        <div class="result-meta-block">
+          <span>Next step</span>
+          <strong>Call to confirm availability before sending the prescription.</strong>
+        </div>
+      </div>
+
+      <p class="result-note">
+        Real-time inventory for <strong>${escapeHtml(medication)}</strong> is not yet verified in this demo. Use PharmaPath to decide which pharmacy to contact first, then confirm stock directly.
+      </p>
+
+      <div class="result-footer">
+        <div class="tag-row">
+          <span class="tag-pill">${escapeHtml(place.review_label)}</span>
+          <span class="tag-pill">${escapeHtml(status.label)}</span>
+          <span class="tag-pill">Google Places result</span>
+        </div>
+        <div class="card-actions">
+          ${buildResultActions(place)}
+        </div>
+      </div>
+    </article>
+  `;
 }
 
 function renderMetrics(metrics) {
@@ -160,224 +209,375 @@ function renderMetrics(metrics) {
     .join("");
 }
 
-function renderRecommended(response) {
-  const recommended = response.recommended || response.alternateRecommendation;
+function renderSampleSearches(activeId = "") {
+  scenarioList.innerHTML = client
+    .listSampleSearches()
+    .map((sample) => {
+      const activeClass = sample.id === activeId ? " is-active" : "";
+      return `
+        <button
+          class="scenario-card${activeClass}"
+          type="button"
+          data-scenario-id="${escapeHtml(sample.id)}"
+        >
+          <span>${escapeHtml(sample.label)}</span>
+          <strong>${escapeHtml(sample.title)}</strong>
+          <p>${escapeHtml(sample.description)}</p>
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function populateMedicationList() {
+  medicationOptions.innerHTML = client
+    .listMedicationSuggestions()
+    .map((medication) => `<option value="${escapeHtml(medication)}"></option>`)
+    .join("");
+}
+
+function getFilters() {
+  return {
+    medication: medicationInput.value.trim(),
+    location: locationInput.value.trim(),
+    radiusMiles: Number(radiusSelect.value),
+    sortBy: sortSelect.value,
+    onlyOpenNow: openNowToggle.checked,
+  };
+}
+
+function setFilters(filters) {
+  medicationInput.value = filters.medication || "";
+  locationInput.value = filters.location || "";
+  radiusSelect.value = String(filters.radiusMiles || 5);
+  sortSelect.value = filters.sortBy || "best_match";
+  openNowToggle.checked = Boolean(filters.onlyOpenNow);
+}
+
+function findMatchingSample(filters) {
+  return client.listSampleSearches().find((sample) => {
+    const candidate = sample.filters;
+    return (
+      candidate.medication === filters.medication &&
+      candidate.location === filters.location &&
+      Number(candidate.radiusMiles) === Number(filters.radiusMiles) &&
+      candidate.sortBy === filters.sortBy &&
+      Boolean(candidate.onlyOpenNow) === Boolean(filters.onlyOpenNow)
+    );
+  });
+}
+
+function setActionFeedback(message = "", state = "") {
+  if (actionFeedbackTimer) {
+    clearTimeout(actionFeedbackTimer);
+    actionFeedbackTimer = undefined;
+  }
+
+  actionFeedback.classList.remove("is-error", "is-loading", "is-success");
+
+  if (!message) {
+    actionFeedback.textContent = "";
+    return;
+  }
+
+  actionFeedback.textContent = message;
+
+  if (state) {
+    actionFeedback.classList.add(`is-${state}`);
+  }
+
+  if (state === "success") {
+    actionFeedbackTimer = window.setTimeout(() => {
+      actionFeedback.textContent = "";
+      actionFeedback.classList.remove("is-success");
+    }, 2400);
+  }
+}
+
+function setSearchingState(isSearching) {
+  submitButton.disabled = isSearching;
+  submitButton.textContent = isSearching ? "Searching..." : "Find pharmacies";
+  resetButton.disabled = isSearching;
+}
+
+function renderRecommended(payload) {
+  const recommended = payload.recommended;
 
   if (!recommended) {
     recommendedCard.innerHTML = `
-      <p class="panel-eyebrow">Recommended next step</p>
-      <p class="recommended-copy">No nearby recommendation is available in the current demo snapshot.</p>
+      <p class="panel-eyebrow">Recommended first step</p>
+      <p class="recommended-copy">
+        No nearby pharmacy results surfaced for this search. Try widening the radius or using a broader neighborhood or borough.
+      </p>
     `;
     return;
   }
 
-  const isAlternate = Boolean(!response.recommended && response.alternateRecommendation);
-  const badgeClass = isAlternate ? "status-suggestion" : recommended.statusClass;
-  const introLabel = isAlternate ? "Nearest backup route" : "Recommended next step";
+  const status = getOpenStatus(recommended);
+  const ratingLabel = formatRating(recommended.rating, recommended.user_ratings_total);
 
   recommendedCard.innerHTML = `
     <div class="recommended-head">
       <div>
-        <p class="panel-eyebrow">${escapeHtml(introLabel)}</p>
-        <h3 class="recommended-title">${escapeHtml(recommended.pharmacy)}</h3>
+        <p class="panel-eyebrow">Recommended first pharmacy to check</p>
+        <h3 class="recommended-title">${escapeHtml(recommended.name)}</h3>
         <p class="recommended-subtitle">
-          ${escapeHtml(recommended.neighborhood)} • ${escapeHtml(
-            recommended.distanceLabel,
-          )} away • ${escapeHtml(recommended.hours)}
+          ${escapeHtml(recommended.address)} • ${escapeHtml(
+            formatDistance(recommended.distance_miles),
+          )} away
         </p>
       </div>
-      <span class="status-badge ${escapeHtml(badgeClass)}">${escapeHtml(
-        isAlternate ? "Backup route" : recommended.status,
+      <span class="status-badge ${escapeHtml(status.className)}">${escapeHtml(
+        status.label,
       )}</span>
     </div>
 
-    <p class="recommended-copy">${escapeHtml(
-      isAlternate ? response.summary.alternativeBody : response.summary.recommendedBody,
-    )}</p>
+    <p class="recommended-copy">
+      ${escapeHtml(
+        `${recommended.name} is the strongest first call for ${payload.query.medication} near ${payload.location.formatted_address}. ${payload.disclaimer}`,
+      )}
+    </p>
 
     <div class="highlight-grid">
       <div class="highlight-block">
-        <span>Prescription fit</span>
+        <span>Search context</span>
         <strong>${escapeHtml(
-          `${recommended.medication} • ${recommended.dosage} • ${recommended.formulation}`,
+          `${payload.query.medication} • ${payload.query.radius_miles} mi radius`,
         )}</strong>
       </div>
       <div class="highlight-block">
-        <span>Fill outlook</span>
-        <strong>${escapeHtml(recommended.fulfillment)}</strong>
+        <span>Google signal</span>
+        <strong>${escapeHtml(ratingLabel)}</strong>
       </div>
       <div class="highlight-block">
         <span>Next handoff</span>
-        <strong>${escapeHtml(recommended.nextStep)}</strong>
+        <strong>Call before sending or transferring the prescription.</strong>
       </div>
     </div>
 
     <div class="tag-row">
-      ${recommended.tags
-        .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
-        .join("")}
+      <span class="tag-pill">${escapeHtml(status.label)}</span>
+      <span class="tag-pill">${escapeHtml(recommended.review_label)}</span>
+      <span class="tag-pill">${escapeHtml(getSortLabel(payload.query.sort_by))}</span>
     </div>
 
     <div class="card-actions">
-      ${buildActionMarkup(recommended)}
+      ${buildResultActions(recommended)}
     </div>
   `;
 }
 
-function renderDigest(digestItems) {
+function renderDigest(payload) {
+  const digestItems = [
+    `Google Places resolved "${payload.query.location}" to ${payload.location.formatted_address}.`,
+    `Results are ranked by ${getSortLabel(payload.query.sort_by)} so the first recommendation is easier to explain in the demo.`,
+    `Real-time inventory for ${payload.query.medication} is not yet verified. PharmaPath is identifying the best pharmacies to contact first.`,
+  ];
+
+  if (payload.query.only_open_now) {
+    digestItems.push("This search is limited to pharmacies Google marks open now.");
+  }
+
+  if (payload.counts.hours_unknown) {
+    digestItems.push(
+      `${payload.counts.hours_unknown} result${
+        payload.counts.hours_unknown === 1 ? "" : "s"
+      } did not include live open/closed status from Google.`,
+    );
+  }
+
   outcomeDigest.innerHTML = digestItems
     .map((item) => `<div class="digest-item">${escapeHtml(item)}</div>`)
     .join("");
 }
 
-function renderResultCard(item, label = "") {
-  const labelMarkup = label
-    ? `<span class="inline-badge inline-badge-highlight">${escapeHtml(label)}</span>`
-    : "";
+function renderPrimaryResults(payload) {
+  const primaryResults = payload.results.slice(0, 3);
 
-  return `
-    <article class="result-card${label ? " is-recommended" : ""}">
-      <div class="result-card-top">
-        <div class="result-copy">
-          <div class="result-badges">
-            ${labelMarkup}
-            <span class="inline-badge">${escapeHtml(item.pharmacyType)}</span>
-            <span class="inline-badge">${escapeHtml(item.distanceLabel)} away</span>
-          </div>
-          <h4 class="result-title">${escapeHtml(item.pharmacy)}</h4>
-          <p class="result-subtitle">
-            ${escapeHtml(item.neighborhood)} • ${escapeHtml(item.hours)}
-          </p>
-        </div>
-        <div class="result-status">
-          <span class="status-badge ${escapeHtml(item.statusClass)}">${escapeHtml(
-            item.status,
-          )}</span>
-          <span class="updated-label">Updated ${escapeHtml(item.updatedLabel)}</span>
-        </div>
-      </div>
+  resultsToolbarCopy.textContent = `${payload.results.length} nearby pharmacies ranked by ${getSortLabel(
+    payload.query.sort_by,
+  )} within ${payload.query.radius_miles} miles of ${payload.location.formatted_address}.`;
 
-      <div class="result-meta">
-        <div class="result-meta-block">
-          <span>Prescription fit</span>
-          <strong>${escapeHtml(
-            `${item.medication} • ${item.dosage} • ${item.formulation}`,
-          )}</strong>
-        </div>
-        <div class="result-meta-block">
-          <span>Fill outlook</span>
-          <strong>${escapeHtml(item.fulfillment)}</strong>
-        </div>
-        <div class="result-meta-block">
-          <span>Next handoff</span>
-          <strong>${escapeHtml(item.nextStep)}</strong>
-        </div>
-      </div>
-
-      <p class="result-note">${escapeHtml(item.stockDetail)}</p>
-
-      <div class="result-footer">
-        <div class="tag-row">
-          ${item.tags
-            .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
-            .join("")}
-        </div>
-        <div class="card-actions">
-          ${buildActionMarkup(item)}
-        </div>
-      </div>
-    </article>
-  `;
-}
-
-function renderResults(response) {
-  resultsToolbarCopy.textContent = response.summary.toolbarCopy;
-  resultsBody.innerHTML = response.results
-    .map((item, index) =>
-      renderResultCard(
-        item,
-        item.id === response.recommended?.id ? "Best exact match" : "",
+  resultsBody.innerHTML = primaryResults
+    .map((place, index) =>
+      buildResultCard(
+        place,
+        payload.query.medication,
+        index === 0 ? "Top recommendation" : "",
       ),
     )
     .join("");
 
-  if (response.results.length) {
+  if (primaryResults.length) {
     emptyState.hidden = true;
     return;
   }
 
   emptyState.hidden = false;
-  emptyStateTitle.textContent = response.summary.emptyTitle;
-  emptyStateCopy.textContent = response.summary.emptyBody;
-  emptyStateSuggestion.textContent = response.summary.emptySuggestion;
+  emptyStateTitle.textContent = "No nearby pharmacy results";
+  emptyStateCopy.textContent =
+    "PharmaPath could not find pharmacies for this location and filter combination.";
+  emptyStateSuggestion.textContent =
+    "Try broadening the location text, increasing the radius, or turning off the open-now filter.";
 }
 
-function renderAlternatives(response) {
-  if (!response.alternativeMatches.length) {
+function renderAdditionalResults(payload) {
+  const overflowResults = payload.results.slice(3);
+
+  if (!overflowResults.length) {
     alternativesSection.hidden = true;
     alternativesBody.innerHTML = "";
     return;
   }
 
   alternativesSection.hidden = false;
-  alternativesCopy.textContent = response.summary.alternativeCopy;
-  alternativesBody.innerHTML = response.alternativeMatches
-    .map((item, index) =>
-      renderResultCard(item, index === 0 ? "Nearest backup route" : "Backup route"),
-    )
+  alternativesCopy.textContent =
+    "Use these as backup calls if the top recommendation cannot confirm availability.";
+  alternativesBody.innerHTML = overflowResults
+    .map((place) => buildResultCard(place, payload.query.medication, "Backup option"))
     .join("");
 }
 
-function renderResponse(response) {
-  queryChip.textContent = response.summary.queryLabel;
-  resultsHeadline.textContent = response.summary.headline;
-  resultsSummary.textContent = response.summary.body;
-  scenarioContext.textContent = response.scenario
-    ? `Demo story: ${response.scenario.description}`
-    : "Manual search mode. Use the results to show how the best route changes with the prescription details.";
+function renderResponse(payload) {
+  const bestRating = payload.results.reduce((current, place) => {
+    if (!Number.isFinite(place.rating)) {
+      return current;
+    }
 
-  renderMetrics(response.summary.metrics);
-  renderRecommended(response);
-  renderDigest(response.summary.digest);
-  renderResults(response);
-  renderAlternatives(response);
+    return Math.max(current, place.rating);
+  }, 0);
+  const activeSample = findMatchingSample({
+    medication: payload.query.medication,
+    location: payload.query.location,
+    radiusMiles: payload.query.radius_miles,
+    sortBy: payload.query.sort_by,
+    onlyOpenNow: payload.query.only_open_now,
+  });
+
+  queryChip.textContent = `${payload.query.medication} • ${payload.location.formatted_address}`;
+  resultsHeadline.textContent = `${payload.results.length} nearby pharm${
+    payload.results.length === 1 ? "acy" : "acies"
+  } found for ${payload.query.medication}`;
+  resultsSummary.textContent =
+    "Google Places is powering the nearby pharmacy list. PharmaPath keeps the medication search attached to the workflow, but real-time inventory still needs direct confirmation.";
+  scenarioContext.textContent = payload.disclaimer;
+
+  renderMetrics([
+    { label: "Nearby results", value: String(payload.counts.total) },
+    { label: "Open now", value: String(payload.counts.open_now) },
+    {
+      label: "Top rating",
+      value: bestRating ? `${bestRating.toFixed(1)} / 5` : "Unavailable",
+    },
+    { label: "Search radius", value: `${payload.query.radius_miles} mi` },
+  ]);
+
+  renderSampleSearches(activeSample?.id);
+  renderRecommended(payload);
+  renderDigest(payload);
+  renderPrimaryResults(payload);
+  renderAdditionalResults(payload);
+}
+
+function renderLoadingState(filters) {
+  queryChip.textContent = `${filters.medication || "Medication"} • ${
+    filters.location || "Location"
+  }`;
+  resultsHeadline.textContent = "Searching nearby pharmacies...";
+  resultsSummary.textContent =
+    "Resolving the location and loading nearby Google Places results.";
+  scenarioContext.textContent =
+    "Real-time inventory availability is not yet verified in this demo.";
+  renderMetrics([
+    { label: "Nearby results", value: "--" },
+    { label: "Open now", value: "--" },
+    { label: "Top rating", value: "--" },
+    { label: "Search radius", value: `${filters.radiusMiles || 5} mi` },
+  ]);
+  recommendedCard.innerHTML = `
+    <p class="panel-eyebrow">Recommended first step</p>
+    <p class="recommended-copy">Looking up nearby pharmacies and preparing the best first call.</p>
+  `;
+  outcomeDigest.innerHTML = `
+    <div class="digest-item">The location is being geocoded before nearby pharmacy results are ranked.</div>
+    <div class="digest-item">Medication context stays attached so the handoff can stay specific and honest.</div>
+  `;
+  resultsToolbarCopy.textContent = "Loading nearby pharmacy results...";
+  resultsBody.innerHTML = "";
+  alternativesSection.hidden = true;
+  alternativesBody.innerHTML = "";
+  emptyState.hidden = true;
+}
+
+function renderErrorState(message, filters) {
+  queryChip.textContent = `${filters.medication || "Medication"} • ${
+    filters.location || "Location"
+  }`;
+  resultsHeadline.textContent = "Search unavailable";
+  resultsSummary.textContent = message;
+  scenarioContext.textContent =
+    "PharmaPath is designed to keep the medication search honest. If pharmacy results fail, the UI should fail clearly instead of faking availability.";
+  renderMetrics([
+    { label: "Nearby results", value: "--" },
+    { label: "Open now", value: "--" },
+    { label: "Top rating", value: "--" },
+    { label: "Search radius", value: `${filters.radiusMiles || 5} mi` },
+  ]);
+  recommendedCard.innerHTML = `
+    <p class="panel-eyebrow">Recommended first step</p>
+    <p class="recommended-copy">Adjust the medication or location and run the search again.</p>
+  `;
+  outcomeDigest.innerHTML = `
+    <div class="digest-item">No pharmacy results were shown because the backend returned an error.</div>
+    <div class="digest-item">This protects the demo from implying live medication availability when the search failed.</div>
+  `;
+  resultsBody.innerHTML = "";
+  alternativesSection.hidden = true;
+  alternativesBody.innerHTML = "";
+  emptyState.hidden = false;
+  emptyStateTitle.textContent = "Unable to load pharmacy results";
+  emptyStateCopy.textContent = message;
+  emptyStateSuggestion.textContent =
+    "Check the location text, expand the radius, or verify that GOOGLE_API_KEY is configured.";
 }
 
 async function runSearch(filters = getFilters()) {
-  const location = locationInput ? locationInput.value.trim() : "";
+  const activeSample = findMatchingSample(filters);
 
-  // Try live API if a location was entered
-  if (location && filters.medication) {
-    liveAdapter.setLocation(location);
-    resultsHeadline.textContent = "Searching live pharmacies...";
-    resultsSummary.textContent = "";
-
-    const liveResponse = await liveAdapter.searchPrescriptionLive(filters);
-    if (liveResponse) {
-      const activeScenario = client.findScenario(filters);
-      renderScenarios(activeScenario?.id);
-      renderResponse(liveResponse);
-      return;
-    }
+  if (!filters.medication || !filters.location) {
+    renderSampleSearches(activeSample?.id);
+    renderErrorState("Enter both a medication and a location to search.", filters);
+    setActionFeedback("Enter both a medication and a location to search.", "error");
+    return;
   }
 
-  // Fall back to mock data
-  const activeScenario = client.findScenario(filters);
-  const response = client.searchPrescription(filters);
-  renderScenarios(activeScenario?.id);
-  renderResponse(response);
+  renderSampleSearches(activeSample?.id);
+  renderLoadingState(filters);
+  setSearchingState(true);
+  setActionFeedback("Resolving the location and loading nearby pharmacies...", "loading");
+
+  try {
+    const response = await client.searchPharmacies(filters);
+    renderResponse(response);
+    setActionFeedback(
+      `Loaded ${response.results.length} nearby pharmacies for ${response.query.medication}.`,
+      "success",
+    );
+  } catch (error) {
+    renderErrorState(error.message, filters);
+    setActionFeedback(error.message, "error");
+  } finally {
+    setSearchingState(false);
+  }
 }
 
-function showActionFeedback(action, pharmacy) {
-  if (actionFeedbackTimer) {
-    clearTimeout(actionFeedbackTimer);
+async function copyAddress(address, pharmacy) {
+  try {
+    await navigator.clipboard.writeText(address);
+    setActionFeedback(`Copied ${pharmacy} address.`, "success");
+  } catch (error) {
+    setActionFeedback("Unable to copy the address on this device.", "error");
   }
-
-  actionFeedback.textContent = `Demo action: ${action} at ${pharmacy}. Placeholder only until live integrations are connected.`;
-
-  actionFeedbackTimer = window.setTimeout(() => {
-    actionFeedback.textContent = "";
-  }, 2800);
 }
 
 function setHeaderState() {
@@ -443,22 +643,19 @@ function observeReveals() {
 
 populateMedicationList();
 setFilters(initialFilters);
-renderScenarios(demoScenarios[0].id);
-runSearch(initialFilters);
+renderSampleSearches(client.listSampleSearches()[0].id);
+renderLoadingState(initialFilters);
 setHeaderState();
 observeSections();
 observeReveals();
+runSearch(initialFilters);
 
-searchForm.addEventListener("submit", async (event) => {
+searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  await runSearch();
+  runSearch();
 });
 
-medicationInput.addEventListener("input", () => {
-  updateFilterOptions();
-});
-
-scenarioList.addEventListener("click", async (event) => {
+scenarioList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-scenario-id]");
 
   if (!button) {
@@ -466,7 +663,7 @@ scenarioList.addEventListener("click", async (event) => {
   }
 
   const scenario = client
-    .listScenarios()
+    .listSampleSearches()
     .find((item) => item.id === button.dataset.scenarioId);
 
   if (!scenario) {
@@ -474,12 +671,12 @@ scenarioList.addEventListener("click", async (event) => {
   }
 
   setFilters(scenario.filters);
-  await runSearch(scenario.filters);
+  runSearch(scenario.filters);
 });
 
-resetButton.addEventListener("click", async () => {
+resetButton.addEventListener("click", () => {
   setFilters(initialFilters);
-  await runSearch(initialFilters);
+  runSearch(initialFilters);
 });
 
 window.addEventListener("scroll", setHeaderState, { passive: true });
@@ -495,10 +692,10 @@ navLinks.forEach((link) => {
 });
 
 document.addEventListener("click", (event) => {
-  const actionButton = event.target.closest("[data-action]");
+  const copyButton = event.target.closest("[data-copy-address]");
 
-  if (actionButton) {
-    showActionFeedback(actionButton.dataset.action, actionButton.dataset.pharmacy);
+  if (copyButton) {
+    copyAddress(copyButton.dataset.copyAddress, copyButton.dataset.pharmacy);
     return;
   }
 
