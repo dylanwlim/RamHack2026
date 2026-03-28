@@ -1,0 +1,39 @@
+import type React from "react";
+import type { Metadata } from "next";
+import { Figtree, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  weight: ["400", "500", "600"],
+});
+
+export const metadata: Metadata = {
+  title: "PharmaPath",
+  description:
+    "Find nearby pharmacies with live Google Places results, then layer FDA shortage and access signals on top without overstating inventory certainty.",
+  icons: {
+    icon: "/favicon.svg",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${figtree.variable} ${geistMono.variable} font-sans antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+}
