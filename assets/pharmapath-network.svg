@@ -1,0 +1,75 @@
+<svg width="1080" height="860" viewBox="0 0 1080 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gridGlow" x1="204" y1="94" x2="860" y2="770" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B7FFF5"/>
+      <stop offset="1" stop-color="#12B3A0"/>
+    </linearGradient>
+    <linearGradient id="pulse" x1="214" y1="130" x2="790" y2="688" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DFFFFA" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#12B3A0" stop-opacity="0.75"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(553 399) rotate(90) scale(336 392)">
+      <stop stop-color="#1CE8D1" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#1CE8D1" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softBlur" x="-120" y="-120" width="1320" height="1100" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="56"/>
+    </filter>
+  </defs>
+
+  <g opacity="0.72">
+    <path d="M63 149L222 83L356 149L479 74L642 138L782 74L938 138" stroke="white" stroke-opacity="0.12" stroke-width="2"/>
+    <path d="M94 263L273 214L425 274L573 210L716 258L864 212L998 274" stroke="white" stroke-opacity="0.09" stroke-width="2"/>
+    <path d="M88 388L234 329L393 394L531 332L678 394L814 335L969 390" stroke="white" stroke-opacity="0.08" stroke-width="2"/>
+    <path d="M62 531L222 455L380 524L540 468L707 530L865 470L1008 542" stroke="white" stroke-opacity="0.08" stroke-width="2"/>
+    <path d="M101 659L264 581L430 654L587 586L742 650L905 586L993 633" stroke="white" stroke-opacity="0.08" stroke-width="2"/>
+    <path d="M150 774L150 110L293 110L293 774M438 110V774M583 110V774M727 110V774M874 110V774" stroke="white" stroke-opacity="0.07" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#softBlur)">
+    <ellipse cx="553" cy="399" rx="240" ry="172" fill="url(#halo)"/>
+  </g>
+
+  <path d="M206 604C265 536 299 486 350 447C411 400 468 398 529 350C584 307 606 254 662 214C720 174 802 158 870 175" stroke="url(#gridGlow)" stroke-opacity="0.6" stroke-width="6" stroke-linecap="round"/>
+  <path d="M214 203C288 232 352 266 407 307C459 346 486 408 544 434C595 458 654 441 713 463C782 488 818 547 876 575" stroke="url(#gridGlow)" stroke-opacity="0.44" stroke-width="5" stroke-linecap="round"/>
+  <path d="M255 531C330 519 399 529 461 579C522 627 614 673 720 667C804 662 861 633 916 603" stroke="url(#gridGlow)" stroke-opacity="0.36" stroke-width="4.5" stroke-linecap="round"/>
+
+  <g opacity="0.94">
+    <circle cx="206" cy="604" r="22" fill="#DFFFFA"/>
+    <circle cx="206" cy="604" r="34" fill="#B7FFF5" fill-opacity="0.14" stroke="#B7FFF5" stroke-opacity="0.32"/>
+    <circle cx="350" cy="447" r="14" fill="#12B3A0"/>
+    <circle cx="529" cy="350" r="18" fill="#DFFFFA"/>
+    <circle cx="662" cy="214" r="14" fill="#12B3A0"/>
+    <circle cx="870" cy="175" r="22" fill="#DFFFFA"/>
+    <circle cx="870" cy="175" r="34" fill="#B7FFF5" fill-opacity="0.14" stroke="#B7FFF5" stroke-opacity="0.32"/>
+    <circle cx="214" cy="203" r="18" fill="#DFFFFA"/>
+    <circle cx="407" cy="307" r="12" fill="#12B3A0"/>
+    <circle cx="544" cy="434" r="16" fill="#DFFFFA"/>
+    <circle cx="713" cy="463" r="12" fill="#12B3A0"/>
+    <circle cx="876" cy="575" r="22" fill="#DFFFFA"/>
+    <circle cx="255" cy="531" r="14" fill="#12B3A0"/>
+    <circle cx="461" cy="579" r="12" fill="#12B3A0"/>
+    <circle cx="720" cy="667" r="20" fill="#DFFFFA"/>
+    <circle cx="916" cy="603" r="16" fill="#12B3A0"/>
+  </g>
+
+  <g opacity="0.9">
+    <rect x="184" y="148" width="212" height="82" rx="24" fill="rgba(7, 24, 34, 0.24)"/>
+    <rect x="184" y="148" width="212" height="82" rx="24" fill="#0A2433" fill-opacity="0.72" stroke="white" stroke-opacity="0.08"/>
+    <text x="214" y="184" fill="#DFFFFA" font-family="Manrope, sans-serif" font-size="18" font-weight="800">Medication match</text>
+    <text x="214" y="210" fill="white" fill-opacity="0.7" font-family="Manrope, sans-serif" font-size="15" font-weight="600">Adderall XR • 20 mg • XR capsule</text>
+  </g>
+
+  <g opacity="0.9">
+    <rect x="648" y="646" width="248" height="96" rx="26" fill="#0A2433" fill-opacity="0.78" stroke="white" stroke-opacity="0.08"/>
+    <text x="678" y="686" fill="#B7FFF5" font-family="Manrope, sans-serif" font-size="17" font-weight="800">Closest full fill</text>
+    <text x="678" y="712" fill="white" fill-opacity="0.74" font-family="Manrope, sans-serif" font-size="15" font-weight="600">Greenline Community Pharmacy</text>
+    <text x="678" y="735" fill="white" fill-opacity="0.58" font-family="Manrope, sans-serif" font-size="14" font-weight="600">0.7 mi away • updated 8 min ago</text>
+  </g>
+
+  <g opacity="0.58">
+    <circle cx="206" cy="604" r="52" stroke="url(#pulse)" stroke-width="2"/>
+    <circle cx="870" cy="175" r="52" stroke="url(#pulse)" stroke-width="2"/>
+    <circle cx="720" cy="667" r="46" stroke="url(#pulse)" stroke-width="2"/>
+  </g>
+</svg>
