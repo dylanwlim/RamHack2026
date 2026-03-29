@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { ControlledCombobox } from "@/components/search/controlled-combobox";
+import {
+  findSupportedOption,
+  medicationOptions,
+  resolveInitialOption,
+  type SearchOption,
+} from "@/lib/search-options";
 
 export function MedicationQueryForm({
   action,
@@ -16,29 +23,64 @@ export function MedicationQueryForm({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialQuery);
+  const [selectedOption, setSelectedOption] = useState<SearchOption | null>(() =>
+    resolveInitialOption(medicationOptions, initialQuery),
+  );
+  const [query, setQuery] = useState(
+    resolveInitialOption(medicationOptions, initialQuery)?.label || initialQuery,
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextOption = resolveInitialOption(medicationOptions, initialQuery);
+    setSelectedOption(nextOption);
+    setQuery(nextOption?.label || initialQuery);
+  }, [initialQuery]);
 
   return (
     <form
       className="surface-panel rounded-[2rem] p-5 sm:p-6"
       onSubmit={(event) => {
         event.preventDefault();
-        const params = new URLSearchParams({ query: query.trim() });
+
+        const resolvedOption = selectedOption || findSupportedOption(medicationOptions, query);
+        setError(resolvedOption ? null : "Choose a supported medication from the list.");
+
+        if (!resolvedOption) {
+          return;
+        }
+
+        const params = new URLSearchParams({ query: resolvedOption.value.trim() });
         startTransition(() => {
           router.push(`${action}?${params.toString()}`);
         });
       }}
     >
-      <label className="block space-y-2">
-        <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Medication</span>
-        <input
-          className="h-14 w-full rounded-[1.2rem] border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10"
-          placeholder="Wegovy"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          required
-        />
-      </label>
+      <ControlledCombobox
+        label="Medication"
+        placeholder="Select a medication"
+        options={medicationOptions}
+        value={query}
+        selectedOptionId={selectedOption?.id || null}
+        onValueChange={(nextValue) => {
+          setQuery(nextValue);
+          setError(null);
+
+          if (
+            selectedOption &&
+            nextValue.trim().toLowerCase() !== selectedOption.label.trim().toLowerCase()
+          ) {
+            setSelectedOption(null);
+          }
+        }}
+        onSelect={(option) => {
+          setSelectedOption(option);
+          setQuery(option.label);
+          setError(null);
+        }}
+        emptyMessage="No supported medications match that search yet."
+        error={error}
+      />
 
       <p className="mt-4 text-sm leading-6 text-slate-600">{helper}</p>
 

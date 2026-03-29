@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { ExampleScenarioGrid } from "@/components/search/example-scenario-grid";
 import { createPharmaPathClient, type DrugIntelligenceResponse } from "@/lib/pharmapath-client";
 import { MedicationQueryForm } from "@/components/search/medication-query-form";
 import {
@@ -488,7 +489,18 @@ export function PrescriberClient() {
             action="/prescriber"
             initialQuery={query}
             submitLabel="Search medication"
-            helper="Use this when the question is clinical planning, not store-level inventory."
+            helper="Choose a supported medication when the question is clinical planning, not store-level inventory."
+          />
+        </div>
+      </section>
+
+      <section className="px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="site-shell">
+          <ExampleScenarioGrid
+            mode="prescriber"
+            eyebrow="Example scenarios"
+            title="Four useful starting points for Medication Lookup."
+            description="These keep the demo grounded in supported medications while surfacing shortage, recall, formulation, and manufacturer context immediately."
           />
         </div>
       </section>

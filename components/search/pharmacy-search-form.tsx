@@ -2,8 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { ControlledCombobox } from "@/components/search/controlled-combobox";
 import { featuredSearches } from "@/lib/content";
 import { useAuth } from "@/lib/auth/auth-context";
+import {
+  findSupportedOption,
+  locationOptions,
+  medicationOptions,
+  resolveInitialOption,
+  type SearchOption,
+} from "@/lib/search-options";
 import { cn } from "@/lib/utils";
 
 type PharmacySearchFormProps = {
@@ -60,15 +68,53 @@ export function PharmacySearchForm({
   const router = useRouter();
   const { profile } = useAuth();
   const [isPending, startTransition] = useTransition();
-  const [medication, setMedication] = useState(initialMedication);
-  const [location, setLocation] = useState(initialLocation);
+  const [medicationOption, setMedicationOption] = useState<SearchOption | null>(() =>
+    resolveInitialOption(medicationOptions, initialMedication),
+  );
+  const [medication, setMedication] = useState(
+    resolveInitialOption(medicationOptions, initialMedication)?.label || initialMedication,
+  );
+  const [locationOption, setLocationOption] = useState<SearchOption | null>(() =>
+    resolveInitialOption(locationOptions, initialLocation),
+  );
+  const [location, setLocation] = useState(
+    resolveInitialOption(locationOptions, initialLocation)?.label || initialLocation,
+  );
   const [radiusMiles, setRadiusMiles] = useState(initialRadiusMiles);
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [onlyOpenNow, setOnlyOpenNow] = useState(initialOnlyOpenNow);
+  const [medicationError, setMedicationError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextMedicationOption = resolveInitialOption(medicationOptions, initialMedication);
+    setMedicationOption(nextMedicationOption);
+    setMedication(nextMedicationOption?.label || initialMedication);
+  }, [initialMedication]);
+
+  useEffect(() => {
+    const nextLocationOption = resolveInitialOption(locationOptions, initialLocation);
+    setLocationOption(nextLocationOption);
+    setLocation(nextLocationOption?.label || initialLocation);
+  }, [initialLocation]);
+
+  useEffect(() => {
+    setRadiusMiles(initialRadiusMiles);
+  }, [initialRadiusMiles]);
+
+  useEffect(() => {
+    setSortBy(initialSortBy);
+  }, [initialSortBy]);
+
+  useEffect(() => {
+    setOnlyOpenNow(initialOnlyOpenNow);
+  }, [initialOnlyOpenNow]);
 
   useEffect(() => {
     if (!initialLocation && !location && profile?.defaultLocationLabel) {
-      setLocation(profile.defaultLocationLabel);
+      const nextLocationOption = resolveInitialOption(locationOptions, profile.defaultLocationLabel);
+      setLocationOption(nextLocationOption);
+      setLocation(nextLocationOption?.label || profile.defaultLocationLabel);
     }
   }, [initialLocation, location, profile?.defaultLocationLabel]);
 
@@ -83,17 +129,57 @@ export function PharmacySearchForm({
     }
   }, [initialRadiusMiles, profile?.preferredSearchRadius, radiusMiles]);
 
+  const handleMedicationInputChange = (nextValue: string) => {
+    setMedication(nextValue);
+    setMedicationError(null);
+
+    if (
+      medicationOption &&
+      nextValue.trim().toLowerCase() !== medicationOption.label.trim().toLowerCase()
+    ) {
+      setMedicationOption(null);
+    }
+  };
+
+  const handleLocationInputChange = (nextValue: string) => {
+    setLocation(nextValue);
+    setLocationError(null);
+
+    if (
+      locationOption &&
+      nextValue.trim().toLowerCase() !== locationOption.label.trim().toLowerCase()
+    ) {
+      setLocationOption(null);
+    }
+  };
+
   return (
     <div className={cn("surface-panel rounded-[2rem] p-5 sm:p-6", className)}>
       <form
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
+
+          const resolvedMedication =
+            medicationOption || findSupportedOption(medicationOptions, medication);
+          const resolvedLocation = locationOption || findSupportedOption(locationOptions, location);
+
+          setMedicationError(
+            resolvedMedication ? null : "Choose a supported medication from the list.",
+          );
+          setLocationError(
+            resolvedLocation ? null : "Choose a supported city or ZIP-backed location.",
+          );
+
+          if (!resolvedMedication || !resolvedLocation) {
+            return;
+          }
+
           startTransition(() => {
             router.push(
               buildResultsHref({
-                medication,
-                location,
+                medication: resolvedMedication.value,
+                location: resolvedLocation.value,
                 radiusMiles,
                 sortBy,
                 onlyOpenNow,
@@ -103,28 +189,38 @@ export function PharmacySearchForm({
           });
         }}
       >
-        <div className={cn("grid gap-3", compact ? "lg:grid-cols-2" : "lg:grid-cols-2")}>
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Medication</span>
-            <input
-              className="h-14 w-full rounded-[1.2rem] border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10"
-              placeholder="Adderall XR 20 mg"
-              value={medication}
-              onChange={(event) => setMedication(event.target.value)}
-              required
-            />
-          </label>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <ControlledCombobox
+            label="Medication"
+            placeholder="Select a medication"
+            options={medicationOptions}
+            value={medication}
+            selectedOptionId={medicationOption?.id || null}
+            onValueChange={handleMedicationInputChange}
+            onSelect={(option) => {
+              setMedicationOption(option);
+              setMedication(option.label);
+              setMedicationError(null);
+            }}
+            emptyMessage="No supported medications match that search yet."
+            error={medicationError}
+          />
 
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Location</span>
-            <input
-              className="h-14 w-full rounded-[1.2rem] border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10"
-              placeholder="Brooklyn, NY"
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              required
-            />
-          </label>
+          <ControlledCombobox
+            label="Location"
+            placeholder="Select a city or ZIP-backed area"
+            options={locationOptions}
+            value={location}
+            selectedOptionId={locationOption?.id || null}
+            onValueChange={handleLocationInputChange}
+            onSelect={(option) => {
+              setLocationOption(option);
+              setLocation(option.label);
+              setLocationError(null);
+            }}
+            emptyMessage="No supported city or ZIP-backed locations match that search yet."
+            error={locationError}
+          />
         </div>
 
         <div
@@ -136,7 +232,7 @@ export function PharmacySearchForm({
           <label className="space-y-2">
             <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Radius</span>
             <select
-              className="h-12 w-full rounded-[1.05rem] border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10"
+              className="search-select-control"
               value={radiusMiles}
               onChange={(event) => setRadiusMiles(Number(event.target.value))}
             >
@@ -150,7 +246,7 @@ export function PharmacySearchForm({
           <label className="space-y-2">
             <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Sort</span>
             <select
-              className="h-12 w-full rounded-[1.05rem] border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10"
+              className="search-select-control"
               value={sortBy}
               onChange={(event) =>
                 setSortBy(event.target.value as "best_match" | "distance" | "rating")
@@ -162,14 +258,17 @@ export function PharmacySearchForm({
             </select>
           </label>
 
-          <label className="flex items-center gap-3 rounded-[1.05rem] border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
-              checked={onlyOpenNow}
-              onChange={(event) => setOnlyOpenNow(event.target.checked)}
-            />
-            Open now only
+          <label className="space-y-2">
+            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Availability</span>
+            <span className="search-toggle-control">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
+                checked={onlyOpenNow}
+                onChange={(event) => setOnlyOpenNow(event.target.checked)}
+              />
+              Open now only
+            </span>
           </label>
         </div>
 

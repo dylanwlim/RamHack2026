@@ -70,7 +70,7 @@ export function HealthStatusCard() {
         <div className="mt-5 space-y-3">
           <StatusRow label="Route status" value={payload.status} good={payload.status === "ok"} />
           <StatusRow
-            label="Google Places key"
+            label="Google Maps key"
             value={payload.google_api_configured ? "configured" : "missing"}
             good={Boolean(payload.google_api_configured)}
           />

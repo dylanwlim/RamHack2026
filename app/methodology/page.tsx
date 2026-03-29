@@ -4,18 +4,20 @@ import { SiteNavbar } from "@/components/site-navbar";
 
 const dataSources = [
   {
-    label: "Google Places",
-    description: "Live nearby pharmacy names, addresses, hours, ratings, and map links.",
+    label: "Google Maps Platform",
+    description:
+      "Handled city and ZIP selections resolve through Google geocoding, then nearby pharmacy names, hours, ratings, and Maps links come from Google Places.",
     accent: "bg-sky-50 border-sky-200",
     dot: "bg-sky-500",
     eyebrow: "text-sky-600",
   },
   {
-    label: "openFDA Shortages",
-    description: "Active and resolved drug shortage records from the FDA shortage database.",
-    accent: "bg-amber-50 border-amber-200",
-    dot: "bg-amber-500",
-    eyebrow: "text-amber-600",
+    label: "FDA Listing Records",
+    description:
+      "openFDA drug listing records shape the matched strengths, dosage forms, routes, active listing counts, and manufacturer breadth.",
+    accent: "bg-emerald-50 border-emerald-200",
+    dot: "bg-emerald-500",
+    eyebrow: "text-emerald-600",
   },
   {
     label: "Drugs@FDA",
@@ -25,22 +27,23 @@ const dataSources = [
     eyebrow: "text-violet-600",
   },
   {
-    label: "FDA NDC Listings",
-    description: "National Drug Code listings for manufacturer and packaging breadth.",
-    accent: "bg-emerald-50 border-emerald-200",
-    dot: "bg-emerald-500",
-    eyebrow: "text-emerald-600",
+    label: "FDA Drug Shortages",
+    description: "Active, available, resolved, and discontinued shortage entries for matching presentations.",
+    accent: "bg-amber-50 border-amber-200",
+    dot: "bg-amber-500",
+    eyebrow: "text-amber-600",
   },
   {
     label: "FDA Recall Enforcement",
-    description: "Recall and enforcement action records tied to specific drug families.",
+    description: "Recall and enforcement records tied to the matched medication family.",
     accent: "bg-rose-50 border-rose-200",
     dot: "bg-rose-500",
     eyebrow: "text-rose-600",
   },
   {
-    label: "Crowd Signals",
-    description: "User-submitted fill reports layered on top of FDA context where available.",
+    label: "User-submitted reports",
+    description:
+      "Signed-in users can submit fill reports. Those reports sit in a separate weighted layer and are not public-source inventory data.",
     accent: "bg-teal-50 border-teal-200",
     dot: "bg-teal-500",
     eyebrow: "text-teal-600",
@@ -58,19 +61,22 @@ const boundaries = [
 
 const methodologyGuide = [
   {
-    title: "Live nearby discovery",
-    value: "Google Places",
-    detail: "Pharmacy names, distance, hours, ratings, and map links come from the live nearby search.",
+    title: "Handled search inputs",
+    value: "Chosen from the list",
+    detail:
+      "Medication and location inputs are constrained to the handled demo options so the app stays inside what this build is designed to support.",
   },
   {
     title: "Medication context",
-    value: "openFDA evidence",
-    detail: "Shortages, recalls, approvals, and manufacturer breadth stay visible as separate evidence.",
+    value: "FDA evidence",
+    detail:
+      "Listing, shortage, recall, and approval records stay separate so the access signal remains explainable instead of sounding like a stock feed.",
   },
   {
-    title: "Store-level stock",
-    value: "Still manual",
-    detail: "PharmaPath does not claim a specific pharmacy has inventory confirmed without a direct call.",
+    title: "Crowd layer",
+    value: "Separate by design",
+    detail:
+      "User-submitted reports can add context where available, but they never become proof of live inventory at a specific store.",
   },
 ];
 
@@ -88,7 +94,8 @@ export default function MethodologyPage() {
                 What the data supports. What it doesn&apos;t.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Backed by five public data sources, with clear boundaries on every claim.
+                PharmaPath combines Google Maps lookup, FDA records, and optional user-submitted
+                reports while keeping every claim inside a clear boundary.
               </p>
             </div>
             <div className="surface-panel rounded-[2.25rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
@@ -112,7 +119,7 @@ export default function MethodologyPage() {
         </section>
 
         {/* Data sources */}
-        <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <section className="px-4 pb-24 sm:px-6 lg:px-8">
           <div className="site-shell">
             <span className="eyebrow-label">Data sources</span>
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -143,8 +150,8 @@ export default function MethodologyPage() {
                 What PharmaPath can state directly, and what still needs a call.
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                The app keeps live nearby discovery, medication-wide evidence, and still-manual steps
-                separate so the product never overstates store-level availability.
+                The app keeps live nearby discovery, medication-wide evidence, crowd input, and
+                still-manual steps separate so the product never overstates store-level availability.
               </p>
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/70 p-5">
@@ -176,26 +183,6 @@ export default function MethodologyPage() {
               </div>
             </div>
             <HealthStatusCard />
-          </div>
-        </section>
-
-        {/* Two views */}
-        <section className="px-4 pb-24 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-5 lg:grid-cols-2">
-            <div className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pharmacy Finder</span>
-              <h2 className="mt-4 text-xl tracking-tight text-slate-950">Nearby list + access signal</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
-                Google Places results ranked by distance and open status. One FDA-derived friction label. Questions to ask before calling.
-              </p>
-            </div>
-            <div className="rounded-[2rem] border border-teal-200 bg-teal-50 p-6">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-600">Medication Lookup</span>
-              <h2 className="mt-4 text-xl tracking-tight text-slate-950">Evidence trail intact</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
-                Shortage records, recall history, manufacturer spread, and formulation context — without flattening it into a single label.
-              </p>
-            </div>
           </div>
         </section>
       </main>

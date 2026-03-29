@@ -65,9 +65,9 @@ export function DataRail() {
               The UI separates live nearby search from medication evidence.
             </h2>
             <p className="mt-4 max-w-[37.5rem] text-lg leading-7 text-[#666666]">
-              Google Places answers where to call. openFDA helps explain whether the medication may
-              be harder to source. Methodology keeps those meanings from collapsing into one fake
-              claim.
+              Google Maps answers where to call. FDA records help explain why a medication may be
+              easier or harder to route. Methodology keeps those signals from collapsing into one
+              fake claim.
             </p>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

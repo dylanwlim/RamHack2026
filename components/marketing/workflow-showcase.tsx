@@ -69,7 +69,7 @@ const routeVisualMeta: Record<
     accentColor: "#159a83",
   },
   methodology: {
-    panelTitle: "Methodology page",
+    panelTitle: "Methodology",
     panelLabel: "Trust boundary",
     sections: [
       {
@@ -211,7 +211,11 @@ export function WorkflowShowcase() {
           <div className="space-y-8">
             <div>
               <span className="eyebrow-label">Pages</span>
-              <h2 className="mt-6 section-title">Three pages for three outlooks.</h2>
+              <h2 className="mt-6 section-title">Three surfaces. Three distinct jobs.</h2>
+              <p className="mt-4 max-w-[38rem] text-lg leading-7 text-slate-600">
+                Pharmacy Finder handles the nearby call list, Medication Lookup keeps the evidence
+                trail intact, and Methodology marks the boundary between direct data and inference.
+              </p>
             </div>
 
             <AnimatePresence mode="wait" custom={direction}>
@@ -258,7 +262,7 @@ export function WorkflowShowcase() {
                         ? "w-8 bg-slate-900"
                         : "w-2 bg-slate-400/30 hover:bg-slate-400/50"
                     }`}
-                    aria-label={`Show ${item.id} page`}
+                    aria-label={`Show ${routeVisualMeta[item.id].panelTitle}`}
                   />
                 ))}
               </div>
@@ -300,7 +304,7 @@ export function WorkflowShowcase() {
             </div>
           </div>
 
-          <div className="relative flex h-[520px] items-center overflow-hidden">
+          <div className="relative flex min-h-[520px] items-center">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={active.id}
@@ -310,7 +314,7 @@ export function WorkflowShowcase() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.5, ease: motionEase.standard }}
-                className="absolute inset-0 flex items-center"
+                className="flex w-full items-center"
               >
                 <RouteVisualPanel routeId={active.id} />
               </motion.div>

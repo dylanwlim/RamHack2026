@@ -1,3 +1,9 @@
+import {
+  locationOptions,
+  medicationOptions,
+  searchScenarios,
+} from "./search-options";
+
 export type FeaturedSearch = {
   id: string;
   label: string;
@@ -6,40 +12,14 @@ export type FeaturedSearch = {
   description: string;
 };
 
-export const featuredSearches: FeaturedSearch[] = [
-  {
-    id: "brooklyn-adderall",
-    label: "Controlled stimulant",
-    medication: "Adderall XR 20 mg",
-    location: "Brooklyn, NY",
-    description:
-      "A higher-friction handoff where the nearby list stays live and the medication info stays careful.",
-  },
-  {
-    id: "queens-wegovy",
-    label: "GLP-1 refill",
-    medication: "Wegovy",
-    location: "Queens, NY",
-    description:
-      "See shipment-sensitive guidance without claiming any store has dose-level stock confirmed.",
-  },
-  {
-    id: "hoboken-amoxicillin",
-    label: "Same-day antibiotic",
-    medication: "Amoxicillin 500 mg",
-    location: "Hoboken, NJ",
-    description:
-      "A speed-sensitive search where the nearby ordering should lean hard toward open and close-by options.",
-  },
-  {
-    id: "downtown-sertraline",
-    label: "Routine refill",
-    medication: "Sertraline 50 mg",
-    location: "Lower Manhattan, NY",
-    description:
-      "A steadier refill flow that should still surface clear next questions instead of pretending the refill is guaranteed.",
-  },
-];
+export const featuredSearches: FeaturedSearch[] = searchScenarios.map((scenario) => ({
+  id: scenario.id,
+  label: scenario.label,
+  medication:
+    medicationOptions.find((option) => option.id === scenario.medicationId)?.value || "",
+  location: locationOptions.find((option) => option.id === scenario.locationId)?.value || "",
+  description: scenario.description,
+}));
 
 export const homeStats = [
   {
@@ -63,13 +43,13 @@ export const homeStats = [
 export const workflowShowcase = [
   {
     id: "patient",
-    title: "Pharmacy Finder keeps the first answer short.",
+    title: "Pharmacy Finder keeps the first call path tight.",
     summary:
-      "Medication plus location produces a live nearby list, FDA access info, and a call-ready set of questions.",
+      "Choose a supported medication and handled location to load the nearby list, one access read, and the next question to ask.",
     bullets: [
       "Nearby list from Google Places",
-      "Medication-wide FDA data, not store inventory",
-      "Plain-language questions for the next call",
+      "Medication-wide FDA context, not store inventory",
+      "Call-ready questions without fake certainty",
     ],
     href: "/patient",
     accent: "from-sky-100 via-white to-cyan-50",
@@ -78,24 +58,24 @@ export const workflowShowcase = [
     id: "prescriber",
     title: "Medication Lookup keeps the evidence trail intact.",
     summary:
-      "Same medication search, but with shortage records, manufacturer spread, recall context, and alternative-planning cues surfaced first.",
+      "Start with the medication itself when the question is shortage context, manufacturer breadth, recall activity, or earlier alternative planning.",
     bullets: [
       "Shortage and recall evidence",
       "Formulation, route, and manufacturer context",
-      "No claim that a pharmacy can fill right now",
+      "No claim that any pharmacy can fill it right now",
     ],
     href: "/prescriber",
     accent: "from-emerald-100 via-white to-teal-50",
   },
   {
     id: "methodology",
-    title: "Methodology shows the boundary before trust breaks.",
+    title: "Methodology keeps the boundary explicit.",
     summary:
-      "The app distinguishes what is known from Google Places and openFDA, what is inferred, and what still needs a direct phone call.",
+      "See which parts come directly from Google Maps and FDA records, which parts are inferred, and which questions still require a pharmacy call.",
     bullets: [
       "Live config status from /api/health",
       "Known vs inferred vs unavailable",
-      "Truthful positioning for demo and deployment",
+      "Truthful copy for demos and live use",
     ],
     href: "/methodology",
     accent: "from-amber-100 via-white to-orange-50",
@@ -103,12 +83,12 @@ export const workflowShowcase = [
 ];
 
 export const sourceRail = [
-  "Google Places",
-  "NDC Listings",
+  "Google Maps Platform",
+  "FDA Listing Records",
   "Drug Shortages",
   "Drugs@FDA",
   "Recall Enforcement",
-  "Methodology Guardrails",
+  "User Reports",
   "Nearby Ranking",
   "Access Routing",
 ];
@@ -122,11 +102,11 @@ export const homeFaqs = [
   {
     question: "Why separate the pharmacy and medication pages?",
     answer:
-      "Pharmacy lookup helps those who need a fast list and a pointer of where to call. Medication lookup gives the evidence trail: shortage status, manufacturer breadth, formulation spread, and recall context.",
+      "Pharmacy Finder is built for the nearby call list and next outreach step. Medication Lookup keeps the evidence trail together: shortage status, manufacturer breadth, formulation spread, and recall context.",
   },
   {
     question: "Where does PharmaPath get its data?",
     answer:
-      "Nearby pharmacy results come from the Google Places API, which provides live names, addresses, ratings, hours, and location data. Medication information like shortages, recalls, approvals, and manufacturer details comes from openFDA, the public API maintained by the U.S. Food and Drug Administration. Over time, PharmaPath also incorporates crowdsourced input from users to help improve accuracy and fill in gaps that official sources don't cover.",
+      "Nearby pharmacy search uses Google Maps Platform for handled location resolution and live nearby pharmacy results. Medication evidence comes from FDA records, including listings, shortage files, recall notices, and approval history. When signed-in users submit reports, those appear as a separate crowd layer rather than as public-source inventory proof.",
   },
 ];

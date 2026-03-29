@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { ExampleScenarioGrid } from "@/components/search/example-scenario-grid";
 import { PharmacySearchForm } from "@/components/search/pharmacy-search-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
-import { featuredSearches } from "@/lib/content";
 
 export default function PatientPage() {
   return (
@@ -27,47 +27,19 @@ export default function PatientPage() {
         </section>
 
         <section className="px-4 pb-24 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-5 lg:grid-cols-3">
-            <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Nearby list</span>
-              <h2 className="mt-5 text-2xl tracking-tight text-slate-950">Real pharmacy options first.</h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                Pharmacy names, addresses, hours, ratings, and map links come from live Google
-                Places results.
-              </p>
-            </div>
-            <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Signal summary</span>
-              <h2 className="mt-5 text-2xl tracking-tight text-slate-950">Medication friction second.</h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                openFDA data adds a careful access summary so the user knows whether the call path
-                may be straightforward, mixed, or harder.
-              </p>
-            </div>
-            <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Boundary</span>
-              <h2 className="mt-5 text-2xl tracking-tight text-slate-950">Inventory still needs a call.</h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                PharmaPath will not claim that a nearby pharmacy has the medication confirmed on the
-                shelf right now.
-              </p>
-            </div>
-          </div>
+          <div className="site-shell">
+            <ExampleScenarioGrid
+              mode="patient"
+              eyebrow="Example searches"
+              title="Four demo-ready searches, each tuned to a real workflow."
+              description="Use these to move quickly through the handled medication and location combinations without implying store-level inventory certainty."
+            />
 
-          <div className="mt-10 grid gap-4">
-            {featuredSearches.map((search) => (
-              <Link
-                key={search.id}
-                href={`/patient/results?query=${encodeURIComponent(search.medication)}&location=${encodeURIComponent(search.location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`}
-                className="surface-panel flex flex-col gap-3 rounded-[1.8rem] p-5 transition hover:-translate-y-0.5"
-              >
-                <div className="text-sm uppercase tracking-[0.18em] text-slate-500">{search.label}</div>
-                <div className="text-xl tracking-tight text-slate-950">
-                  {search.medication} in {search.location}
-                </div>
-                <p className="text-sm leading-6 text-slate-600">{search.description}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/prescriber" className="template-button-secondary text-sm">
+                Open Medication Lookup
               </Link>
-            ))}
+            </div>
           </div>
         </section>
       </main>
