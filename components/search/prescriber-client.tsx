@@ -256,9 +256,9 @@ function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerR
   );
 }
 
-// ─── main shortage panel ────────────────────────────────────────────────────
+// ─── shortage evidence panel (right column) ───────────────────────────────
 
-function ShortagePanel({
+function ShortageEvidencePanel({
   match,
   drugData,
 }: {
@@ -340,27 +340,6 @@ function ShortagePanel({
 
       {/* ── Manufacturer status ── */}
       <ManufacturerList rows={mfgRows} />
-
-      {/* ── Clinical recommendation strip ── */}
-      <div className="surface-panel flex items-start gap-4 rounded-[2rem] border border-violet-200 bg-violet-50 p-5">
-        <span className="mt-0.5 shrink-0 text-lg font-bold text-violet-600" aria-hidden>Rx</span>
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-violet-500">
-            Clinical recommendation
-          </div>
-          <p className="mt-1 text-sm leading-6 text-violet-900">
-            {match.prescriber_view.should_consider_alternatives
-              ? "FDA shortage data supports considering alternatives earlier. Discuss backup formulations or therapeutic substitutes with the patient."
-              : "No strong FDA trigger to abandon the current plan. Monitor fill status and have alternatives ready if the patient reports difficulty."}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Operational takeaways ── */}
-      <div className="surface-panel rounded-[2rem] p-6">
-        <span className="eyebrow-label">Operational takeaways</span>
-        <CalloutList className="mt-5" items={match.prescriber_view.takeaways} />
-      </div>
 
       {/* ── Active FDA shortage entries ── */}
       {activeShortages.length > 0 ? (
@@ -565,6 +544,27 @@ export function PrescriberClient() {
                   </div>
                 </div>
 
+                {/* ── Clinical recommendation ── */}
+                <div className="surface-panel flex items-start gap-4 rounded-[2rem] border border-violet-200 bg-violet-50 p-5">
+                  <span className="mt-0.5 shrink-0 text-lg font-bold text-violet-600" aria-hidden>Rx</span>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-violet-500">
+                      Clinical recommendation
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-violet-900">
+                      {selectedMatch.prescriber_view.should_consider_alternatives
+                        ? "FDA shortage data supports considering alternatives earlier. Discuss backup formulations or therapeutic substitutes with the patient."
+                        : "No strong FDA trigger to abandon the current plan. Monitor fill status and have alternatives ready if the patient reports difficulty."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ── Operational takeaways ── */}
+                <div className="surface-panel rounded-[2rem] p-6">
+                  <span className="eyebrow-label">Operational takeaways</span>
+                  <CalloutList className="mt-5" items={selectedMatch.prescriber_view.takeaways} />
+                </div>
+
                 <div className="surface-panel rounded-[2rem] p-6">
                   <span className="eyebrow-label">Formulation spread</span>
                   <div className="mt-5 space-y-6">
@@ -602,18 +602,12 @@ export function PrescriberClient() {
                   >
                     Open patient view
                   </Link>
-                  <Link
-                    href={`/drug?query=${encodeURIComponent(query)}&id=${encodeURIComponent(selectedMatch.id)}${location ? `&location=${encodeURIComponent(location)}` : ""}`}
-                    className="rounded-full bg-slate-950 px-[18px] py-[15px] text-sm font-medium leading-4 text-white transition-all duration-200 hover:rounded-2xl"
-                  >
-                    Open drug detail
-                  </Link>
                 </div>
               </div>
 
-              {/* ── Right: shortage panel ── */}
+              {/* ── Right: shortage evidence ── */}
               <div className="space-y-6">
-                <ShortagePanel match={selectedMatch} drugData={payload!} />
+                <ShortageEvidencePanel match={selectedMatch} drugData={payload!} />
               </div>
             </div>
           )}
