@@ -1,93 +1,96 @@
 # PharmaPath
 
-PharmaPath is a RamHack 2026 demo that combines two layers into one medication
-access workflow:
+PharmaPath is a tool that helps patients and prescribers understand medication access friction — combining nearby pharmacy discovery with FDA-sourced drug intelligence in one workflow.
 
-- Live nearby pharmacy discovery from Google Places
-- Medication-wide access context from openFDA
+## What it does
 
-The product is built for two audiences:
+**Pharmacy Finder** — search a medication and location to see nearby pharmacies ranked by call priority, alongside an FDA-derived access signal (easy / moderate / difficult / unavailable) that reflects shortage, recall, discontinuation, and manufacturer context.
 
-- Patients who need to know whether a medication may be harder than average to obtain
-- Prescribers who need shortage, manufacturer, discontinuation, formulation, and recall context
+**Medication Lookup** — get a deeper intelligence view: shortage evidence, recall details, formulation alternatives, manufacturer history, approval status, and a plain-language takeaway for clinical decision-making.
 
-The product is intentionally explicit about its limits:
+**What it does not do** — PharmaPath does not claim live shelf inventory. It uses Google Places for pharmacy discovery and FDA datasets for access signals. It is explicit about this distinction throughout the UI.
 
-- It **does not** claim live pharmacy shelf inventory
-- It **does not** know whether a nearby store can fill a prescription right now
-- It **does** use live Google Places data for nearby pharmacy lookup
-- It **does** translate FDA listing, shortage, approval, and recall datasets into a
-  signal-based access summary
-- It **does** let signed-in contributors submit pharmacy-specific availability reports
-- It **does** weight those reports by contributor history and recency instead of treating every report equally
+## Crowd signal
 
-## Route structure
+Signed-in contributors can submit pharmacy-specific availability reports. Reports are stored in Firestore and weighted by contributor trust (based on contribution history and recency), so no single account dominates the signal. Contradictory reports reduce confidence rather than being silently averaged.
 
-- `/` landing page
-- `/patient` patient search page
-- `/patient/results?query=...&location=...` patient results page
-- `/drug?query=...&id=...` drug detail page
-- `/prescriber?query=...&id=...` prescriber intelligence page
-- `/methodology` methodology and limitations page
-- `/login` contributor login
-- `/register` contributor registration
-- `/forgot-password` password reset flow
-- `/profile` signed-in contributor profile
-- `/settings` signed-in contributor settings
+## Routes
+
+| Route | Description |
+|---|---|
+| `/` | Landing page |
+| `/patient` | Patient search form |
+| `/patient/results?query=...&location=...` | Patient results with pharmacy list + access signal |
+| `/prescriber?query=...&id=...` | Prescriber intelligence view |
+| `/drug?query=...&id=...` | Drug detail page |
+| `/methodology` | Data sources, signal methodology, and limitations |
+| `/login` | Contributor login |
+| `/register` | Contributor registration |
+| `/forgot-password` | Password reset |
+| `/profile` | Contributor profile |
+| `/settings` | Account settings |
 
 ## Stack
 
-- Next.js App Router frontend: `app/`, `components/`, `lib/`
-- Firebase Authentication for contributor accounts
-- Firestore for contributor profiles and crowd availability reports
-- Next App Router API routes:
-  - `app/api/pharmacies/search/route.js`
-  - `app/api/drug-intelligence/route.js`
-  - `app/api/medications/search/route.ts`
-  - `app/api/health/route.js`
-- Shared server-side API helpers:
-  - `api/_lib/pharmacy-search.js`
-  - `api/_lib/openfda.js`
-  - `api/_lib/openfda-normalize.js`
-  - `lib/medications/normalize.js`
-  - `lib/medications/index-store.js`
-- Google Places / Geocoding used server-side for nearby pharmacy lookup
-- openFDA datasets used server-side:
-  - Drug NDC
-  - Drug shortages
-  - Drugs@FDA
-  - Drug enforcement / recalls
-- Scheduled medication index sync:
-  - `scripts/sync-medication-index.mjs`
-  - `.github/workflows/medication-index-sync.yml`
+- **Next.js 16** (App Router) — pages, layouts, and API routes
+- **React 19** — UI
+- **Tailwind CSS v4** + **Framer Motion** — styling and animation
+- **Firebase Auth** — contributor accounts
+- **Firestore** — contributor profiles and crowd availability reports
+- **Google Places / Geocoding API** — nearby pharmacy discovery (server-side)
+- **openFDA** — NDC listings, shortages, Drugs@FDA approvals, enforcement/recalls (server-side)
+
+### Key source directories
+
+```
+app/                    Next.js pages and API routes
+  api/
+    pharmacies/search/  POST — nearby pharmacy search
+    drug-intelligence/  GET  — FDA-backed medication intelligence
+    medications/search/ GET  — medication autocomplete index
+    health/             GET  — service health check
+  api/_lib/             Shared server-side helpers (pharmacy-search, openfda, normalize)
+components/
+  search/               Patient results, prescriber view, medication combobox, pharmacy form
+  marketing/            Landing page sections
+  auth/                 Login, register, password flows
+  crowd-signal/         Crowd report card
+  profile/              Profile and settings pages
+lib/
+  medications/          Medication index store and normalization
+  content.ts            Shared copy/content
+scripts/
+  sync-medication-index.mjs   FDA NDC bulk snapshot builder
+data/
+  medication-index.snapshot.json.gz   Checked-in medication snapshot
+```
 
 ## Environment variables
 
-- `GOOGLE_API_KEY`
-- `OPENFDA_API_KEY`
-- `FDA_API_KEY` (legacy fallback still supported by the current server code)
-- `NEXT_PUBLIC_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (optional)
+| Variable | Required | Notes |
+|---|---|---|
+| `GOOGLE_API_KEY` | Yes | Server-side — pharmacy search and geocoding |
+| `OPENFDA_API_KEY` | Recommended | Server-side — higher FDA rate limits |
+| `FDA_API_KEY` | No | Legacy fallback (still supported; not needed if `OPENFDA_API_KEY` is set) |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Yes | |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | No | Analytics only |
 
-The nearby pharmacy route requires `GOOGLE_API_KEY`.
-The openFDA routes work without an API key, but rate limits are better with one.
-For Vercel, set `GOOGLE_API_KEY`, `OPENFDA_API_KEY`, and every `NEXT_PUBLIC_FIREBASE_*` variable in both Preview and Production.
-`FDA_API_KEY` remains a legacy local fallback and is not required when `OPENFDA_API_KEY` is set.
+On Vercel, set all of the above in both Preview and Production environments.
 
-## Run locally
-
-Use the Next.js app directly so the pages and API routes run together:
+## Running locally
 
 ```bash
 npm install
-npm run sync:medications
+npm run sync:medications   # builds data/medication-index.snapshot.json.gz from FDA NDC bulk data
 npm run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000).
 
 For a production smoke check:
 
@@ -96,27 +99,29 @@ npm run build
 npm run start
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+## Medication index
 
-## Deploy Firestore rules and indexes
+The medication autocomplete is backed by a normalized snapshot of the openFDA NDC bulk dataset. It supports brand name, generic name, ingredient, strength, dosage form, route, and NDC matching.
 
-If Firebase CLI auth is available:
+- **Rebuild locally:** `npm run sync:medications`
+- **Checked-in snapshot:** `data/medication-index.snapshot.json.gz`
+- **Automated refresh:** GitHub Actions workflow (`.github/workflows/medication-index-sync.yml`) runs daily at 07:17 UTC, commits any snapshot changes to `main`, and Vercel picks up the deploy automatically.
 
-```bash
-npx firebase-tools deploy --project pharma-path --only firestore:rules,firestore:indexes
-```
-
-If you prefer to use the checked-in project alias:
+## Deploying Firestore rules and indexes
 
 ```bash
 npx firebase-tools deploy --only firestore:rules,firestore:indexes
 ```
 
-## API routes
+Or using the checked-in project alias:
+
+```bash
+npx firebase-tools deploy --project pharma-path --only firestore:rules,firestore:indexes
+```
+
+## API reference
 
 ### `POST /api/pharmacies/search`
-
-Accepts:
 
 ```json
 {
@@ -128,16 +133,33 @@ Accepts:
 }
 ```
 
-Returns:
+Returns: resolved location, ranked nearby pharmacies from Google Places, medication-specific call guidance, and a disclaimer that inventory is not live verified.
 
-- resolved search location
-- ranked nearby pharmacies from Google Places
-- medication-specific call guidance
-- a disclaimer that inventory is not live verified
+---
+
+### `GET /api/drug-intelligence?query=Adderall%20XR%2020%20mg`
+
+Returns normalized FDA medication intelligence:
+
+- `matches` — list of candidate drugs
+- `featured_match_id` — best match
+- `data_freshness`, `limitations`, `methodology_summary`
+
+Each match includes:
+- Patient-facing summary and prescriber takeaways
+- Access signal label and reasoning (easy / moderate / difficult / unavailable)
+- Shortage evidence, recall evidence
+- Manufacturer, formulation, and application context
+
+---
+
+### `GET /api/medications/search?q=adderall%20xr%2020%20mg`
+
+Returns canonical medication matches from the local FDA-backed index. Supports brand names (e.g. Adderall, Wegovy) as well as generic names. Each result includes Rx/OTC badge hints and snapshot freshness metadata.
+
+---
 
 ### `GET /api/health`
-
-Returns:
 
 ```json
 {
@@ -148,79 +170,14 @@ Returns:
 }
 ```
 
-### `GET /api/drug-intelligence?query=Adderall%20XR%2020%20mg`
+## Signal framing
 
-Returns normalized medication intelligence including:
+PharmaPath is only as credible as its distinctions:
 
-- `matches`
-- `featured_match_id`
-- `data_freshness`
-- `limitations`
-- `methodology_summary`
+| Category | Examples |
+|---|---|
+| **Known** | Nearby pharmacies (Google Places), FDA listings, shortage records, discontinuation notices, approval status, recall enforcement actions |
+| **Inferred** | Access friction signal, first-call ranking, contributor crowd reports |
+| **Unavailable** | Live shelf stock, insurance outcomes, wholesaler allocation, real-time fill rates |
 
-Each match contains:
-
-- patient-facing summary copy
-- prescriber-facing takeaways
-- access signal label and reasoning
-- shortage evidence
-- recall evidence
-- manufacturer, formulation, and application context
-
-### `GET /api/medications/search?q=adderall%20xr%2020%20mg`
-
-Returns canonical medication matches from the FDA-backed local index:
-
-- brand, generic, ingredient, strength, dosage-form, route, and NDC-aware matching
-- canonical labels for UI selection
-- Rx / OTC badge hints
-- snapshot freshness metadata
-
-## Medication index sync
-
-The medication dropdown is backed by a normalized snapshot generated from the openFDA
-NDC bulk download:
-
-- local refresh: `npm run sync:medications`
-- checked-in snapshot: `data/medication-index.snapshot.json.gz`
-- scheduled refresh: GitHub Actions workflow at `.github/workflows/medication-index-sync.yml`
-
-The scheduled workflow rebuilds the snapshot on a timer, commits changes to `main`,
-and relies on the existing Vercel/Git deployment path to roll the refreshed index out.
-
-## Product framing guardrails
-
-PharmaPath is credible when it keeps these distinctions clear:
-
-- `Known`: nearby pharmacy discovery from Google Places, plus FDA listing, shortage,
-  discontinuation, approval, and recall records
-- `Inferred`: signal-based access friction summary and first-call ranking guidance
-- `Unavailable`: local shelf stock, insurance outcomes, wholesaler allocations
-
-If the UI says a medication is easier or harder to obtain, that statement should
-always be framed as an estimate derived from FDA signals, not as verified retail
-availability.
-
-## Crowd signal model
-
-Crowd reports are stored in Firestore and tied to:
-
-- medication query
-- pharmacy identity
-- reporting user
-- report type
-- timestamp
-
-The signal intentionally stays simple and demo-friendly:
-
-- new contributors start with very low influence
-- trust rises gradually with contribution count
-- influence caps before any single account can dominate
-- fresh reports matter more than stale ones
-- contradictory reports reduce confidence and can produce a mixed signal
-
-The starter Firestore rules in [firestore.rules](./firestore.rules) allow:
-
-- users to read and update only their own profile document
-- signed-in users to create crowd reports for themselves
-- anyone to read crowd reports so the live signal can render publicly
+Any UI statement that a medication is easier or harder to obtain is an estimate derived from FDA signals — not verified retail availability.
