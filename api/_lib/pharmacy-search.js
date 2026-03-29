@@ -225,6 +225,138 @@ function normalizeSortBy(value) {
   return "best_match";
 }
 
+function getAddressComponent(components, type) {
+  return (
+    (Array.isArray(components)
+      ? components.find(
+          (component) => Array.isArray(component.types) && component.types.includes(type),
+        )
+      : null) || null
+  );
+}
+
+function getFirstAddressComponent(components, types) {
+  for (const type of types) {
+    const component = getAddressComponent(components, type);
+    if (component) {
+      return component;
+    }
+  }
+
+  return null;
+}
+
+function extractStructuredLocationFields(components) {
+  const cityComponent = getFirstAddressComponent(components, [
+    "locality",
+    "postal_town",
+    "sublocality",
+    "sublocality_level_1",
+    "administrative_area_level_3",
+    "administrative_area_level_2",
+  ]);
+  const neighborhoodComponent = getFirstAddressComponent(components, [
+    "neighborhood",
+    "sublocality",
+    "sublocality_level_1",
+  ]);
+  const stateComponent = getAddressComponent(components, "administrative_area_level_1");
+  const postalCodeComponent = getAddressComponent(components, "postal_code");
+  const countryComponent = getAddressComponent(components, "country");
+  const routeComponent = getAddressComponent(components, "route");
+  const streetNumberComponent = getAddressComponent(components, "street_number");
+
+  return {
+    city: cityComponent?.long_name || null,
+    state: stateComponent?.short_name || stateComponent?.long_name || null,
+    postal_code: postalCodeComponent?.long_name || null,
+    neighborhood: neighborhoodComponent?.long_name || null,
+    country: countryComponent?.long_name || null,
+    country_code: countryComponent?.short_name || null,
+    route: routeComponent?.long_name || null,
+    street_number: streetNumberComponent?.long_name || null,
+  };
+}
+
+function buildResolvedLocation({
+  rawQuery,
+  displayLabel,
+  formattedAddress,
+  name,
+  placeId,
+  coordinates,
+  components,
+  types,
+  resolutionSource,
+}) {
+  if (!coordinates || !Number.isFinite(coordinates.lat) || !Number.isFinite(coordinates.lng)) {
+    throw createGoogleApiError("Resolved location is missing coordinates.", 502, "location_missing_coordinates");
+  }
+
+  return {
+    raw_query: sanitizeText(rawQuery),
+    display_label:
+      sanitizeText(displayLabel) || sanitizeText(formattedAddress) || sanitizeText(name) || sanitizeText(rawQuery),
+    formatted_address:
+      sanitizeText(formattedAddress) || sanitizeText(displayLabel) || sanitizeText(name) || sanitizeText(rawQuery),
+    name: sanitizeText(name) || null,
+    place_id: sanitizeText(placeId) || null,
+    coordinates: {
+      lat: coordinates.lat,
+      lng: coordinates.lng,
+    },
+    types: Array.isArray(types) ? types.filter((type) => typeof type === "string") : [],
+    resolution_source: resolutionSource,
+    ...extractStructuredLocationFields(components),
+  };
+}
+
+function getLocationSuggestionTypeLabel(types) {
+  if (!Array.isArray(types) || !types.length) {
+    return "Location";
+  }
+
+  if (types.includes("postal_code")) {
+    return "ZIP";
+  }
+
+  if (
+    types.some((type) =>
+      [
+        "street_address",
+        "premise",
+        "subpremise",
+        "route",
+        "intersection",
+      ].includes(type),
+    )
+  ) {
+    return "Address";
+  }
+
+  if (
+    types.some((type) =>
+      [
+        "locality",
+        "administrative_area_level_1",
+        "administrative_area_level_2",
+        "administrative_area_level_3",
+        "sublocality",
+        "sublocality_level_1",
+        "neighborhood",
+      ].includes(type),
+    )
+  ) {
+    return "Area";
+  }
+
+  if (types.some((type) => ["establishment", "point_of_interest", "pharmacy"].includes(type))) {
+    return "Place";
+  }
+
+  return "Location";
+}
+
 function toRadians(value) {
   return (value * Math.PI) / 180;
 }
@@ -567,7 +699,98 @@ async function fetchJson(url) {
   }
 }
 
-async function geocodeLocation(location, apiKey) {
+async function autocompleteLocationSuggestions(query, apiKey, { limit = 8, sessionToken } = {}) {
+  const normalizedQuery = sanitizeText(query);
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const url = new URL("https://maps.googleapis.com/maps/api/place/autocomplete/json");
+  url.searchParams.set("input", normalizedQuery);
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("language", "en");
+
+  if (sessionToken) {
+    url.searchParams.set("sessiontoken", sessionToken);
+  }
+
+  const payload = await fetchJson(url);
+
+  if (payload.status === "ZERO_RESULTS") {
+    return [];
+  }
+
+  if (payload.status !== "OK" || !Array.isArray(payload.predictions)) {
+    throw createGoogleApiError(
+      payload.error_message || `Places autocomplete failed with status ${payload.status || "UNKNOWN"}.`,
+      502,
+      "places_autocomplete_failed",
+    );
+  }
+
+  return payload.predictions.slice(0, Math.max(1, limit)).map((prediction) => {
+    const structuredFormatting = prediction.structured_formatting || {};
+    const description =
+      sanitizeText(prediction.description) || sanitizeText(structuredFormatting.main_text) || normalizedQuery;
+    const types = Array.isArray(prediction.types)
+      ? prediction.types.filter((type) => typeof type === "string")
+      : [];
+
+    return {
+      place_id: sanitizeText(prediction.place_id) || null,
+      description,
+      primary_text: sanitizeText(structuredFormatting.main_text) || description,
+      secondary_text: sanitizeText(structuredFormatting.secondary_text) || null,
+      types,
+      type_label: getLocationSuggestionTypeLabel(types),
+    };
+  });
+}
+
+async function getPlaceDetails(placeId, apiKey, { displayLabel, rawQuery, sessionToken } = {}) {
+  const normalizedPlaceId = sanitizeText(placeId);
+
+  if (!normalizedPlaceId) {
+    throw createGoogleApiError("A Google place ID is required to resolve this location.", 400, "missing_place_id");
+  }
+
+  const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+  url.searchParams.set("place_id", normalizedPlaceId);
+  url.searchParams.set(
+    "fields",
+    "address_component,formatted_address,geometry,name,place_id,type",
+  );
+  url.searchParams.set("key", apiKey);
+
+  if (sessionToken) {
+    url.searchParams.set("sessiontoken", sessionToken);
+  }
+
+  const payload = await fetchJson(url);
+
+  if (payload.status !== "OK" || !payload.result) {
+    throw createGoogleApiError(
+      payload.error_message || `Place details failed with status ${payload.status || "UNKNOWN"}.`,
+      502,
+      "place_details_failed",
+    );
+  }
+
+  return buildResolvedLocation({
+    rawQuery,
+    displayLabel,
+    formattedAddress: payload.result.formatted_address,
+    name: payload.result.name,
+    placeId: payload.result.place_id,
+    coordinates: payload.result.geometry?.location,
+    components: payload.result.address_components,
+    types: payload.result.types,
+    resolutionSource: "place_details",
+  });
+}
+
+async function geocodeLocation(location, apiKey, { displayLabel, rawQuery } = {}) {
   const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
   url.searchParams.set("address", location);
   url.searchParams.set("key", apiKey);
@@ -588,14 +811,59 @@ async function geocodeLocation(location, apiKey) {
 
   const match = payload.results[0];
 
-  return {
-    formatted_address: match.formatted_address,
-    place_id: match.place_id || null,
-    coordinates: {
-      lat: match.geometry.location.lat,
-      lng: match.geometry.location.lng,
-    },
-  };
+  return buildResolvedLocation({
+    rawQuery: rawQuery || location,
+    displayLabel,
+    formattedAddress: match.formatted_address,
+    name: null,
+    placeId: match.place_id,
+    coordinates: match.geometry?.location,
+    components: match.address_components,
+    types: match.types,
+    resolutionSource: "geocode",
+  });
+}
+
+async function resolveLocationInput({ query, placeId, sessionToken } = {}, apiKey) {
+  const normalizedQuery = sanitizeText(query);
+  const normalizedPlaceId = sanitizeText(placeId);
+
+  if (!normalizedQuery && !normalizedPlaceId) {
+    const error = new Error("Location is required.");
+    error.statusCode = 400;
+    error.code = "missing_location";
+    throw error;
+  }
+
+  if (normalizedPlaceId) {
+    return getPlaceDetails(normalizedPlaceId, apiKey, {
+      displayLabel: normalizedQuery || undefined,
+      rawQuery: normalizedQuery || undefined,
+      sessionToken,
+    });
+  }
+
+  try {
+    const [topSuggestion] = await autocompleteLocationSuggestions(normalizedQuery, apiKey, {
+      limit: 1,
+      sessionToken,
+    });
+
+    if (topSuggestion?.place_id) {
+      return getPlaceDetails(topSuggestion.place_id, apiKey, {
+        displayLabel: topSuggestion.description,
+        rawQuery: normalizedQuery,
+        sessionToken,
+      });
+    }
+  } catch (error) {
+    // Fall back to geocoding so direct address/city/ZIP searches can still resolve
+    // even when autocomplete has no usable prediction.
+  }
+
+  return geocodeLocation(normalizedQuery, apiKey, {
+    rawQuery: normalizedQuery,
+  });
 }
 
 async function searchNearbyPharmacies({
@@ -670,6 +938,7 @@ function getSearchInput(req, body = {}) {
   return {
     medication: sanitizeText(source.medication || source.query),
     location: sanitizeText(source.location),
+    locationPlaceId: sanitizeText(source.locationPlaceId || source.location_place_id),
     radiusMiles: normalizeRadiusMiles(source.radiusMiles || source.radius_miles),
     onlyOpenNow: normalizeBoolean(source.onlyOpenNow || source.only_open_now),
     sortBy: normalizeSortBy(source.sortBy || source.sort_by),
@@ -678,9 +947,13 @@ function getSearchInput(req, body = {}) {
 
 module.exports = {
   SEARCH_DISCLAIMER,
+  autocompleteLocationSuggestions,
+  extractStructuredLocationFields,
   geocodeLocation,
+  getPlaceDetails,
   getSearchInput,
   readJsonBody,
+  resolveLocationInput,
   searchNearbyPharmacies,
   sendJson,
 };

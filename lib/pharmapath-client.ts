@@ -3,6 +3,7 @@
 export type PharmacySearchFilters = {
   medication: string;
   location: string;
+  locationPlaceId?: string;
   radiusMiles?: number;
   sortBy?: "best_match" | "distance" | "rating";
   onlyOpenNow?: boolean;
@@ -13,17 +14,31 @@ export type PharmacySearchResponse = {
   query: {
     medication: string;
     location: string;
+    location_place_id?: string | null;
     radius_miles: number;
     only_open_now: boolean;
     sort_by: string;
   };
   location: {
+    raw_query: string;
+    display_label: string;
     formatted_address: string;
+    name: string | null;
     place_id: string | null;
     coordinates: {
       lat: number;
       lng: number;
     };
+    types: string[];
+    resolution_source: string;
+    city: string | null;
+    state: string | null;
+    postal_code: string | null;
+    neighborhood: string | null;
+    country: string | null;
+    country_code: string | null;
+    route: string | null;
+    street_number: string | null;
   };
   disclaimer: string;
   medication_profile: {
@@ -251,6 +266,7 @@ function buildPharmacyCacheKey(filters: PharmacySearchFilters) {
   return `${PHARMACY_CACHE_PREFIX}${JSON.stringify({
     medication: sanitizeText(filters.medication).toLowerCase(),
     location: sanitizeText(filters.location).toLowerCase(),
+    locationPlaceId: sanitizeText(filters.locationPlaceId || "").toLowerCase(),
     radiusMiles: Number(filters.radiusMiles || 5),
     sortBy: filters.sortBy || "best_match",
     onlyOpenNow: Boolean(filters.onlyOpenNow),
@@ -261,6 +277,7 @@ function buildPharmacyPayload(filters: PharmacySearchFilters) {
   return {
     medication: sanitizeText(filters.medication),
     location: sanitizeText(filters.location),
+    locationPlaceId: sanitizeText(filters.locationPlaceId || "") || undefined,
     radiusMiles: Number(filters.radiusMiles || 5),
     sortBy: filters.sortBy || "best_match",
     onlyOpenNow: Boolean(filters.onlyOpenNow),

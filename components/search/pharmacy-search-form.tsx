@@ -2,27 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { ControlledCombobox } from "@/components/search/controlled-combobox";
+import { LocationCombobox } from "@/components/search/location-combobox";
 import { MedicationCombobox } from "@/components/search/medication-combobox";
 import { MedicationStrengthField } from "@/components/search/medication-strength-field";
 import { featuredSearches } from "@/lib/content";
+import {
+  createLocationSessionToken,
+  resolveLocationQuery,
+} from "@/lib/locations/client";
 import {
   resolveMedicationOption,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
 import { buildMedicationQueryLabel } from "@/lib/medications/selection";
 import { useAuth } from "@/lib/auth/auth-context";
-import {
-  findSupportedOption,
-  locationOptions,
-  resolveInitialOption,
-  type SearchOption,
-} from "@/lib/search-options";
 import { cn } from "@/lib/utils";
 
 type PharmacySearchFormProps = {
   initialMedication?: string;
   initialLocation?: string;
+  initialLocationPlaceId?: string;
   initialRadiusMiles?: number;
   initialSortBy?: "best_match" | "distance" | "rating";
   initialOnlyOpenNow?: boolean;
@@ -36,6 +35,7 @@ type PharmacySearchFormProps = {
 function buildResultsHref({
   medication,
   location,
+  locationPlaceId,
   radiusMiles,
   sortBy,
   onlyOpenNow,
@@ -43,6 +43,7 @@ function buildResultsHref({
 }: {
   medication: string;
   location: string;
+  locationPlaceId?: string | null;
   radiusMiles: number;
   sortBy: string;
   onlyOpenNow: boolean;
@@ -56,12 +57,35 @@ function buildResultsHref({
     onlyOpenNow: String(onlyOpenNow),
   });
 
+  if (locationPlaceId) {
+    params.set("locationPlaceId", locationPlaceId);
+  }
+
   return `${action}?${params.toString()}`;
+}
+
+type LocationSelection = {
+  label: string;
+  placeId: string | null;
+};
+
+function createLocationSelection(label: string, placeId?: string | null) {
+  const trimmedLabel = label.trim();
+
+  if (!trimmedLabel) {
+    return null;
+  }
+
+  return {
+    label: trimmedLabel,
+    placeId: placeId?.trim() || null,
+  } satisfies LocationSelection;
 }
 
 export function PharmacySearchForm({
   initialMedication = "",
   initialLocation = "",
+  initialLocationPlaceId = "",
   initialRadiusMiles = 5,
   initialSortBy = "best_match",
   initialOnlyOpenNow = false,
@@ -77,19 +101,18 @@ export function PharmacySearchForm({
   const [medicationOption, setMedicationOption] = useState<MedicationSearchOption | null>(null);
   const [medication, setMedication] = useState(initialMedication);
   const [selectedStrength, setSelectedStrength] = useState("");
-  const [locationOption, setLocationOption] = useState<SearchOption | null>(() =>
-    resolveInitialOption(locationOptions, initialLocation),
+  const [locationSelection, setLocationSelection] = useState<LocationSelection | null>(() =>
+    createLocationSelection(initialLocation, initialLocationPlaceId),
   );
-  const [location, setLocation] = useState(
-    resolveInitialOption(locationOptions, initialLocation)?.label || initialLocation,
-  );
+  const [location, setLocation] = useState(initialLocation);
   const [radiusMiles, setRadiusMiles] = useState(initialRadiusMiles);
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [onlyOpenNow, setOnlyOpenNow] = useState(initialOnlyOpenNow);
   const [medicationError, setMedicationError] = useState<string | null>(null);
   const [strengthError, setStrengthError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [isResolvingMedication, setIsResolvingMedication] = useState(false);
+  const [isResolvingSearch, setIsResolvingSearch] = useState(false);
+  const [locationSessionToken, setLocationSessionToken] = useState(createLocationSessionToken);
 
   useEffect(() => {
     let cancelled = false;
@@ -128,10 +151,10 @@ export function PharmacySearchForm({
   }, [initialMedication]);
 
   useEffect(() => {
-    const nextLocationOption = resolveInitialOption(locationOptions, initialLocation);
-    setLocationOption(nextLocationOption);
-    setLocation(nextLocationOption?.label || initialLocation);
-  }, [initialLocation]);
+    const nextLocationSelection = createLocationSelection(initialLocation, initialLocationPlaceId);
+    setLocationSelection(nextLocationSelection);
+    setLocation(nextLocationSelection?.label || initialLocation);
+  }, [initialLocation, initialLocationPlaceId]);
 
   useEffect(() => {
     setRadiusMiles(initialRadiusMiles);
@@ -147,9 +170,9 @@ export function PharmacySearchForm({
 
   useEffect(() => {
     if (!initialLocation && !location && profile?.defaultLocationLabel) {
-      const nextLocationOption = resolveInitialOption(locationOptions, profile.defaultLocationLabel);
-      setLocationOption(nextLocationOption);
-      setLocation(nextLocationOption?.label || profile.defaultLocationLabel);
+      const nextLocationSelection = createLocationSelection(profile.defaultLocationLabel);
+      setLocationSelection(nextLocationSelection);
+      setLocation(nextLocationSelection?.label || profile.defaultLocationLabel);
     }
   }, [initialLocation, location, profile?.defaultLocationLabel]);
 
@@ -183,10 +206,10 @@ export function PharmacySearchForm({
     setLocationError(null);
 
     if (
-      locationOption &&
-      nextValue.trim().toLowerCase() !== locationOption.label.trim().toLowerCase()
+      locationSelection &&
+      nextValue.trim().toLowerCase() !== locationSelection.label.trim().toLowerCase()
     ) {
-      setLocationOption(null);
+      setLocationSelection(null);
     }
   };
 
@@ -196,17 +219,46 @@ export function PharmacySearchForm({
         className="space-y-4"
         onSubmit={async (event) => {
           event.preventDefault();
-          setIsResolvingMedication(true);
+          setIsResolvingSearch(true);
+          const normalizedMedication = medication.trim();
+          const normalizedLocation = location.trim();
+
+          if (!normalizedMedication || !normalizedLocation) {
+            setMedicationError(normalizedMedication ? null : "Choose a medication from the search results.");
+            setLocationError(
+              normalizedLocation ? null : "Enter a city, ZIP, address, pharmacy, or landmark.",
+            );
+            setIsResolvingSearch(false);
+            return;
+          }
+
+          const [medicationResult, locationResult] = await Promise.allSettled([
+            medicationOption ? Promise.resolve(medicationOption) : resolveMedicationOption(normalizedMedication),
+            resolveLocationQuery({
+              query: normalizedLocation,
+              placeId: locationSelection?.placeId,
+              sessionToken: locationSessionToken,
+            }),
+          ]);
+
           try {
-            const resolvedMedication = medicationOption || (await resolveMedicationOption(medication));
-            const resolvedLocation = locationOption || findSupportedOption(locationOptions, location);
+            const resolvedMedication =
+              medicationResult.status === "fulfilled" ? medicationResult.value : null;
+            const resolvedLocation =
+              locationResult.status === "fulfilled" ? locationResult.value : null;
             const resolvedStrength =
               selectedStrength ||
               resolvedMedication?.matchedStrength ||
               (resolvedMedication?.strengths.length === 1 ? resolvedMedication.strengths[0].value : "");
 
             setMedicationError(
-              resolvedMedication ? null : "Choose a medication from the search results.",
+              medicationResult.status === "rejected"
+                ? medicationResult.reason instanceof Error
+                  ? medicationResult.reason.message
+                  : "Unable to search medications right now."
+                : resolvedMedication
+                  ? null
+                  : "Choose a medication from the search results.",
             );
             setStrengthError(
               resolvedMedication && resolvedMedication.strengths.length > 1 && !resolvedStrength
@@ -214,7 +266,13 @@ export function PharmacySearchForm({
                 : null,
             );
             setLocationError(
-              resolvedLocation ? null : "Choose a supported city or ZIP-backed location.",
+              locationResult.status === "rejected"
+                ? locationResult.reason instanceof Error
+                  ? locationResult.reason.message
+                  : "Unable to resolve that location right now."
+                : resolvedLocation
+                  ? null
+                  : "Enter a real location to search nearby pharmacies.",
             );
 
             if (
@@ -228,11 +286,17 @@ export function PharmacySearchForm({
             setMedicationOption(resolvedMedication);
             setMedication(resolvedMedication.label);
             setSelectedStrength(resolvedStrength);
+            setLocationSelection(
+              createLocationSelection(resolvedLocation.display_label, resolvedLocation.place_id),
+            );
+            setLocation(resolvedLocation.display_label);
+            setLocationSessionToken(createLocationSessionToken());
             startTransition(() => {
               router.push(
                 buildResultsHref({
                   medication: buildMedicationQueryLabel(resolvedMedication, resolvedStrength),
-                  location: resolvedLocation.value,
+                  location: resolvedLocation.display_label,
+                  locationPlaceId: resolvedLocation.place_id,
                   radiusMiles,
                   sortBy,
                   onlyOpenNow,
@@ -240,12 +304,8 @@ export function PharmacySearchForm({
                 }),
               );
             });
-          } catch (reason) {
-            setMedicationError(
-              reason instanceof Error ? reason.message : "Unable to search medications right now.",
-            );
           } finally {
-            setIsResolvingMedication(false);
+            setIsResolvingSearch(false);
           }
         }}
       >
@@ -279,19 +339,20 @@ export function PharmacySearchForm({
             error={strengthError}
           />
 
-          <ControlledCombobox
+          <LocationCombobox
             label="Location"
-            placeholder="Select a city or ZIP-backed area"
-            options={locationOptions}
+            placeholder="Search city, ZIP, address, pharmacy, or landmark"
             value={location}
-            selectedOptionId={locationOption?.id || null}
+            selectedPlaceId={locationSelection?.placeId || null}
+            sessionToken={locationSessionToken}
             onValueChange={handleLocationInputChange}
             onSelect={(option) => {
-              setLocationOption(option);
-              setLocation(option.label);
+              setLocationSelection(
+                createLocationSelection(option.description, option.placeId),
+              );
+              setLocation(option.description);
               setLocationError(null);
             }}
-            emptyMessage="No supported city or ZIP-backed locations match that search yet."
             error={locationError}
           />
         </div>
@@ -351,10 +412,10 @@ export function PharmacySearchForm({
           </p>
           <button
             type="submit"
-            disabled={isPending || isResolvingMedication}
+            disabled={isPending || isResolvingSearch}
             className="template-button-primary relative z-40 whitespace-nowrap px-4 py-3.5 text-sm disabled:cursor-wait disabled:opacity-70 sm:self-start"
           >
-            {isPending || isResolvingMedication ? "Loading..." : submitLabel}
+            {isPending || isResolvingSearch ? "Loading..." : submitLabel}
           </button>
         </div>
       </form>

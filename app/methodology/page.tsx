@@ -7,7 +7,7 @@ const dataSources = [
   {
     label: "Google Maps Platform",
     description:
-      "Handled city and ZIP selections resolve through Google geocoding, then nearby pharmacy names, hours, ratings, and Maps links come from Google Places.",
+      "Freeform location searches resolve through Google Places Autocomplete, Place Details, and Geocoding, then nearby pharmacy names, hours, ratings, and Maps links come from Google Places.",
     accent: "bg-sky-50 border-sky-200",
     dot: "bg-sky-500",
     eyebrow: "text-sky-600",
@@ -65,7 +65,7 @@ const methodologyGuide = [
     title: "Handled search inputs",
     value: "Indexed server-side",
     detail:
-      "Medication typeahead hits a normalized FDA-backed index plus a clearly isolated demo-only catalog, while location stays constrained to the handled city and ZIP-backed entries in this build.",
+      "Medication typeahead hits a normalized FDA-backed index plus a clearly isolated demo-only catalog, while location accepts freeform Google-backed searches such as city/state, ZIP, address, pharmacy name, and landmark queries.",
   },
   {
     title: "Medication context",

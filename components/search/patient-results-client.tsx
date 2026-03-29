@@ -500,6 +500,7 @@ export function PatientResultsClient() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query")?.trim() || "";
   const location = searchParams.get("location")?.trim() || "";
+  const locationPlaceId = searchParams.get("locationPlaceId")?.trim() || "";
   const radiusMiles = Number(searchParams.get("radiusMiles") || 5);
   const sortBy = (searchParams.get("sortBy") || "best_match") as "best_match" | "distance" | "rating";
   const onlyOpenNow = searchParams.get("onlyOpenNow") === "true";
@@ -549,6 +550,7 @@ export function PatientResultsClient() {
       client.searchPharmacies({
         medication: query,
         location,
+        locationPlaceId: locationPlaceId || undefined,
         radiusMiles,
         sortBy,
         onlyOpenNow,
@@ -581,7 +583,7 @@ export function PatientResultsClient() {
     return () => {
       cancelled = true;
     };
-  }, [query, location, radiusMiles, sortBy, onlyOpenNow]);
+  }, [query, location, locationPlaceId, radiusMiles, sortBy, onlyOpenNow]);
 
   useEffect(() => {
     if (!query) {
@@ -740,6 +742,7 @@ export function PatientResultsClient() {
           <PharmacySearchForm
             initialMedication={query}
             initialLocation={location}
+            initialLocationPlaceId={locationPlaceId || undefined}
             initialRadiusMiles={radiusMiles}
             initialSortBy={sortBy}
             initialOnlyOpenNow={onlyOpenNow}
@@ -793,7 +796,7 @@ export function PatientResultsClient() {
                     <div>
                       <span className="eyebrow-label">Live nearby pharmacies</span>
                       <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
-                        {pharmacyData?.location.formatted_address || location}
+                        {pharmacyData?.location.display_label || pharmacyData?.location.formatted_address || location}
                       </h2>
                     </div>
                     {pharmacyData ? (

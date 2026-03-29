@@ -42,7 +42,7 @@ export const workflowShowcase = [
     id: "patient",
     title: "Pharmacy Finder keeps the first call path tight.",
     summary:
-      "Search the FDA-backed medication catalog plus a handled location to load the nearby list, one access read, and the next question to ask.",
+      "Search the FDA-backed medication catalog plus any Google-resolved location to load the nearby list, one access read, and the next question to ask.",
     bullets: [
       "Nearby list from Google Places",
       "Medication-wide FDA context, not store inventory",
@@ -104,6 +104,6 @@ export const homeFaqs = [
   {
     question: "Where does PharmaPath get its data?",
     answer:
-      "Nearby pharmacy search uses Google Maps Platform for handled location resolution and live nearby pharmacy results. Medication evidence comes from FDA records, including listings, shortage files, recall notices, and approval history. Clearly labeled demo-only medication entries stay isolated from that FDA-backed catalog. When signed-in users submit reports, those appear as a separate crowd layer rather than as public-source inventory proof.",
+      "Nearby pharmacy search uses Google Maps Platform for freeform location autocomplete, resolution, and live nearby pharmacy results. Medication evidence comes from FDA records, including listings, shortage files, recall notices, and approval history. Clearly labeled demo-only medication entries stay isolated from that FDA-backed catalog. When signed-in users submit reports, those appear as a separate crowd layer rather than as public-source inventory proof.",
   },
 ];

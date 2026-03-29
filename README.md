@@ -39,7 +39,7 @@ Signed-in contributors can submit pharmacy-specific availability reports. Report
 - **Tailwind CSS v4** + **Framer Motion** — styling and animation
 - **Firebase Auth** — contributor accounts
 - **Firestore** — contributor profiles and crowd availability reports
-- **Google Places / Geocoding API** — nearby pharmacy discovery (server-side)
+- **Google Places / Geocoding API** — location autocomplete, resolution, and nearby pharmacy discovery (server-side)
 - **openFDA** — NDC listings, shortages, Drugs@FDA approvals, enforcement/recalls (server-side)
 
 ### Key source directories
@@ -47,6 +47,8 @@ Signed-in contributors can submit pharmacy-specific availability reports. Report
 ```
 app/                    Next.js pages and API routes
   api/
+    locations/autocomplete/ GET — Google-backed location suggestions
+    locations/resolve/      POST — canonical Google location resolution
     pharmacies/search/  POST — nearby pharmacy search
     drug-intelligence/  GET  — FDA-backed medication intelligence
     medications/search/ GET  — medication autocomplete index
@@ -71,7 +73,7 @@ data/
 
 | Variable | Required | Notes |
 |---|---|---|
-| `GOOGLE_API_KEY` | Yes | Server-side — pharmacy search and geocoding |
+| `GOOGLE_API_KEY` | Yes | Server-side — Places autocomplete, place details, nearby pharmacy search, and geocoding |
 | `OPENFDA_API_KEY` | Recommended | Server-side — higher FDA rate limits |
 | `FDA_API_KEY` | No | Legacy fallback (still supported; not needed if `OPENFDA_API_KEY` is set) |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | |
@@ -129,13 +131,32 @@ npx firebase-tools deploy --project pharma-path --only firestore:rules,firestore
 {
   "medication": "Adderall XR 20 mg",
   "location": "Brooklyn, NY",
+  "locationPlaceId": "ChIJ..."
   "radiusMiles": 5,
   "sortBy": "best_match",
   "onlyOpenNow": false
 }
 ```
 
-Returns: resolved location, ranked nearby pharmacies from Google Places, medication-specific call guidance, and a disclaimer that inventory is not live verified.
+Returns: a canonical resolved location, ranked nearby pharmacies from Google Places, medication-specific call guidance, and a disclaimer that inventory is not live verified.
+
+---
+
+### `GET /api/locations/autocomplete?q=brooklyn%20ny`
+
+Returns live Google-backed location suggestions for freeform entries such as cities, ZIP codes, addresses, landmarks, and pharmacy names.
+
+---
+
+### `POST /api/locations/resolve`
+
+```json
+{
+  "query": "10019"
+}
+```
+
+Returns the canonical Google-resolved location structure used by the pharmacy search flow, including display label, coordinates, `place_id`, and structured address fields when available.
 
 ---
 

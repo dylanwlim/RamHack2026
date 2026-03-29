@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 
 const require = createRequire(import.meta.url);
 const {
-  geocodeLocation,
   getSearchInput,
+  resolveLocationInput,
   searchNearbyPharmacies,
 } = require("../../../../api/_lib/pharmacy-search");
 const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
@@ -56,7 +56,13 @@ async function handleSearch(request) {
     }
 
     const medicationProfile = await resolveMedicationProfile(input.medication);
-    const resolvedLocation = await geocodeLocation(input.location, apiKey);
+    const resolvedLocation = await resolveLocationInput(
+      {
+        query: input.location,
+        placeId: input.locationPlaceId,
+      },
+      apiKey,
+    );
     const searchResult = await searchNearbyPharmacies({
       medication: medicationProfile.canonicalLabel,
       medicationProfileKey: medicationProfile.workflowCategory,
@@ -72,6 +78,7 @@ async function handleSearch(request) {
       query: {
         medication: medicationProfile.canonicalLabel,
         location: input.location,
+        location_place_id: input.locationPlaceId || null,
         radius_miles: input.radiusMiles,
         only_open_now: input.onlyOpenNow,
         sort_by: input.sortBy,
