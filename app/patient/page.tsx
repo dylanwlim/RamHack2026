@@ -11,10 +11,10 @@ export default function PatientPage() {
       <SiteNavbar />
       <PageTransitionShell>
         <section className="px-4 pb-16 pt-28 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div>
+          <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-center lg:gap-10 xl:grid-cols-[minmax(0,35rem)_minmax(0,1fr)] xl:gap-12">
+            <div className="max-w-[35rem]">
               <span className="eyebrow-label">Pharmacy Finder</span>
-              <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.5rem]">
+              <h1 className="mt-6 text-[2.9rem] leading-[0.98] tracking-tight text-slate-950 sm:text-[3.3rem] xl:text-[3.45rem]">
                 Search a medication and location without pretending the stock is guaranteed.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">

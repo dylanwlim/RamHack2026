@@ -188,13 +188,11 @@ export function WorkflowShowcase() {
   const slideFrameVariants = {
     enter: (slideDirection: number) => ({
       opacity: 0,
-      x: slideDirection > 0 ? 28 : -28,
-      y: 8,
+      x: slideDirection > 0 ? 32 : -32,
     }),
     center: {
       opacity: 1,
       x: 0,
-      y: 0,
       transition: {
         duration: motionTiming.base + 0.12,
         ease: motionEase.standard,
@@ -204,8 +202,7 @@ export function WorkflowShowcase() {
     },
     exit: (slideDirection: number) => ({
       opacity: 0,
-      x: slideDirection < 0 ? 28 : -28,
-      y: -8,
+      x: slideDirection < 0 ? 32 : -32,
       transition: {
         duration: motionTiming.base,
         ease: motionEase.standard,
@@ -215,26 +212,26 @@ export function WorkflowShowcase() {
   };
 
   const slideChildVariants = {
-    enter: {
+    enter: (slideDirection: number) => ({
       opacity: 0,
-      y: 12,
-    },
+      x: slideDirection > 0 ? 18 : -18,
+    }),
     center: {
       opacity: 1,
-      y: 0,
+      x: 0,
       transition: {
         duration: motionTiming.base + 0.08,
         ease: motionEase.standard,
       },
     },
-    exit: {
+    exit: (slideDirection: number) => ({
       opacity: 0,
-      y: -10,
+      x: slideDirection < 0 ? 18 : -18,
       transition: {
         duration: motionTiming.quick + 0.05,
         ease: motionEase.standard,
       },
-    },
+    }),
   };
 
   return (
@@ -268,6 +265,7 @@ export function WorkflowShowcase() {
                 className="grid gap-10 lg:grid-cols-[minmax(0,38rem)_minmax(0,46rem)] lg:items-start lg:justify-center lg:gap-14"
               >
                 <motion.div
+                  custom={direction}
                   variants={slideChildVariants}
                   className="flex min-h-[26rem] w-full max-w-[38rem] flex-col justify-start space-y-6 lg:min-h-[32rem]"
                 >
@@ -292,6 +290,7 @@ export function WorkflowShowcase() {
                 </motion.div>
 
                 <motion.div
+                  custom={direction}
                   variants={slideChildVariants}
                   className="relative flex w-full max-w-[46rem] items-start justify-center lg:justify-self-end"
                 >
