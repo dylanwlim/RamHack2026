@@ -1,4 +1,5 @@
 import { HealthStatusCard } from "@/components/search/health-status-card";
+import { PageTransitionShell } from "@/components/page-transition-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
 
@@ -84,7 +85,7 @@ export default function MethodologyPage() {
   return (
     <>
       <SiteNavbar />
-      <main>
+      <PageTransitionShell>
         {/* Hero */}
         <section className="px-4 pb-16 pt-28 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
@@ -185,7 +186,7 @@ export default function MethodologyPage() {
             <HealthStatusCard />
           </div>
         </section>
-      </main>
+      </PageTransitionShell>
       <SiteFooter />
     </>
   );

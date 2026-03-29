@@ -101,7 +101,7 @@ function RouteVisualPanel({
   const panel = routeVisualMeta[routeId];
 
   return (
-    <div className="surface-panel mx-auto flex h-auto min-h-[430px] w-full max-w-[46rem] flex-col justify-center rounded-[2rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
+    <div className="surface-panel flex h-full min-h-[28rem] w-full flex-col justify-center rounded-[2rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8 lg:min-h-[32rem]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-slate-900">{panel.panelTitle}</p>
@@ -207,8 +207,8 @@ export function WorkflowShowcase() {
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
       <div className="site-shell">
-        <div className="grid items-start gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
-          <div className="space-y-8">
+        <div className="mx-auto grid w-full max-w-[72rem] gap-12 lg:min-h-[46rem] lg:grid-cols-[minmax(0,38rem)_minmax(0,46rem)] lg:items-center lg:justify-center lg:gap-14">
+          <div className="flex h-full w-full max-w-[38rem] flex-col justify-center space-y-8 justify-self-center">
             <div>
               <span className="eyebrow-label">Pages</span>
               <h2 className="mt-6 section-title">Three surfaces. Three distinct jobs.</h2>
@@ -218,37 +218,39 @@ export function WorkflowShowcase() {
               </p>
             </div>
 
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={active.id}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.5, ease: motionEase.standard }}
-                className="space-y-6"
-              >
-                <div className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">
-                  {activeMeta.panelTitle}
-                </div>
-                <h3 className="text-[2.25rem] leading-tight tracking-tight text-slate-950">
-                  {active.title}
-                </h3>
-                <p className="max-w-[36rem] text-lg leading-8 text-slate-700">{active.summary}</p>
-                <ul className="space-y-3">
-                  {active.bullets.map((bullet) => (
-                    <li key={bullet} className="flex gap-3 text-sm leading-6 text-slate-700 sm:text-base">
-                      <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href={active.href} className="template-button-primary">
-                  Open {activeMeta.panelTitle}
-                </Link>
-              </motion.div>
-            </AnimatePresence>
+            <div className="lg:min-h-[29rem]">
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={active.id}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.5, ease: motionEase.standard }}
+                  className="flex flex-col justify-center space-y-6 lg:min-h-[29rem]"
+                >
+                  <div className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">
+                    {activeMeta.panelTitle}
+                  </div>
+                  <h3 className="text-[2.25rem] leading-tight tracking-tight text-slate-950">
+                    {active.title}
+                  </h3>
+                  <p className="max-w-[36rem] text-lg leading-8 text-slate-700">{active.summary}</p>
+                  <ul className="space-y-3">
+                    {active.bullets.map((bullet) => (
+                      <li key={bullet} className="flex gap-3 text-sm leading-6 text-slate-700 sm:text-base">
+                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={active.href} className="template-button-primary">
+                    Open {activeMeta.panelTitle}
+                  </Link>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
             <div className="flex items-center gap-6">
               <div className="flex gap-2">
@@ -304,7 +306,7 @@ export function WorkflowShowcase() {
             </div>
           </div>
 
-          <div className="relative flex min-h-[520px] items-center">
+          <div className="relative flex h-full w-full max-w-[46rem] items-center justify-center justify-self-center lg:min-h-[36rem]">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={active.id}
@@ -314,7 +316,7 @@ export function WorkflowShowcase() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.5, ease: motionEase.standard }}
-                className="flex w-full items-center"
+                className="flex w-full items-center justify-center"
               >
                 <RouteVisualPanel routeId={active.id} />
               </motion.div>

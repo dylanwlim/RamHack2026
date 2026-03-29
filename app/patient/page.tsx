@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageTransitionShell } from "@/components/page-transition-shell";
 import { ExampleScenarioGrid } from "@/components/search/example-scenario-grid";
 import { PharmacySearchForm } from "@/components/search/pharmacy-search-form";
 import { SiteFooter } from "@/components/site-footer";
@@ -8,7 +9,7 @@ export default function PatientPage() {
   return (
     <>
       <SiteNavbar />
-      <main>
+      <PageTransitionShell>
         <section className="px-4 pb-16 pt-28 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
@@ -42,7 +43,7 @@ export default function PatientPage() {
             </div>
           </div>
         </section>
-      </main>
+      </PageTransitionShell>
       <SiteFooter />
     </>
   );
