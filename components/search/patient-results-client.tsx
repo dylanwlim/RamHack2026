@@ -248,7 +248,10 @@ function DoseGrid({ doses }: { doses: ReturnType<typeof buildDoseAvailability> }
 
 /** Manufacturer status rows — like airline availability per flight */
 function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerRows> }) {
+  const [showAll, setShowAll] = useState(false);
   if (!rows.length) return null;
+  const visible = showAll ? rows : rows.slice(0, 5);
+  const hidden = rows.length - 5;
   return (
     <div className="surface-panel rounded-[2rem] p-6">
       <span className="eyebrow-label">Manufacturer status</span>
@@ -256,7 +259,7 @@ function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerR
         FDA-listed manufacturers for matching presentations.
       </p>
       <div className="mt-4 divide-y divide-slate-100">
-        {rows.map((r, i) => {
+        {visible.map((r, i) => {
           const style = mfgStatusStyle(r.status);
           return (
             <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
@@ -278,6 +281,15 @@ function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerR
           );
         })}
       </div>
+      {rows.length > 5 ? (
+        <button
+          type="button"
+          className="mt-3 text-sm text-[#156d95]"
+          onClick={() => setShowAll((v) => !v)}
+        >
+          {showAll ? "Show fewer" : `Show ${hidden} more`}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -320,12 +332,6 @@ function ShortagePanel({
     type: classifyInsight(text),
     text,
   }));
-
-  // "Best bet" action tip — first action-type insight, or fallback question
-  const bestBet =
-    insights.find((i) => i.type === "action")?.text ??
-    match.patient_view.questions_to_ask[0] ??
-    null;
 
   return (
     <>
@@ -383,16 +389,6 @@ function ShortagePanel({
       {/* ── Manufacturer status ── */}
       <ManufacturerList rows={mfgRows} />
 
-      {/* ── Best bet action strip (like "Book now" in Flights) ── */}
-      {bestBet ? (
-        <div className="surface-panel flex items-start gap-4 rounded-[2rem] border border-violet-200 bg-violet-50 p-5">
-          <span className="mt-0.5 shrink-0 text-lg font-bold text-violet-600" aria-hidden>→</span>
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-widest text-violet-500">Your best next step</div>
-            <p className="mt-1 text-sm leading-6 text-violet-900">{bestBet}</p>
-          </div>
-        </div>
-      ) : null}
 
       {/* ── Insights ── */}
       {insights.length > 0 ? (
@@ -420,29 +416,6 @@ function ShortagePanel({
         <CalloutList className="mt-5" items={match.patient_view.questions_to_ask} />
       </div>
 
-      {/* ── Active shortage entries (detail, collapsed) ── */}
-      {activeShortages.length > 0 ? (
-        <div className="surface-panel rounded-[2rem] p-6">
-          <span className="eyebrow-label">Active FDA shortage entries</span>
-          <div className="mt-5 space-y-3">
-            {activeShortages.slice(0, 4).map((s, i) => (
-              <div key={i} className="rounded-[1.2rem] border border-rose-100 bg-rose-50 p-4">
-                {s.presentation ? (
-                  <div className="text-sm font-medium text-slate-900">{s.presentation}</div>
-                ) : null}
-                {s.companyName ? (
-                  <div className="mt-0.5 text-xs text-slate-500">{s.companyName}</div>
-                ) : null}
-                <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600">
-                  {s.shortageReason ? <span><span className="font-medium">Reason:</span> {s.shortageReason}</span> : null}
-                  {s.availability ? <span><span className="font-medium">Status:</span> {s.availability}</span> : null}
-                  {s.updateLabel ? <span className="text-slate-400">Updated {s.updateLabel}</span> : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {/* ── Recent recalls ── */}
       {hasRecalls ? (
