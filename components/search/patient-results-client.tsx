@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, ExternalLink, LoaderCircle, MapPin, PhoneCall } from "lucide-react";
@@ -659,13 +660,13 @@ export function PatientResultsClient() {
                               {pharmacyData.recommended.address}
                             </p>
                           </div>
-                          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <div className="flat-chip">
                             {formatMiles(pharmacyData.recommended.distance_miles)}
                           </div>
                         </div>
 
                         <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-600">
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                          <span className="flat-chip">
                             {pharmacyData.recommended.open_now === true
                               ? "Open now"
                               : pharmacyData.recommended.open_now === false
@@ -673,11 +674,11 @@ export function PatientResultsClient() {
                                 : "Hours unavailable"}
                           </span>
                           {pharmacyData.recommended.rating ? (
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                            <span className="flat-chip">
                               Rating {pharmacyData.recommended.rating.toFixed(1)}
                             </span>
                           ) : null}
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                          <span className="flat-chip">
                             {pharmacyData.recommended.review_label}
                           </span>
                         </div>
@@ -734,7 +735,7 @@ export function PatientResultsClient() {
                                     <div className="text-lg tracking-tight text-slate-900">{result.name}</div>
                                     <div className="mt-1 text-sm text-slate-500">{result.address}</div>
                                   </div>
-                                  <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                                  <div className="flat-chip">
                                     {formatMiles(result.distance_miles)}
                                   </div>
                                 </div>
@@ -782,7 +783,26 @@ export function PatientResultsClient() {
                     <p className="mt-3 text-base leading-7">{drugError}</p>
                   </div>
                 ) : featuredMatch ? (
-                  <ShortagePanel match={featuredMatch} drugData={drugData!} query={query} location={location} />
+                  <>
+                    <ShortagePanel match={featuredMatch} drugData={drugData!} query={query} location={location} />
+                    <div className="surface-panel rounded-[2rem] p-6">
+                      <span className="eyebrow-label">Questions to ask next</span>
+                      <div className="mt-6 flex flex-wrap gap-3">
+                        <Link
+                          href={`/drug?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
+                          className="rounded-full bg-slate-950 px-[18px] py-[15px] text-sm font-medium leading-4 text-white transition-all duration-200 hover:rounded-2xl"
+                        >
+                          Open drug detail
+                        </Link>
+                        <Link
+                          href={`/prescriber?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
+                          className="rounded-full border border-slate-300 px-[18px] py-[15px] text-sm font-medium leading-4 text-slate-900 transition-all duration-200 hover:rounded-2xl"
+                        >
+                          Open prescriber view
+                        </Link>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <EmptyState
                     eyebrow="No FDA match"
