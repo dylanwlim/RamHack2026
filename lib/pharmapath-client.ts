@@ -113,9 +113,12 @@ export type DrugIntelligenceResponse = {
         active_count: number;
         items: Array<{
           status: string;
+          normalizedStatus?: string;
           presentation?: string;
+          companyName?: string;
           shortageReason?: string;
           availability?: string;
+          updateDate?: string | null;
           updateLabel?: string;
         }>;
       };
@@ -127,6 +130,7 @@ export type DrugIntelligenceResponse = {
           reason?: string;
           productDescription?: string;
           reportDateLabel?: string;
+          recallingFirm?: string;
         }>;
       };
       approvals: {

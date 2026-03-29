@@ -101,6 +101,18 @@ function buildExactFieldQuery(pairs) {
   return joinOr(clauses);
 }
 
+// Builds unquoted token clauses — openFDA Elasticsearch matches the token
+// anywhere within the field value, so generic_name:semaglutide matches
+// "Semaglutide Injection" without needing the exact full string.
+function buildTokenFieldQuery(field, tokens) {
+  const clauses = tokens
+    .map((t) => sanitizeText(t).toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((t) => t.length >= 4)
+    .map((t) => `${field}:${t}`);
+
+  return joinOr(clauses);
+}
+
 function getOpenFdaApiKey() {
   return sanitizeText(process.env.OPENFDA_API_KEY || process.env.FDA_API_KEY);
 }
@@ -241,8 +253,48 @@ async function searchDrugApplications(searchPhrases) {
   });
 }
 
+// FDA shortage records store the full multi-ingredient chemical string in
+// generic_name (e.g. "Amphetamine Aspartate Monohydrate, Amphetamine Sulfate,
+// Dextroamphetamine Saccharate...") with no proprietary_name. Exact-phrase
+// matching on a short display name like "Adderall" or "Dextroamp Saccharate"
+// won't hit those records. We extract the longest meaningful active ingredient
+// token from each generic name and add it as an additional search term so
+// openFDA's full-text search within the field value finds the records.
+function extractActiveIngredientTokens(genericNames) {
+  // Common pharmaceutical salt/form suffixes that are too generic to search on
+  const noiseWords = new Set([
+    "and", "or", "with", "for", "the",
+    "monohydrate", "hydrochloride", "sulfate", "saccharate",
+    "phosphate", "acetate", "citrate", "tartrate", "sodium",
+    "calcium", "potassium", "chloride", "bromide", "maleate",
+    "fumarate", "succinate", "besylate", "mesylate", "injection",
+    "tablet", "capsule", "solution", "suspension",
+  ]);
+  const seen = new Set();
+  const tokens = [];
+
+  genericNames.forEach((name) => {
+    sanitizeText(name)
+      .split(/[\s,/]+/)
+      .map((w) => w.toLowerCase().replace(/[^a-z]/g, ""))
+      .filter((w) => w.length >= 6 && !noiseWords.has(w))
+      .slice(0, 3)
+      .forEach((w) => {
+        if (!seen.has(w)) {
+          seen.add(w);
+          tokens.push(w);
+        }
+      });
+  });
+
+  return tokens;
+}
+
 async function searchShortagesForCandidate(candidate) {
-  const search = buildExactFieldQuery([
+  const activeIngredientTokens = extractActiveIngredientTokens(candidate.genericNames);
+
+  // Exact-phrase clauses for proprietary_name and full generic_name strings
+  const exactSearch = buildExactFieldQuery([
     ...candidate.brandNames.slice(0, 3).map((value) => ({
       field: "proprietary_name",
       value,
@@ -253,6 +305,15 @@ async function searchShortagesForCandidate(candidate) {
     })),
   ]);
 
+  // Unquoted token clauses — matches the ingredient word anywhere inside the
+  // FDA's verbose multi-ingredient generic_name string, e.g.:
+  //   "semaglutide" matches "Semaglutide Injection"
+  //   "dextroamphetamine" matches "Dextroamphetamine Saccharate..."
+  const tokenSearch = buildTokenFieldQuery("generic_name", activeIngredientTokens.slice(0, 4));
+
+  const clauses = [exactSearch, tokenSearch].filter(Boolean);
+  const search = clauses.length > 1 ? `(${clauses.join("+OR+")})` : clauses[0] || "";
+
   if (!search) {
     return {
       meta: { results: { total: 0, limit: 0, skip: 0 } },
@@ -262,7 +323,7 @@ async function searchShortagesForCandidate(candidate) {
 
   return fetchOpenFdaJson("/drug/shortages.json", {
     search,
-    limit: "12",
+    limit: "20",
   });
 }
 
