@@ -23,7 +23,11 @@ import {
 } from "@/lib/crowd-signal/scoring";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { toDate } from "@/lib/firebase/firestore-utils";
-import { createDefaultProfile } from "@/lib/profile/profile-service";
+import {
+  createDefaultProfile,
+  ensureUserProfile,
+  mapProfileDoc,
+} from "@/lib/profile/profile-service";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
 
 const MAX_NOTE_LENGTH = 240;
@@ -141,16 +145,15 @@ export async function submitCrowdReport(input: {
     throw new Error("Medication and pharmacy details are required.");
   }
 
+  await ensureUserProfile(input.actor, input.profile || {});
+
   const profileRef = doc(db, "profiles", input.actor.uid);
   const reportRef = doc(collection(db, "crowdReports"));
 
   await runTransaction(db, async (transaction) => {
     const profileSnapshot = await transaction.get(profileRef);
     const currentProfile = profileSnapshot.exists()
-      ? ({
-          ...createDefaultProfile(input.actor),
-          ...(profileSnapshot.data() as Partial<UserProfileRecord>),
-        } as UserProfileRecord)
+      ? mapProfileDoc(profileSnapshot.id, profileSnapshot.data())
       : input.profile || createDefaultProfile(input.actor);
 
     const currentContributionCount = Number(currentProfile.contributionCount || 0);

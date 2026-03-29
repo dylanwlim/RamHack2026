@@ -41,6 +41,10 @@ type SignUpInput = {
   displayName: string;
   firstName?: string;
   lastName?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  defaultLocationLabel?: string;
 };
 
 type AuthContextValue = {
@@ -157,6 +161,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: input.displayName.trim(),
             firstName: input.firstName?.trim() || "",
             lastName: input.lastName?.trim() || "",
+            city: input.city?.trim() || "",
+            state: input.state?.trim() || "",
+            zipCode: input.zipCode?.trim() || "",
+            defaultLocationLabel: input.defaultLocationLabel?.trim() || "",
             contributorAlias: input.displayName.trim(),
           });
           return credential.user;
@@ -196,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           }
 
-          await saveUserProfile(user.uid, input);
+          await saveUserProfile(user, input);
         } catch (error) {
           throw new Error(formatAuthError(error));
         }

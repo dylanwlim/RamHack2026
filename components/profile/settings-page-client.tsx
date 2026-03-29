@@ -10,6 +10,7 @@ import {
   AuthLabel,
 } from "@/components/auth/auth-primitives";
 import { useAuth } from "@/lib/auth/auth-context";
+import { createDefaultProfile } from "@/lib/profile/profile-service";
 
 type SettingsFormState = {
   displayName: string;
@@ -26,7 +27,7 @@ type SettingsFormState = {
 };
 
 export function SettingsPageClient() {
-  const { profile, updateProfileRecord, signOut } = useAuth();
+  const { profile, profileLoading, signOut, updateProfileRecord, user } = useAuth();
   const [formState, setFormState] = useState<SettingsFormState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -34,24 +35,32 @@ export function SettingsPageClient() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!profile) {
+    if (profileLoading || !user) {
       return;
     }
 
+    const currentProfile = profile || createDefaultProfile(user);
     setFormState({
-      displayName: profile.displayName || "",
-      city: profile.city || "",
-      state: profile.state || "",
-      zipCode: profile.zipCode || "",
-      defaultLocationLabel: profile.defaultLocationLabel || "",
-      preferredSearchRadius: profile.preferredSearchRadius || 5,
-      contributorAlias: profile.contributorAlias || profile.displayName || "",
-      publicContributorAlias: Boolean(profile.publicContributorAlias),
-      notifyCrowdUpdates: Boolean(profile.notifyCrowdUpdates),
-      notifyShortageChanges: Boolean(profile.notifyShortageChanges),
-      notifySavedSearchUpdates: Boolean(profile.notifySavedSearchUpdates),
+      displayName: currentProfile.displayName || "",
+      city: currentProfile.city || "",
+      state: currentProfile.state || "",
+      zipCode: currentProfile.zipCode || "",
+      defaultLocationLabel: currentProfile.defaultLocationLabel || "",
+      preferredSearchRadius: currentProfile.preferredSearchRadius || 5,
+      contributorAlias: currentProfile.contributorAlias || currentProfile.displayName || "",
+      publicContributorAlias: Boolean(currentProfile.publicContributorAlias),
+      notifyCrowdUpdates: Boolean(currentProfile.notifyCrowdUpdates),
+      notifyShortageChanges: Boolean(currentProfile.notifyShortageChanges),
+      notifySavedSearchUpdates: Boolean(currentProfile.notifySavedSearchUpdates),
     });
-  }, [profile]);
+  }, [profile, profileLoading, user]);
+
+  function updateField<Key extends keyof SettingsFormState>(
+    key: Key,
+    value: SettingsFormState[Key],
+  ) {
+    setFormState((current) => (current ? { ...current, [key]: value } : current));
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,11 +128,7 @@ export function SettingsPageClient() {
                       <AuthInput
                         id="displayName"
                         value={formState.displayName}
-                        onChange={(event) =>
-                          setFormState((current) =>
-                            current ? { ...current, displayName: event.currentTarget.value } : current,
-                          )
-                        }
+                        onChange={(event) => updateField("displayName", event.currentTarget.value)}
                       />
                     </div>
 
@@ -133,11 +138,7 @@ export function SettingsPageClient() {
                         <AuthInput
                           id="city"
                           value={formState.city}
-                          onChange={(event) =>
-                            setFormState((current) =>
-                              current ? { ...current, city: event.currentTarget.value } : current,
-                            )
-                          }
+                          onChange={(event) => updateField("city", event.currentTarget.value)}
                         />
                       </div>
                       <div className="space-y-2">
@@ -145,11 +146,7 @@ export function SettingsPageClient() {
                         <AuthInput
                           id="state"
                           value={formState.state}
-                          onChange={(event) =>
-                            setFormState((current) =>
-                              current ? { ...current, state: event.currentTarget.value } : current,
-                            )
-                          }
+                          onChange={(event) => updateField("state", event.currentTarget.value)}
                         />
                       </div>
                     </div>
@@ -160,11 +157,7 @@ export function SettingsPageClient() {
                         <AuthInput
                           id="zipCode"
                           value={formState.zipCode}
-                          onChange={(event) =>
-                            setFormState((current) =>
-                              current ? { ...current, zipCode: event.currentTarget.value } : current,
-                            )
-                          }
+                          onChange={(event) => updateField("zipCode", event.currentTarget.value)}
                         />
                       </div>
                       <div className="space-y-2">
@@ -173,11 +166,7 @@ export function SettingsPageClient() {
                           id="defaultLocationLabel"
                           value={formState.defaultLocationLabel}
                           onChange={(event) =>
-                            setFormState((current) =>
-                              current
-                                ? { ...current, defaultLocationLabel: event.currentTarget.value }
-                                : current,
-                            )
+                            updateField("defaultLocationLabel", event.currentTarget.value)
                           }
                         />
                       </div>
@@ -195,11 +184,7 @@ export function SettingsPageClient() {
                         className="h-12 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus-visible:border-[#156d95] focus-visible:ring-[3px] focus-visible:ring-[#156d95]/12"
                         value={formState.preferredSearchRadius}
                         onChange={(event) =>
-                          setFormState((current) =>
-                            current
-                              ? { ...current, preferredSearchRadius: Number(event.currentTarget.value) }
-                              : current,
-                          )
+                          updateField("preferredSearchRadius", Number(event.currentTarget.value))
                         }
                       >
                         <option value={2}>2 miles</option>
@@ -222,22 +207,14 @@ export function SettingsPageClient() {
                         id="contributorAlias"
                         value={formState.contributorAlias}
                         onChange={(event) =>
-                          setFormState((current) =>
-                            current
-                              ? { ...current, contributorAlias: event.currentTarget.value }
-                              : current,
-                          )
+                          updateField("contributorAlias", event.currentTarget.value)
                         }
                       />
                     </div>
                     <AuthCheckbox
                       checked={formState.publicContributorAlias}
                       onChange={(event) =>
-                        setFormState((current) =>
-                          current
-                            ? { ...current, publicContributorAlias: event.currentTarget.checked }
-                            : current,
-                        )
+                        updateField("publicContributorAlias", event.currentTarget.checked)
                       }
                       label="Show this alias on future crowd reports"
                     />
@@ -250,33 +227,21 @@ export function SettingsPageClient() {
                     <AuthCheckbox
                       checked={formState.notifyCrowdUpdates}
                       onChange={(event) =>
-                        setFormState((current) =>
-                          current
-                            ? { ...current, notifyCrowdUpdates: event.currentTarget.checked }
-                            : current,
-                        )
+                        updateField("notifyCrowdUpdates", event.currentTarget.checked)
                       }
                       label="Let crowd activity influence saved searches"
                     />
                     <AuthCheckbox
                       checked={formState.notifyShortageChanges}
                       onChange={(event) =>
-                        setFormState((current) =>
-                          current
-                            ? { ...current, notifyShortageChanges: event.currentTarget.checked }
-                            : current,
-                        )
+                        updateField("notifyShortageChanges", event.currentTarget.checked)
                       }
                       label="Surface shortage context changes in future iterations"
                     />
                     <AuthCheckbox
                       checked={formState.notifySavedSearchUpdates}
                       onChange={(event) =>
-                        setFormState((current) =>
-                          current
-                            ? { ...current, notifySavedSearchUpdates: event.currentTarget.checked }
-                            : current,
-                        )
+                        updateField("notifySavedSearchUpdates", event.currentTarget.checked)
                       }
                       label="Keep saved searches visible in profile history"
                     />

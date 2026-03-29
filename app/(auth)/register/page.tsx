@@ -13,7 +13,6 @@ import {
 import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { useAuth } from "@/lib/auth/auth-context";
-import { saveUserProfile } from "@/lib/profile/profile-service";
 
 function parseLocationInput(value: string) {
   const trimmed = value.trim();
@@ -116,17 +115,16 @@ function RegisterPageInner() {
     try {
       setIsLoading(true);
       const displayName = `${firstName} ${lastName}`.trim();
-      const user = await signUp({
+      const locationFields = parseLocationInput(location);
+
+      await signUp({
         email,
         password,
         displayName,
         firstName,
         lastName,
+        ...locationFields,
       });
-
-      if (location) {
-        await saveUserProfile(user.uid, parseLocationInput(location));
-      }
 
       router.replace(nextPath);
     } catch (error) {

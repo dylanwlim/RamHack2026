@@ -3,17 +3,18 @@
 import type { User } from "firebase/auth";
 import {
   doc,
-  getDoc,
   onSnapshot,
   runTransaction,
   serverTimestamp,
-  setDoc,
 } from "firebase/firestore";
 import { getTrustTier } from "@/lib/crowd-signal/scoring";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { toDate } from "@/lib/firebase/firestore-utils";
 import type { RecentSearchEntry, UserProfileRecord } from "@/lib/profile/profile-types";
 
+const ALLOWED_SEARCH_RADII = [2, 5, 10, 25] as const;
+
+type ProfileUser = Pick<User, "uid" | "email" | "displayName">;
 type RawRecentSearchEntry = {
   medication?: string;
   location?: string;
@@ -47,7 +48,31 @@ function deriveNameParts(displayName: string) {
   };
 }
 
-export function createDefaultProfile(user: Pick<User, "uid" | "email" | "displayName">): UserProfileRecord {
+function cleanString(value: unknown, fallback = "") {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  return fallback;
+}
+
+function cleanContributionCount(value: unknown) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue) || nextValue < 0) {
+    return 0;
+  }
+
+  return Math.floor(nextValue);
+}
+
+function cleanSearchRadius(value: unknown) {
+  const nextValue = Number(value);
+  return ALLOWED_SEARCH_RADII.includes(nextValue as (typeof ALLOWED_SEARCH_RADII)[number])
+    ? nextValue
+    : 5;
+}
+
+export function createDefaultProfile(user: ProfileUser): UserProfileRecord {
   const displayName = deriveDisplayName(user);
   const names = deriveNameParts(displayName);
 
@@ -76,6 +101,55 @@ export function createDefaultProfile(user: Pick<User, "uid" | "email" | "display
   };
 }
 
+function normalizeProfileRecord(
+  user: ProfileUser,
+  existing: Partial<UserProfileRecord> | null = null,
+  overrides: Partial<UserProfileRecord> = {},
+): UserProfileRecord {
+  const base = createDefaultProfile(user);
+  const merged = {
+    ...base,
+    ...(existing || {}),
+    ...overrides,
+  };
+
+  const displayName = cleanString(merged.displayName, "") || deriveDisplayName(user);
+  const names = deriveNameParts(displayName);
+  const city = cleanString(merged.city);
+  const state = cleanString(merged.state);
+  const zipCode = cleanString(merged.zipCode);
+  const contributionCount = cleanContributionCount(merged.contributionCount);
+  const contributorAlias = cleanString(merged.contributorAlias, displayName) || displayName;
+
+  return {
+    uid: user.uid,
+    email: cleanString(merged.email, user.email || ""),
+    displayName,
+    firstName: cleanString(merged.firstName, names.firstName),
+    lastName: cleanString(merged.lastName, names.lastName),
+    city,
+    state,
+    zipCode,
+    defaultLocationLabel: cleanString(merged.defaultLocationLabel),
+    preferredSearchRadius: cleanSearchRadius(merged.preferredSearchRadius),
+    publicContributorAlias: Boolean(merged.publicContributorAlias),
+    contributorAlias,
+    notifyCrowdUpdates:
+      merged.notifyCrowdUpdates === undefined ? true : Boolean(merged.notifyCrowdUpdates),
+    notifyShortageChanges:
+      merged.notifyShortageChanges === undefined ? true : Boolean(merged.notifyShortageChanges),
+    notifySavedSearchUpdates: Boolean(merged.notifySavedSearchUpdates),
+    contributionCount,
+    contributionLevel:
+      cleanString(merged.contributionLevel, getTrustTier(contributionCount).label) ||
+      getTrustTier(contributionCount).label,
+    createdAt: toDate(merged.createdAt),
+    updatedAt: toDate(merged.updatedAt),
+    lastContributionAt: toDate(merged.lastContributionAt),
+    recentSearches: mapRecentSearches(merged.recentSearches),
+  };
+}
+
 function mapRecentSearches(value: unknown): RecentSearchEntry[] {
   if (!Array.isArray(value)) {
     return [];
@@ -95,10 +169,10 @@ function mapRecentSearches(value: unknown): RecentSearchEntry[] {
     .slice(0, 6);
 }
 
-function mapProfileDoc(id: string, value: Record<string, unknown>): UserProfileRecord {
+export function mapProfileDoc(id: string, value: Record<string, unknown>): UserProfileRecord {
   const displayName = String(value.displayName || "").trim() || "PharmaPath User";
   const names = deriveNameParts(displayName);
-  const contributionCount = Number(value.contributionCount || 0);
+  const contributionCount = cleanContributionCount(value.contributionCount);
 
   return {
     uid: id,
@@ -110,7 +184,7 @@ function mapProfileDoc(id: string, value: Record<string, unknown>): UserProfileR
     state: String(value.state || "").trim(),
     zipCode: String(value.zipCode || "").trim(),
     defaultLocationLabel: String(value.defaultLocationLabel || "").trim(),
-    preferredSearchRadius: Number(value.preferredSearchRadius || 5),
+    preferredSearchRadius: cleanSearchRadius(value.preferredSearchRadius),
     publicContributorAlias: Boolean(value.publicContributorAlias),
     contributorAlias: String(value.contributorAlias || displayName).trim(),
     notifyCrowdUpdates:
@@ -127,8 +201,8 @@ function mapProfileDoc(id: string, value: Record<string, unknown>): UserProfileR
   };
 }
 
-export async function ensureUserProfile(
-  user: Pick<User, "uid" | "email" | "displayName">,
+async function writeUserProfile(
+  user: ProfileUser,
   overrides: Partial<UserProfileRecord> = {},
 ) {
   const db = getFirebaseDb();
@@ -137,30 +211,27 @@ export async function ensureUserProfile(
   }
 
   const profileRef = doc(db, "profiles", user.uid);
-  const existing = await getDoc(profileRef);
+  await runTransaction(db, async (transaction) => {
+    const existingSnapshot = await transaction.get(profileRef);
+    const existingProfile = existingSnapshot.exists()
+      ? mapProfileDoc(existingSnapshot.id, existingSnapshot.data())
+      : null;
+    const nextProfile = normalizeProfileRecord(user, existingProfile, overrides);
+    const existingCreatedAt = existingSnapshot.exists() ? existingSnapshot.data().createdAt : null;
 
-  if (!existing.exists()) {
-    const base = createDefaultProfile(user);
-    await setDoc(profileRef, {
-      ...base,
-      ...overrides,
-      recentSearches: overrides.recentSearches || base.recentSearches,
-      createdAt: serverTimestamp(),
+    transaction.set(profileRef, {
+      ...nextProfile,
+      createdAt: existingCreatedAt || serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    return;
-  }
+  });
+}
 
-  await setDoc(
-    profileRef,
-    {
-      email: user.email || "",
-      displayName: overrides.displayName || existing.data().displayName || deriveDisplayName(user),
-      updatedAt: serverTimestamp(),
-      ...overrides,
-    },
-    { merge: true },
-  );
+export async function ensureUserProfile(
+  user: ProfileUser,
+  overrides: Partial<UserProfileRecord> = {},
+) {
+  await writeUserProfile(user, overrides);
 }
 
 export function subscribeToUserProfile(
@@ -183,29 +254,11 @@ export function subscribeToUserProfile(
   });
 }
 
-export async function saveUserProfile(uid: string, input: Partial<UserProfileRecord>) {
-  const db = getFirebaseDb();
-  if (!db) {
-    throw new Error("Firebase is not configured.");
-  }
-
-  const payload: Record<string, unknown> = {
-    ...input,
-    updatedAt: serverTimestamp(),
-  };
-
-  if (typeof input.contributionCount === "number") {
-    payload.contributionLevel =
-      input.contributionLevel || getTrustTier(input.contributionCount).label;
-  } else if (input.contributionLevel) {
-    payload.contributionLevel = input.contributionLevel;
-  }
-
-  await setDoc(
-    doc(db, "profiles", uid),
-    payload,
-    { merge: true },
-  );
+export async function saveUserProfile(
+  user: ProfileUser,
+  input: Partial<UserProfileRecord>,
+) {
+  await writeUserProfile(user, input);
 }
 
 export async function saveRecentSearch(

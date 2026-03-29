@@ -18,6 +18,36 @@ service cloud.firestore {
       return getAfter(profilePath(userId));
     }
 
+    function previousProfileCreatedAt() {
+      return "createdAt" in resource.data && resource.data.createdAt is timestamp
+        ? resource.data.createdAt
+        : null;
+    }
+
+    function previousProfileContributionCount() {
+      return "contributionCount" in resource.data
+          && resource.data.contributionCount is int
+          && resource.data.contributionCount >= 0
+        ? resource.data.contributionCount
+        : 0;
+    }
+
+    function previousProfileLastContributionAt() {
+      return "lastContributionAt" in resource.data
+          && (
+            resource.data.lastContributionAt == null
+            || resource.data.lastContributionAt is timestamp
+          )
+        ? resource.data.lastContributionAt
+        : null;
+    }
+
+    function previousProfileEmail() {
+      return "email" in resource.data && resource.data.email is string
+        ? resource.data.email
+        : "";
+    }
+
     function validProfilePayload(userId, data) {
       return data.keys().hasOnly([
           "uid",
@@ -97,27 +127,34 @@ service cloud.firestore {
 
     function validProfileUpdate(userId) {
       let data = request.resource.data;
-      let previous = resource.data;
       let authEmail = request.auth.token.email;
+      let previousCreatedAt = previousProfileCreatedAt();
+      let previousContributionCount = previousProfileContributionCount();
+      let previousLastContributionAt = previousProfileLastContributionAt();
+      let previousEmail = previousProfileEmail();
 
       return validProfilePayload(userId, data)
-        && data.createdAt == previous.createdAt
+        && (
+          previousCreatedAt == null
+          ? data.createdAt == request.time
+          : data.createdAt == previousCreatedAt
+        )
         && data.updatedAt == request.time
         && (
           authEmail == null
           || data.email == authEmail
-          || data.email == previous.email
+          || data.email == previousEmail
         )
-        && data.contributionCount >= previous.contributionCount
-        && data.contributionCount <= previous.contributionCount + 1
+        && data.contributionCount >= previousContributionCount
+        && data.contributionCount <= previousContributionCount + 1
         && (
-          data.contributionCount == previous.contributionCount
-          ? data.lastContributionAt == previous.lastContributionAt
+          data.contributionCount == previousContributionCount
+          ? data.lastContributionAt == previousLastContributionAt
           : data.lastContributionAt == request.time
         );
     }
 
-    function validCrowdReport(reportId) {
+    function validCrowdReport() {
       let data = request.resource.data;
       let profile = profileAfter(request.auth.uid);
       let expectedAlias =
@@ -125,7 +162,7 @@ service cloud.firestore {
           ? profile.data.contributorAlias
           : "Private contributor";
 
-      return profile.exists()
+      return exists(profilePath(request.auth.uid))
         && data.keys().hasOnly([
           "signalKey",
           "medicationKey",
@@ -194,7 +231,7 @@ service cloud.firestore {
 
     match /crowdReports/{reportId} {
       allow read: if true;
-      allow create: if isSignedIn() && validCrowdReport(reportId);
+      allow create: if isSignedIn() && validCrowdReport();
       allow update: if false;
       allow delete: if false;
     }
