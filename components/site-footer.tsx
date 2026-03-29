@@ -46,7 +46,7 @@ export function SiteFooter() {
               <SiteBrand className="mb-2" wordmarkClassName="text-2xl font-medium" />
               <p className="max-w-xs text-sm leading-5 text-[#666666]">
                 Live nearby pharmacy search with FDA access context and clear boundaries around what
-                still needs a direct call.
+                still needs a direct call. FDA signals are shown as guidance, not guarantees.
               </p>
             </div>
           </motion.div>
