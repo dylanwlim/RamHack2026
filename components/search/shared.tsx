@@ -29,7 +29,8 @@ export function formatMiles(value: number | null | undefined) {
     return "Distance unavailable";
   }
 
-  return `${value < 10 ? value.toFixed(1) : value.toFixed(0)} mi`;
+  const miles = value as number;
+  return `${miles < 10 ? miles.toFixed(1) : miles.toFixed(0)} mi`;
 }
 
 export function SignalBadge({
@@ -43,7 +44,9 @@ export function SignalBadge({
     <span className={cn("signal-chip", className)} data-level={signal.level}>
       <span>{signal.label}</span>
       {signal.confidence_label ? (
-        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs">{signal.confidence_label}</span>
+        <span className="text-[11px] uppercase tracking-[0.12em] opacity-70">
+          {signal.confidence_label}
+        </span>
       ) : null}
     </span>
   );
@@ -59,7 +62,12 @@ export function MetricPill({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-[1.2rem] border border-slate-200 bg-white px-4 py-3", className)}>
+    <div
+      className={cn(
+        "rounded-lg border border-black/5 bg-white/78 px-4 py-3 shadow-[0_1px_1px_rgba(0,0,0,0.04)]",
+        className,
+      )}
+    >
       <div className="text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">{label}</div>
       <div className="mt-1 text-xl font-medium tracking-tight text-slate-900">{value}</div>
     </div>
@@ -99,10 +107,7 @@ export function TagList({
   return (
     <div className="flex flex-wrap gap-2">
       {items.map((item) => (
-        <span
-          key={item}
-          className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
-        >
+        <span key={item} className="flat-chip">
           {item}
         </span>
       ))}

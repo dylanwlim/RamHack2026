@@ -162,7 +162,7 @@ export function PharmacySearchForm({
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-full bg-[#156d95] px-[18px] py-[15px] text-sm font-medium leading-4 text-white transition-all duration-200 hover:rounded-2xl hover:bg-[#12597a] disabled:cursor-wait disabled:opacity-70"
+            className="template-button-primary disabled:cursor-wait disabled:opacity-70"
           >
             {isPending ? "Loading..." : submitLabel}
           </button>
@@ -175,7 +175,7 @@ export function PharmacySearchForm({
             <button
               key={search.id}
               type="button"
-              className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:border-[#156d95] hover:text-[#156d95]"
+              className="flat-chip hover:border-[#156d95]/25 hover:text-[#156d95]"
               onClick={() =>
                 startTransition(() => {
                   router.push(

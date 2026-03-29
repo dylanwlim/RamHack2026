@@ -120,18 +120,8 @@ export const homeFaqs = [
       "No. PharmaPath can show live nearby pharmacy results from Google Places, but stock still has to be confirmed directly with the pharmacy. The medication signal is derived from FDA listing, shortage, approval, and recall data, not from shelf-level inventory feeds.",
   },
   {
-    question: "What is actually live in the product?",
-    answer:
-      "The nearby pharmacy lookup is live when `GOOGLE_API_KEY` is configured. The medication intelligence route is live against openFDA and uses the repo's existing `/api/drug-intelligence` contract. Those two layers are shown together, but they mean different things.",
-  },
-  {
     question: "Why separate patient and prescriber views?",
     answer:
       "Patients need a fast shortlist, a signal label, and the right next question. Prescribers need the evidence trail that shaped that signal: shortage status, manufacturer breadth, formulation spread, and recall context. Mixing those into one page makes both views worse.",
-  },
-  {
-    question: "Which environment variables have to stay the same?",
-    answer:
-      "`GOOGLE_API_KEY` must remain the Google lookup key. `OPENFDA_API_KEY` and the existing fallback `FDA_API_KEY` remain the openFDA configuration path used by the current API logic.",
   },
 ];

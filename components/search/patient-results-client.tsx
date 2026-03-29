@@ -206,13 +206,13 @@ export function PatientResultsClient() {
                               {pharmacyData.recommended.address}
                             </p>
                           </div>
-                          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <div className="flat-chip">
                             {formatMiles(pharmacyData.recommended.distance_miles)}
                           </div>
                         </div>
 
                         <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-600">
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                          <span className="flat-chip">
                             {pharmacyData.recommended.open_now === true
                               ? "Open now"
                               : pharmacyData.recommended.open_now === false
@@ -220,11 +220,11 @@ export function PatientResultsClient() {
                                 : "Hours unavailable"}
                           </span>
                           {pharmacyData.recommended.rating ? (
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                            <span className="flat-chip">
                               Rating {pharmacyData.recommended.rating.toFixed(1)}
                             </span>
                           ) : null}
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                          <span className="flat-chip">
                             {pharmacyData.recommended.review_label}
                           </span>
                         </div>
@@ -281,7 +281,7 @@ export function PatientResultsClient() {
                                     <div className="text-lg tracking-tight text-slate-900">{result.name}</div>
                                     <div className="mt-1 text-sm text-slate-500">{result.address}</div>
                                   </div>
-                                  <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                                  <div className="flat-chip text-xs text-slate-600">
                                     {formatMiles(result.distance_miles)}
                                   </div>
                                 </div>
@@ -368,7 +368,8 @@ export function PatientResultsClient() {
                       </div>
 
                       <p className="mt-5 text-sm leading-6 text-slate-500">
-                        Dataset freshness: {buildFreshnessLine(drugData)}
+                        Dataset freshness:{" "}
+                        {drugData ? buildFreshnessLine(drugData) : "FDA freshness unavailable for this request."}
                       </p>
                     </div>
 

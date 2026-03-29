@@ -45,7 +45,7 @@ export function MedicationQueryForm({
       <button
         type="submit"
         disabled={isPending}
-        className="mt-5 rounded-full bg-[#156d95] px-[18px] py-[15px] text-sm font-medium leading-4 text-white transition-all duration-200 hover:rounded-2xl hover:bg-[#12597a] disabled:cursor-wait disabled:opacity-70"
+        className="template-button-primary mt-5 disabled:cursor-wait disabled:opacity-70"
       >
         {isPending ? "Loading..." : submitLabel}
       </button>
