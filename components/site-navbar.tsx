@@ -15,6 +15,7 @@ const navItems = [
   { label: "Pharmacy Finder", href: "/patient" },
   { label: "Medication Lookup", href: "/prescriber" },
   { label: "Methodology", href: "/methodology" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function SiteNavbar() {

@@ -28,6 +28,12 @@ const footerSections = [
       { label: "Live app", href: "https://pharmapath-blue.vercel.app/" },
     ],
   },
+  {
+    title: "Support",
+    links: [
+      { label: "Contact Us", href: "/contact" },
+    ],
+  },
 ];
 
 export function SiteFooter() {

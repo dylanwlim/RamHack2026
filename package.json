@@ -17,6 +17,7 @@
     "next": "16.0.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "resend": "^6.9.4",
     "stream-chain": "^3.4.0",
     "stream-json": "^1.9.1",
     "tailwind-merge": "^3.3.1",
