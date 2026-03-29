@@ -36,16 +36,15 @@ export function HeroSection() {
                 transition={{ duration: 0.4, ease: motionEase.emphasis, delay: 0.6 }}
                 className="eyebrow-label gap-1 text-slate-500"
               >
-                Live nearby lookup + FDA signal routing
+                Live nearby lookup + FDA access data
                 <ArrowRight className="h-[0.72em] w-[0.72em]" />
               </motion.span>
               <h1 className="mt-6 max-w-[11ch] text-[3.5rem] leading-[3.75rem] tracking-tight text-[#202020] sm:text-[4rem] sm:leading-[4.15rem]">
                 Find the closest pharmacy worth calling first.
               </h1>
               <p className="mt-6 max-w-[32rem] text-lg leading-7 text-[#404040]">
-                PharmaPath keeps the nearby pharmacy search live, layers openFDA access signals on
-                top, and makes the boundary explicit: inventory still needs a direct confirmation
-                call.
+                PharmaPath finds nearby pharmacies, layers FDA access data on top, and is
+                upfront about what it can and can't confirm.
               </p>
             </div>
 
@@ -90,14 +89,11 @@ export function HeroSection() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono text-[0.72rem] uppercase tracking-[0.08em] text-slate-500">
-                    Demo workflow
+                    How it works
                   </p>
                   <h2 className="mt-2 text-[2.5rem] font-normal tracking-tight text-[#202020]">
                     One search, three truths.
                   </h2>
-                </div>
-                <div className="eyebrow-label shrink-0 text-slate-500">
-                  Trust the boundary
                 </div>
               </div>
 
@@ -111,12 +107,12 @@ export function HeroSection() {
                   <div className="flex items-center gap-3">
                     <MapPin className="h-5 w-5 text-[#156d95]" />
                     <div>
-                      <p className="text-sm text-slate-500">Nearby list</p>
+                      <p className="text-sm text-slate-500">Nearby pharmacies</p>
                       <p className="text-lg font-medium text-[#202020]">Google Places live</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-slate-600">
-                    Real pharmacy names, distance, hours, ratings, and Maps links.
+                    Pharmacy names, distance, hours, ratings, and Maps links.
                   </p>
                 </motion.div>
 
@@ -129,13 +125,13 @@ export function HeroSection() {
                   <div className="flex items-center gap-3">
                     <Stethoscope className="h-5 w-5 text-sky-300" />
                     <div>
-                      <p className="text-sm text-slate-300">Medication signal</p>
-                      <p className="text-lg font-medium">openFDA-derived access summary</p>
+                      <p className="text-sm text-slate-300">Medication context</p>
+                      <p className="text-lg font-medium">FDA-sourced access info</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-slate-300">
-                    Shortages, approvals, manufacturer breadth, and recalls get translated into a
-                    careful access signal.
+                    Shortages, approvals, manufacturer breadth, and recalls, all in plain
+                    language.
                   </p>
                 </motion.div>
 
@@ -148,7 +144,7 @@ export function HeroSection() {
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="h-5 w-5 text-emerald-700" />
                     <div>
-                      <p className="text-sm text-emerald-700/70">Always say this</p>
+                      <p className="text-sm text-emerald-700/70">Always</p>
                       <p className="text-lg font-medium text-emerald-900">Call to confirm stock</p>
                     </div>
                   </div>
@@ -158,11 +154,6 @@ export function HeroSection() {
                 </motion.div>
               </div>
 
-              <div className="mt-8 flex items-center gap-2 text-sm text-slate-600">
-                <span className="flat-chip">No fake inventory claim</span>
-                <ArrowRight className="h-4 w-4 text-slate-400" />
-                <span className="flat-chip">Route the right next call</span>
-              </div>
             </div>
           </motion.div>
         </div>

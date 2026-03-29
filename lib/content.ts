@@ -13,7 +13,7 @@ export const featuredSearches: FeaturedSearch[] = [
     medication: "Adderall XR 20 mg",
     location: "Brooklyn, NY",
     description:
-      "A higher-friction handoff where the nearby list should stay live and the medication signal should stay careful.",
+      "A higher-friction handoff where the nearby list stays live and the medication info stays careful.",
   },
   {
     id: "queens-wegovy",
@@ -21,7 +21,7 @@ export const featuredSearches: FeaturedSearch[] = [
     medication: "Wegovy",
     location: "Queens, NY",
     description:
-      "Useful for seeing shipment-sensitive outreach guidance without claiming any store has dose-level stock confirmed.",
+      "See shipment-sensitive guidance without claiming any store has dose-level stock confirmed.",
   },
   {
     id: "hoboken-amoxicillin",
@@ -65,10 +65,10 @@ export const workflowShowcase = [
     id: "patient",
     title: "Patient search keeps the first answer short.",
     summary:
-      "Medication plus location produces a live nearby list, an FDA-derived access signal, and a call-ready set of questions.",
+      "Medication plus location produces a live nearby list, FDA access info, and a call-ready set of questions.",
     bullets: [
       "Nearby list from Google Places",
-      "Medication-wide FDA signal, not store inventory",
+      "Medication-wide FDA data, not store inventory",
       "Plain-language questions for the next call",
     ],
     href: "/patient",
@@ -110,18 +110,23 @@ export const sourceRail = [
   "Recall Enforcement",
   "Methodology Guardrails",
   "Nearby Ranking",
-  "Signal Routing",
+  "Access Routing",
 ];
 
 export const homeFaqs = [
   {
     question: "Does PharmaPath know whether a pharmacy has the medication in stock right now?",
     answer:
-      "No. PharmaPath can show live nearby pharmacy results from Google Places, but stock still has to be confirmed directly with the pharmacy. The medication signal is derived from FDA listing, shortage, approval, and recall data, not from shelf-level inventory feeds.",
+      "No. PharmaPath can show live nearby pharmacy results from Google Places, but stock still has to be confirmed directly with the pharmacy. The medication info is derived from FDA listing, shortage, approval, and recall data, not from shelf-level inventory feeds.",
   },
   {
-    question: "Why separate patient and prescriber views?",
+    question: "Why separate the pharmacy and medication pages?",
     answer:
-      "Patients need a fast shortlist, a signal label, and the right next question. Prescribers need the evidence trail that shaped that signal: shortage status, manufacturer breadth, formulation spread, and recall context. Mixing those into one page makes both views worse.",
+      "Pharmacy lookup helps those who need a fast list and a pointer of where to call. Medication lookup gives the evidence trail: shortage status, manufacturer breadth, formulation spread, and recall context.",
+  },
+  {
+    question: "Where does PharmaPath get its data?",
+    answer:
+      "Nearby pharmacy results come from the Google Places API, which provides live names, addresses, ratings, hours, and location data. Medication information like shortages, recalls, approvals, and manufacturer details comes from openFDA, the public API maintained by the U.S. Food and Drug Administration. Over time, PharmaPath also incorporates crowdsourced input from users to help improve accuracy and fill in gaps that official sources don't cover.",
   },
 ];
