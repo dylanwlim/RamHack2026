@@ -101,6 +101,18 @@ function buildExactFieldQuery(pairs) {
   return joinOr(clauses);
 }
 
+// Builds unquoted token clauses — openFDA Elasticsearch matches the token
+// anywhere within the field value, so generic_name:semaglutide matches
+// "Semaglutide Injection" without needing the exact full string.
+function buildTokenFieldQuery(field, tokens) {
+  const clauses = tokens
+    .map((t) => sanitizeText(t).toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((t) => t.length >= 4)
+    .map((t) => `${field}:${t}`);
+
+  return joinOr(clauses);
+}
+
 function getOpenFdaApiKey() {
   return sanitizeText(process.env.OPENFDA_API_KEY || process.env.FDA_API_KEY);
 }
@@ -273,7 +285,8 @@ function extractActiveIngredientTokens(genericNames) {
 async function searchShortagesForCandidate(candidate) {
   const activeIngredientTokens = extractActiveIngredientTokens(candidate.genericNames);
 
-  const search = buildExactFieldQuery([
+  // Exact-phrase clauses for proprietary_name and full generic_name strings
+  const exactSearch = buildExactFieldQuery([
     ...candidate.brandNames.slice(0, 3).map((value) => ({
       field: "proprietary_name",
       value,
@@ -282,14 +295,16 @@ async function searchShortagesForCandidate(candidate) {
       field: "generic_name",
       value,
     })),
-    // Also search by active ingredient tokens so multi-ingredient chemical
-    // strings in the shortage database (e.g. Adderall → "dextroamphetamine")
-    // are matched even when the display name doesn't appear verbatim.
-    ...activeIngredientTokens.slice(0, 3).map((value) => ({
-      field: "generic_name",
-      value,
-    })),
   ]);
+
+  // Unquoted token clauses — matches the ingredient word anywhere inside the
+  // FDA's verbose multi-ingredient generic_name string, e.g.:
+  //   "semaglutide" matches "Semaglutide Injection"
+  //   "dextroamphetamine" matches "Dextroamphetamine Saccharate..."
+  const tokenSearch = buildTokenFieldQuery("generic_name", activeIngredientTokens.slice(0, 4));
+
+  const clauses = [exactSearch, tokenSearch].filter(Boolean);
+  const search = clauses.length > 1 ? `(${clauses.join("+OR+")})` : clauses[0] || "";
 
   if (!search) {
     return {
