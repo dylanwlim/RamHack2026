@@ -13,7 +13,6 @@ import {
   CalloutList,
   EmptyState,
   MetricPill,
-  SignalBadge,
   formatDisplayDate,
   formatMiles,
 } from "@/components/search/shared";
@@ -21,6 +20,16 @@ import {
 const client = createPharmaPathClient();
 
 type Match = DrugIntelligenceResponse["matches"][number];
+
+function shortageSeverityBadge(activeCount: number) {
+  if (activeCount === 0) {
+    return { label: "No active shortage", className: "bg-emerald-100 text-emerald-800" };
+  }
+  if (activeCount === 1) {
+    return { label: "1 active shortage", className: "bg-amber-100 text-amber-800" };
+  }
+  return { label: `${activeCount} active shortages`, className: "bg-rose-100 text-rose-800" };
+}
 
 function ShortagePanel({
   match,
@@ -32,17 +41,11 @@ function ShortagePanel({
   location: string;
 }) {
   const activeShortages = match.evidence.shortages.items.filter(
-    (s) => s.status?.toLowerCase() === "active",
+    (s) => (s.normalizedStatus ?? s.status?.toLowerCase()) === "active",
   );
-  const hasShortage = match.evidence.shortages.active_count > 0;
+  const hasShortage = activeShortages.length > 0;
   const hasRecalls = match.evidence.recalls.recent_count > 0;
-
-  const signalColor =
-    match.access_signal.level === "higher-friction"
-      ? "border-rose-200 bg-rose-50"
-      : match.access_signal.level === "mixed"
-        ? "border-amber-200 bg-amber-50"
-        : "border-emerald-200 bg-emerald-50";
+  const badge = shortageSeverityBadge(activeShortages.length);
 
   return (
     <>
@@ -50,14 +53,12 @@ function ShortagePanel({
       <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <span className="eyebrow-label">FDA Drug Shortage Intelligence</span>
+            <span className="eyebrow-label">FDA Shortage Data</span>
             <h2 className="mt-4 text-2xl tracking-tight text-slate-950">{match.display_name}</h2>
           </div>
-          <SignalBadge signal={match.access_signal} />
-        </div>
-
-        <div className={`mt-5 rounded-[1.4rem] border p-4 text-sm leading-6 ${signalColor}`}>
-          <p className="font-medium text-slate-900">{match.access_signal.patient_summary}</p>
+          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${badge.className}`}>
+            {badge.label}
+          </span>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -73,6 +74,12 @@ function ShortagePanel({
         </p>
       </div>
 
+      {/* What FDA data shows */}
+      <div className="surface-panel rounded-[2rem] p-6">
+        <span className="eyebrow-label">What the FDA data shows</span>
+        <CalloutList className="mt-5" items={match.patient_view.what_we_know} />
+      </div>
+
       {/* Active shortage entries */}
       {hasShortage ? (
         <div className="surface-panel rounded-[2rem] p-6">
@@ -82,6 +89,9 @@ function ShortagePanel({
               <div key={i} className="rounded-[1.2rem] border border-rose-100 bg-rose-50 p-4">
                 {s.presentation ? (
                   <div className="text-sm font-medium text-slate-900">{s.presentation}</div>
+                ) : null}
+                {s.companyName ? (
+                  <div className="mt-1 text-sm text-slate-500">{s.companyName}</div>
                 ) : null}
                 {s.shortageReason ? (
                   <div className="mt-1 text-sm text-slate-600">
@@ -94,7 +104,7 @@ function ShortagePanel({
                   </div>
                 ) : null}
                 {s.updateLabel ? (
-                  <div className="mt-1 text-xs text-slate-400">Updated {s.updateLabel}</div>
+                  <div className="mt-1 text-xs text-slate-400">Last updated {s.updateLabel}</div>
                 ) : null}
               </div>
             ))}
@@ -109,14 +119,13 @@ function ShortagePanel({
         </div>
       )}
 
-      {/* What this means for you */}
-      <div className="surface-panel rounded-[2rem] p-6">
-        <span className="eyebrow-label">What this means for you</span>
-        <CalloutList className="mt-5" items={match.patient_view.what_may_make_it_harder.length
-          ? match.patient_view.what_may_make_it_harder
-          : match.access_signal.reasoning}
-        />
-      </div>
+      {/* Key supply insights */}
+      {match.patient_view.what_may_make_it_harder?.length ? (
+        <div className="surface-panel rounded-[2rem] p-6">
+          <span className="eyebrow-label">Key supply insights</span>
+          <CalloutList className="mt-5" items={match.patient_view.what_may_make_it_harder} />
+        </div>
+      ) : null}
 
       {/* Questions to ask */}
       <div className="surface-panel rounded-[2rem] p-6">
@@ -134,11 +143,14 @@ function ShortagePanel({
                 {r.productDescription ? (
                   <div className="text-sm font-medium text-slate-900">{r.productDescription}</div>
                 ) : null}
+                {r.recallingFirm ? (
+                  <div className="mt-1 text-sm text-slate-500">{r.recallingFirm}</div>
+                ) : null}
                 {r.reason ? (
                   <div className="mt-1 text-sm text-slate-600">{r.reason}</div>
                 ) : null}
                 <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
-                  {r.classification ? <span>Class {r.classification}</span> : null}
+                  {r.classification ? <span className="rounded bg-amber-200 px-1.5 py-0.5 font-medium">Class {r.classification}</span> : null}
                   {r.reportDateLabel ? <span>{r.reportDateLabel}</span> : null}
                 </div>
               </div>
@@ -148,8 +160,8 @@ function ShortagePanel({
       ) : null}
 
       <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-4 text-xs leading-6 text-slate-500">
-        Data from the <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated daily.
-        Informational only — always confirm with your pharmacist or prescriber.
+        Data sourced from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated daily.
+        For informational purposes only — confirm availability with your pharmacist.
       </div>
     </>
   );
