@@ -241,13 +241,51 @@ async function searchDrugApplications(searchPhrases) {
   });
 }
 
+// FDA shortage records store the full multi-ingredient chemical string in
+// generic_name (e.g. "Amphetamine Aspartate Monohydrate, Amphetamine Sulfate,
+// Dextroamphetamine Saccharate...") with no proprietary_name. Exact-phrase
+// matching on a short display name like "Adderall" or "Dextroamp Saccharate"
+// won't hit those records. We extract the longest meaningful active ingredient
+// token from each generic name and add it as an additional search term so
+// openFDA's full-text search within the field value finds the records.
+function extractActiveIngredientTokens(genericNames) {
+  const stopWords = new Set(["and", "or", "with", "for", "the"]);
+  const seen = new Set();
+  const tokens = [];
+
+  genericNames.forEach((name) => {
+    sanitizeText(name)
+      .split(/[\s,/]+/)
+      .map((w) => w.toLowerCase().replace(/[^a-z]/g, ""))
+      .filter((w) => w.length >= 6 && !stopWords.has(w))
+      .slice(0, 2)
+      .forEach((w) => {
+        if (!seen.has(w)) {
+          seen.add(w);
+          tokens.push(w);
+        }
+      });
+  });
+
+  return tokens;
+}
+
 async function searchShortagesForCandidate(candidate) {
+  const activeIngredientTokens = extractActiveIngredientTokens(candidate.genericNames);
+
   const search = buildExactFieldQuery([
     ...candidate.brandNames.slice(0, 3).map((value) => ({
       field: "proprietary_name",
       value,
     })),
     ...candidate.genericNames.slice(0, 2).map((value) => ({
+      field: "generic_name",
+      value,
+    })),
+    // Also search by active ingredient tokens so multi-ingredient chemical
+    // strings in the shortage database (e.g. Adderall → "dextroamphetamine")
+    // are matched even when the display name doesn't appear verbatim.
+    ...activeIngredientTokens.slice(0, 3).map((value) => ({
       field: "generic_name",
       value,
     })),
@@ -262,7 +300,7 @@ async function searchShortagesForCandidate(candidate) {
 
   return fetchOpenFdaJson("/drug/shortages.json", {
     search,
-    limit: "12",
+    limit: "20",
   });
 }
 
