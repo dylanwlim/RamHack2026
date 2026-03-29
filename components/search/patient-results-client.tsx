@@ -617,13 +617,106 @@ export function PatientResultsClient() {
     pharmacyData?.medication_profile.demo_only || featuredMatch?.demo_context?.demo_only || drugData?.data_source === "demo",
   );
 
-  function getCrowdSignalForPharmacy(result: PharmacySearchResponse["results"][number]) {
+  function getCrowdSignalForPharmacy(result: PharmacySearchResponse["results"][number], demoIndex = 0) {
     const signalKey = buildSignalKey({
       medicationQuery: query,
       placeId: result.place_id,
       pharmacyName: result.name,
       pharmacyAddress: result.address,
     });
+
+    if (isDemoMedication) {
+      type DemoSignalPreset = import("@/lib/crowd-signal/model").CrowdSignalSummary;
+      const DEMO_SIGNAL_PRESETS: DemoSignalPreset[] = [
+        {
+          // index 0 — recommended pharmacy: strong positive
+          signalKey,
+          label: "Likely in stock",
+          status: "likely_in_stock",
+          confidenceLabel: "Moderate confidence",
+          likelihood: 0.82,
+          confidence: 0.76,
+          agreement: 0.85,
+          agreementDisplay: "11/13 recent",
+          reportCount: 17,
+          lastReportedAt: new Date(Date.now() - 1000 * 60 * 55),
+          positiveWeight: 12.4,
+          negativeWeight: 1.1,
+          explanation: "Most recent reports indicate this medication was available or successfully filled here.",
+          freshnessNote: "Latest report 55m ago",
+          mixedSignal: false,
+          sparseData: false,
+          stale: false,
+          direction: "positive",
+        },
+        {
+          // index 1 — first extra: still positive, slightly lower confidence
+          signalKey,
+          label: "Likely in stock",
+          status: "likely_in_stock",
+          confidenceLabel: "Low-moderate confidence",
+          likelihood: 0.68,
+          confidence: 0.58,
+          agreement: 0.71,
+          agreementDisplay: "5/7 recent",
+          reportCount: 8,
+          lastReportedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
+          positiveWeight: 6.1,
+          negativeWeight: 1.8,
+          explanation: "A majority of recent contributors reported availability, though sample size is limited.",
+          freshnessNote: "Latest report 3h ago",
+          mixedSignal: false,
+          sparseData: false,
+          stale: false,
+          direction: "positive",
+        },
+        {
+          // index 2 — second extra: mixed signal
+          signalKey,
+          label: "Mixed signal",
+          status: "mixed_signal",
+          confidenceLabel: "Low confidence",
+          likelihood: 0.48,
+          confidence: 0.38,
+          agreement: 0.5,
+          agreementDisplay: "3/6 recent",
+          reportCount: 6,
+          lastReportedAt: new Date(Date.now() - 1000 * 60 * 60 * 7),
+          positiveWeight: 3.2,
+          negativeWeight: 2.9,
+          explanation: "Reports are split — some users found it available while others could not fill.",
+          freshnessNote: "Latest report 7h ago",
+          mixedSignal: true,
+          sparseData: false,
+          stale: false,
+          direction: "mixed",
+        },
+        {
+          // index 3 — third extra: higher fill risk
+          signalKey,
+          label: "Higher fill risk",
+          status: "likely_unavailable",
+          confidenceLabel: "Low confidence",
+          likelihood: 0.22,
+          confidence: 0.44,
+          agreement: 0.33,
+          agreementDisplay: "1/3 recent",
+          reportCount: 4,
+          lastReportedAt: new Date(Date.now() - 1000 * 60 * 60 * 14),
+          positiveWeight: 1.0,
+          negativeWeight: 3.8,
+          explanation: "Recent contributors were mostly unable to fill at this location.",
+          freshnessNote: "Latest report 14h ago",
+          mixedSignal: false,
+          sparseData: true,
+          stale: false,
+          direction: "negative",
+        },
+      ];
+
+      const preset = DEMO_SIGNAL_PRESETS[Math.min(demoIndex, DEMO_SIGNAL_PRESETS.length - 1)];
+      return { ...preset, signalKey };
+    }
 
     return crowdSignals[signalKey];
   }
@@ -780,7 +873,7 @@ export function PatientResultsClient() {
                               placeId: pharmacyData.recommended.place_id,
                               googleMapsUrl: pharmacyData.recommended.google_maps_url,
                             }}
-                            summary={getCrowdSignalForPharmacy(pharmacyData.recommended)}
+                            summary={getCrowdSignalForPharmacy(pharmacyData.recommended, 0)}
                           />
                         </div>
 
@@ -817,7 +910,7 @@ export function PatientResultsClient() {
                             ) : null}
                           </div>
                           <div className="mt-4 space-y-3">
-                            {visibleExtras.map((result) => (
+                            {visibleExtras.map((result, extraIndex) => (
                               <div
                                 key={`${result.name}-${result.address}`}
                                 className="rounded-[1.4rem] border border-slate-200 bg-white p-4"
@@ -842,7 +935,7 @@ export function PatientResultsClient() {
                                       placeId: result.place_id,
                                       googleMapsUrl: result.google_maps_url,
                                     }}
-                                    summary={getCrowdSignalForPharmacy(result)}
+                                    summary={getCrowdSignalForPharmacy(result, extraIndex + 1)}
                                     compact
                                   />
                                 </div>
