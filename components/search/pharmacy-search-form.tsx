@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { ControlledCombobox } from "@/components/search/controlled-combobox";
 import { MedicationCombobox } from "@/components/search/medication-combobox";
+import { MedicationStrengthField } from "@/components/search/medication-strength-field";
 import { featuredSearches } from "@/lib/content";
 import {
   resolveMedicationOption,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
+import { buildMedicationQueryLabel } from "@/lib/medications/selection";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   findSupportedOption,
@@ -74,6 +76,7 @@ export function PharmacySearchForm({
   const [isPending, startTransition] = useTransition();
   const [medicationOption, setMedicationOption] = useState<MedicationSearchOption | null>(null);
   const [medication, setMedication] = useState(initialMedication);
+  const [selectedStrength, setSelectedStrength] = useState("");
   const [locationOption, setLocationOption] = useState<SearchOption | null>(() =>
     resolveInitialOption(locationOptions, initialLocation),
   );
@@ -84,12 +87,44 @@ export function PharmacySearchForm({
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [onlyOpenNow, setOnlyOpenNow] = useState(initialOnlyOpenNow);
   const [medicationError, setMedicationError] = useState<string | null>(null);
+  const [strengthError, setStrengthError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isResolvingMedication, setIsResolvingMedication] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     setMedicationOption(null);
     setMedication(initialMedication);
+    setSelectedStrength("");
+    setMedicationError(null);
+    setStrengthError(null);
+
+    if (!initialMedication) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void resolveMedicationOption(initialMedication)
+      .then((option) => {
+        if (cancelled || !option) {
+          return;
+        }
+
+        setMedicationOption(option);
+        setMedication(option.label);
+        setSelectedStrength(option.matchedStrength || (option.strengths.length === 1 ? option.strengths[0].value : ""));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMedication(initialMedication);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [initialMedication]);
 
   useEffect(() => {
@@ -132,12 +167,14 @@ export function PharmacySearchForm({
   const handleMedicationInputChange = (nextValue: string) => {
     setMedication(nextValue);
     setMedicationError(null);
+    setStrengthError(null);
 
     if (
       medicationOption &&
       nextValue.trim().toLowerCase() !== medicationOption.label.trim().toLowerCase()
     ) {
       setMedicationOption(null);
+      setSelectedStrength("");
     }
   };
 
@@ -163,24 +200,38 @@ export function PharmacySearchForm({
           try {
             const resolvedMedication = medicationOption || (await resolveMedicationOption(medication));
             const resolvedLocation = locationOption || findSupportedOption(locationOptions, location);
+            const resolvedStrength =
+              selectedStrength ||
+              resolvedMedication?.matchedStrength ||
+              (resolvedMedication?.strengths.length === 1 ? resolvedMedication.strengths[0].value : "");
 
             setMedicationError(
-              resolvedMedication ? null : "Choose a medication from the FDA-backed search results.",
+              resolvedMedication ? null : "Choose a medication from the search results.",
+            );
+            setStrengthError(
+              resolvedMedication && resolvedMedication.strengths.length > 1 && !resolvedStrength
+                ? "Choose a specific strength before searching."
+                : null,
             );
             setLocationError(
               resolvedLocation ? null : "Choose a supported city or ZIP-backed location.",
             );
 
-            if (!resolvedMedication || !resolvedLocation) {
+            if (
+              !resolvedMedication ||
+              !resolvedLocation ||
+              (resolvedMedication.strengths.length > 1 && !resolvedStrength)
+            ) {
               return;
             }
 
             setMedicationOption(resolvedMedication);
             setMedication(resolvedMedication.label);
+            setSelectedStrength(resolvedStrength);
             startTransition(() => {
               router.push(
                 buildResultsHref({
-                  medication: resolvedMedication.value,
+                  medication: buildMedicationQueryLabel(resolvedMedication, resolvedStrength),
                   location: resolvedLocation.value,
                   radiusMiles,
                   sortBy,
@@ -198,20 +249,34 @@ export function PharmacySearchForm({
           }
         }}
       >
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-[1.15fr_0.8fr_1fr]">
           <MedicationCombobox
             label="Medication"
-            placeholder="Search FDA-backed medications"
+            placeholder="Search medication options"
             value={medication}
             selectedOptionId={medicationOption?.id || null}
             onValueChange={handleMedicationInputChange}
             onSelect={(option) => {
               setMedicationOption(option);
               setMedication(option.label);
+              setSelectedStrength(
+                option.matchedStrength || (option.strengths.length === 1 ? option.strengths[0].value : ""),
+              );
               setMedicationError(null);
+              setStrengthError(null);
             }}
-            emptyMessage="No FDA-backed medications match that search yet."
+            emptyMessage="No medication options match that search yet."
             error={medicationError}
+          />
+
+          <MedicationStrengthField
+            option={medicationOption}
+            value={selectedStrength}
+            onChange={(nextValue) => {
+              setSelectedStrength(nextValue);
+              setStrengthError(null);
+            }}
+            error={strengthError}
           />
 
           <ControlledCombobox
@@ -282,8 +347,8 @@ export function PharmacySearchForm({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-6 text-slate-600">
-            Nearby pharmacies come from live Google Places results. Inventory still requires direct
-            confirmation.
+            Nearby pharmacies come from live Google Places results. Strength-aware medication
+            context is preserved, but inventory still requires direct confirmation.
           </p>
           <button
             type="submit"

@@ -5,10 +5,19 @@ export type MedicationWorkflowCategory =
   | "maintenance_refill";
 
 export type MedicationBadge = "Rx" | "OTC" | "Rx/OTC" | null;
+export type MedicationSource = "openfda" | "demo";
 
 export type MedicationIngredient = {
   name: string;
   strength: string | null;
+};
+
+export type MedicationStrengthOption = {
+  id: string;
+  label: string;
+  value: string;
+  amount: number | null;
+  unit: string | null;
 };
 
 export type MedicationIndexRecord = {
@@ -54,6 +63,21 @@ export type MedicationSearchOption = {
   value: string;
   description: string;
   badge?: string;
+  source: MedicationSource;
+  canonicalName: string;
+  canonicalLabel: string;
+  queryBaseLabel: string;
+  queryDosageForm: string | null;
+  formulation: string | null;
+  formulationShortLabel: string | null;
+  dosageForm: string | null;
+  route: string | null;
+  strengths: MedicationStrengthOption[];
+  matchedStrength?: string | null;
+  workflowCategory: MedicationWorkflowCategory;
+  demoOnly?: boolean;
+  demoNote?: string | null;
+  simulatedUserCount?: number | null;
 };
 
 export type MedicationSearchResponse = {

@@ -42,11 +42,19 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 
 export function CrowdSignalCard({
   medicationQuery,
+  medicationContext,
   pharmacy,
   summary,
   compact = false,
 }: {
   medicationQuery: string;
+  medicationContext?: {
+    demo_only?: boolean;
+    demo_note?: string | null;
+    simulated_user_count?: number | null;
+    selected_strength?: string | null;
+    formulation?: string | null;
+  } | null;
   pharmacy: {
     name: string;
     address: string;
@@ -66,6 +74,7 @@ export function CrowdSignalCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isDemoMedication = Boolean(medicationContext?.demo_only);
 
   const resolvedSummary = useMemo(
     () =>
@@ -76,6 +85,7 @@ export function CrowdSignalCard({
       ),
     [pharmacy.address, pharmacy.name, pharmacy.placeId, summary],
   );
+  const likelihoodDisplay = resolvedSummary.reportCount ? `${resolvedSummary.likelihood}%` : "No data";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -153,16 +163,21 @@ export function CrowdSignalCard({
       </p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-4">
-        <MiniMetric label="Likelihood" value={`${resolvedSummary.likelihood}%`} />
-        <MiniMetric label="Reports" value={String(resolvedSummary.reportCount)} />
+        <MiniMetric label="Likelihood" value={likelihoodDisplay} />
+        <MiniMetric label={isDemoMedication ? "Live reports" : "Reports"} value={String(resolvedSummary.reportCount)} />
         <MiniMetric label="Freshness" value={resolvedSummary.freshnessNote} />
-        <MiniMetric label="Agreement" value={`${Math.round(resolvedSummary.agreement * 100)}%`} />
+        <MiniMetric label="Consensus" value={resolvedSummary.agreementDisplay} />
       </div>
 
       <p className="mt-3 text-xs leading-5 text-slate-500">
-        Crowd reports are weighted by contributor history and recency. Direct pharmacy confirmation
-        is still recommended before sending someone to pick up a prescription.
+        Crowd reports are weighted by contributor history and recency, and sparse samples stay conservative. Direct pharmacy confirmation is still recommended before sending someone to pick up a prescription.
       </p>
+
+      {isDemoMedication ? (
+        <p className="mt-2 text-xs leading-5 text-amber-900/85">
+          {medicationContext?.demo_note} {medicationContext?.simulated_user_count || 0} seeded demo users are configured for this fictional medication, but pharmacy-specific live report counts remain separate from that simulated context.
+        </p>
+      ) : null}
 
       {feedback ? <p className="mt-3 text-sm text-emerald-700">{feedback}</p> : null}
       {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}

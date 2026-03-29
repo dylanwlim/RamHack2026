@@ -721,9 +721,17 @@ function buildSignalAssessment(candidate, shortages, recalls) {
   };
 }
 
-function buildPatientQuestions(candidate, signal) {
+function buildSelectedMedicationLabel(query, fallback) {
+  return sanitizeText(query) || fallback;
+}
+
+function buildPatientQuestions(candidate, signal, query) {
+  const selectedMedicationLabel = buildSelectedMedicationLabel(query, candidate.displayName);
+  const hasSpecificStrength = extractStrengthTokens(query).length > 0;
   const questions = [
-    `Do you currently have ${candidate.displayName} in the exact strength and formulation listed on my prescription?`,
+    hasSpecificStrength
+      ? `Do you currently have ${selectedMedicationLabel} in the exact prescribed formulation?`
+      : `Do you currently have ${selectedMedicationLabel} in the exact strength and formulation listed on my prescription?`,
     "If not, which strength or formulation is usually easier to fill right now?",
   ];
 
@@ -768,7 +776,7 @@ function buildPrescriberTakeaways(candidate, shortages, recalls, signal) {
   return takeaways;
 }
 
-function buildCandidateOutput(candidate, shortagePayload, recallPayload, referenceDate) {
+function buildCandidateOutput(candidate, shortagePayload, recallPayload, referenceDate, query) {
   const shortages = normalizeShortageItems(shortagePayload);
   const recalls = normalizeRecallItems(recallPayload, referenceDate);
   const signal = buildSignalAssessment(candidate, shortages, recalls);
@@ -810,6 +818,8 @@ function buildCandidateOutput(candidate, shortagePayload, recallPayload, referen
     inactive_listing_count: candidate.inactiveListingCount,
     package_count: candidate.packageCount,
     latest_listing_date: candidate.latestListingDate,
+    data_source: "openfda",
+    demo_context: null,
     access_signal: {
       level: signal.level,
       label: signal.label,
@@ -823,7 +833,7 @@ function buildCandidateOutput(candidate, shortagePayload, recallPayload, referen
       summary: signal.patientSummary,
       what_we_know: knownFacts,
       what_may_make_it_harder: frictionSignals,
-      questions_to_ask: buildPatientQuestions(candidate, signal),
+      questions_to_ask: buildPatientQuestions(candidate, signal, query),
       unavailable: UNAVAILABLE_DATA,
     },
     prescriber_view: {
@@ -916,6 +926,7 @@ function buildDrugIntelligencePayload({
       shortageResultsById[candidate.id],
       recallResultsById[candidate.id],
       referenceDate,
+      query,
     ),
   );
   // Pick the match with the most data: prefer active shortages, then most
@@ -931,6 +942,8 @@ function buildDrugIntelligencePayload({
   return {
     status: "ok",
     generated_at: new Date().toISOString(),
+    data_source: "openfda",
+    demo_context: null,
     query: {
       raw: sanitizeText(query),
       search_phrases: buildSearchPhrases(query),

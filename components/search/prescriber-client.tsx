@@ -211,7 +211,13 @@ function DoseGrid({ doses }: { doses: ReturnType<typeof buildDoseAvailability> }
   );
 }
 
-function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerRows> }) {
+function ManufacturerList({
+  rows,
+  isDemo = false,
+}: {
+  rows: ReturnType<typeof buildManufacturerRows>;
+  isDemo?: boolean;
+}) {
   const [showAll, setShowAll] = useState(false);
   if (!rows.length) return null;
   const visible = showAll ? rows : rows.slice(0, 5);
@@ -220,7 +226,7 @@ function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerR
     <div className="surface-panel rounded-[2rem] p-6">
       <span className="eyebrow-label">Manufacturer status</span>
       <p className="mt-3 text-xs text-slate-500">
-        FDA-listed manufacturers for matching presentations.
+        {isDemo ? "Simulated manufacturers for matching demo presentations." : "FDA-listed manufacturers for matching presentations."}
       </p>
       <div className="mt-4 divide-y divide-slate-100">
         {visible.map((r, i) => {
@@ -270,6 +276,7 @@ function ShortageEvidencePanel({
   const items = match.evidence.shortages.items;
   const activeShortages = items.filter((s) => normalizedStatus(s) === "active");
   const hasRecalls = match.evidence.recalls.recent_count > 0;
+  const isDemoMatch = Boolean(match.demo_context?.demo_only);
 
   const score = computeSeverityScore(items);
   const tier = severityTier(score);
@@ -289,19 +296,29 @@ function ShortageEvidencePanel({
   const reasons = Array.from(
     new Set(activeShortages.map((s) => s.shortageReason).filter(Boolean)),
   ).slice(0, 2) as string[];
+  const tierSublabel = isDemoMatch ? "Simulated demo medication context" : tier.sublabel;
 
   return (
     <>
       {/* ── Hero verdict card ── */}
       <div className={`surface-panel rounded-[2rem] p-6 sm:p-7 border ${tier.tailwindBorder} ${tier.tailwindBg}`}>
-        <span className="eyebrow-label">FDA Drug Shortage Intelligence</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow-label">
+            {isDemoMatch ? "Demo Medication Intelligence" : "FDA Drug Shortage Intelligence"}
+          </span>
+          {isDemoMatch ? (
+            <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+              Demo
+            </span>
+          ) : null}
+        </div>
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <div className={`text-2xl font-bold tracking-tight ${tier.tailwindText}`}>
               {tier.label}
             </div>
-            <div className="mt-1 text-sm text-slate-600">{tier.sublabel}</div>
+            <div className="mt-1 text-sm text-slate-600">{tierSublabel}</div>
           </div>
           <div className="text-right">
             <div className={`text-4xl font-black tabular-nums ${tier.tailwindText}`}>{score}</div>
@@ -332,8 +349,9 @@ function ShortageEvidencePanel({
         )}
 
         <div className="mt-4 text-[10px] text-slate-400">
-          Shortage data as of {formatDisplayDate(drugData.data_freshness.shortages_last_updated)} ·
-          Recalls as of {formatDisplayDate(drugData.data_freshness.recalls_last_updated)}
+          {isDemoMatch
+            ? `Simulated demo context • ${match.demo_context?.simulated_user_count || 0} seeded demo users`
+            : `Shortage data as of ${formatDisplayDate(drugData.data_freshness.shortages_last_updated)} · Recalls as of ${formatDisplayDate(drugData.data_freshness.recalls_last_updated)}`}
         </div>
       </div>
 
@@ -341,12 +359,14 @@ function ShortageEvidencePanel({
       <DoseGrid doses={doses} />
 
       {/* ── Manufacturer status ── */}
-      <ManufacturerList rows={mfgRows} />
+      <ManufacturerList rows={mfgRows} isDemo={isDemoMatch} />
 
       {/* ── Active FDA shortage entries ── */}
       {activeShortages.length > 0 ? (
         <div className="surface-panel rounded-[2rem] p-6">
-          <span className="eyebrow-label">Active FDA shortage entries</span>
+          <span className="eyebrow-label">
+            {isDemoMatch ? "Active simulated shortage entries" : "Active FDA shortage entries"}
+          </span>
           <div className="mt-5 space-y-3">
             {activeShortages.slice(0, 6).map((s, i) => (
               <div key={i} className="rounded-[1.2rem] border border-rose-100 bg-rose-50 p-4">
@@ -404,8 +424,18 @@ function ShortageEvidencePanel({
       ) : null}
 
       <div className="rounded-[1.5rem] border border-slate-200 bg-white/60 px-5 py-4 text-xs leading-6 text-slate-500">
-        Data from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated daily.
-        Informational only — confirm with your pharmacist or prescriber before making any decisions.
+        {isDemoMatch ? (
+          <>
+            <strong>Simulated demo medication data.</strong> {match.demo_context?.note} This
+            profile is isolated from the FDA-backed catalog and exists only for the hackathon demo.
+          </>
+        ) : (
+          <>
+            Data from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated
+            daily. Informational only — confirm with your pharmacist or prescriber before making
+            any decisions.
+          </>
+        )}
       </div>
     </>
   );
@@ -489,7 +519,7 @@ export function PrescriberClient() {
             action="/prescriber"
             initialQuery={query}
             submitLabel="Search medication"
-            helper="Search the FDA-backed medication index when the question is clinical planning, not store-level inventory."
+            helper="Search the FDA-backed medication catalog or the isolated demo medication set when the question is clinical planning, not store-level inventory."
           />
         </div>
       </section>
@@ -500,7 +530,7 @@ export function PrescriberClient() {
             mode="prescriber"
             eyebrow="Example scenarios"
             title="Four useful starting points for Medication Lookup."
-            description="These show FDA-backed search terms that surface shortage, recall, formulation, and manufacturer context immediately."
+            description="These show credible medication lookups that surface formulation, shortage, recall, and manufacturer context immediately, with demo-only entries kept clearly separate."
           />
         </div>
       </section>
@@ -538,13 +568,27 @@ export function PrescriberClient() {
               {/* ── Left: drug identity + clinical context ── */}
               <div className="space-y-6">
                 <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
-                  <span className="eyebrow-label">Selected medication family</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="eyebrow-label">
+                      {selectedMatch.demo_context?.demo_only ? "Selected demo medication" : "Selected medication family"}
+                    </span>
+                    {selectedMatch.demo_context?.demo_only ? (
+                      <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+                        Demo
+                      </span>
+                    ) : null}
+                  </div>
                   <h2 className="mt-4 text-3xl tracking-tight text-slate-950">
                     {selectedMatch.display_name}
                   </h2>
                   <p className="mt-2 text-sm uppercase tracking-[0.18em] text-slate-500">
                     {selectedMatch.canonical_label}
                   </p>
+                  {selectedMatch.demo_context?.demo_only ? (
+                    <p className="mt-3 text-sm leading-6 text-amber-900">
+                      {selectedMatch.demo_context.note} {selectedMatch.demo_context.simulated_user_count || 0} seeded demo users are configured for this variant, and the signal remains explicitly simulated.
+                    </p>
+                  ) : null}
                   <p className="mt-5 max-w-3xl text-base leading-7 text-slate-700">
                     {selectedMatch.prescriber_view.summary}
                   </p>
@@ -572,8 +616,12 @@ export function PrescriberClient() {
                     </div>
                     <p className="mt-1 text-sm leading-6 text-violet-900">
                       {selectedMatch.prescriber_view.should_consider_alternatives
-                        ? "FDA shortage data supports considering alternatives earlier. Discuss backup formulations or therapeutic substitutes with the patient."
-                        : "No strong FDA trigger to abandon the current plan. Monitor fill status and have alternatives ready if the patient reports difficulty."}
+                        ? selectedMatch.demo_context?.demo_only
+                          ? "The simulated demo signal supports discussing backup formulations earlier so the presentation can show formulation-aware decision making."
+                          : "FDA shortage data supports considering alternatives earlier. Discuss backup formulations or therapeutic substitutes with the patient."
+                        : selectedMatch.demo_context?.demo_only
+                          ? "The simulated demo signal does not force an immediate change, but it still keeps strength and release-type alternatives visible."
+                          : "No strong FDA trigger to abandon the current plan. Monitor fill status and have alternatives ready if the patient reports difficulty."}
                     </p>
                   </div>
                 </div>
@@ -601,7 +649,9 @@ export function PrescriberClient() {
                     </div>
                     {selectedMatch.manufacturers.length > 0 && (
                       <div>
-                        <div className="text-sm uppercase tracking-[0.18em] text-slate-500">FDA-listed manufacturers</div>
+                        <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
+                          {selectedMatch.demo_context?.demo_only ? "Simulated manufacturers" : "FDA-listed manufacturers"}
+                        </div>
                         <div className="mt-3">
                           <TagList items={selectedMatch.manufacturers} />
                         </div>

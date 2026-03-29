@@ -177,6 +177,22 @@ function normalizeMedicationText(value) {
   return sanitizeText(value).toLowerCase();
 }
 
+function medicationIncludesStrength(value) {
+  return /\d+(?:\.\d+)?\s*(mg|mcg|g|ml|iu|units?|%)/i.test(sanitizeText(value));
+}
+
+function withStrengthQualifier(medication) {
+  return medicationIncludesStrength(medication)
+    ? medication
+    : `${medication} in the exact prescribed strength`;
+}
+
+function withDoseQualifier(medication) {
+  return medicationIncludesStrength(medication)
+    ? medication
+    : `the prescribed ${medication} dose`;
+}
+
 function normalizeBoolean(value) {
   if (typeof value === "boolean") {
     return value;
@@ -384,9 +400,9 @@ function buildMedicationGuidance(medicationProfile, medication) {
       ranking_focus:
         "Best overall match weighs open status, review depth, and distance so the first controlled-medication call is more likely to be worth the effort.",
       ranking_focus_label: medicationProfile.ranking_focus_label,
-      recommended_action: `Ask whether ${medication} in the prescribed strength can be filled today before routing or transferring the prescription.`,
+      recommended_action: `Ask whether ${withStrengthQualifier(medication)} can be filled today before routing or transferring the prescription.`,
       questions_to_ask: [
-        `Can you fill ${medication} today in the exact prescribed strength?`,
+        `Can you fill ${withStrengthQualifier(medication)} today?`,
         "Should the prescription be sent directly to this location, or is another store in your network better positioned?",
         "If not today, when should I call back or what nearby store would you try next?",
       ],
@@ -424,9 +440,9 @@ function buildMedicationGuidance(medicationProfile, medication) {
       ranking_focus:
         "Best overall match balances reputation, review volume, current hours, and travel distance for medications that often require shipment or refrigerator-handling questions.",
       ranking_focus_label: medicationProfile.ranking_focus_label,
-      recommended_action: `Ask about dose strength, refrigeration handling, and when the next shipment of ${medication} is expected.`,
+      recommended_action: `Ask about the exact strength, refrigeration handling, and when the next shipment of ${medication} is expected.`,
       questions_to_ask: [
-        `Do you have the prescribed ${medication} dose or know when the next shipment arrives?`,
+        `Do you have ${withDoseQualifier(medication)} or know when the next shipment arrives?`,
         "If you do not have it now, how do you handle waitlists, transfers, or next-delivery timing?",
         "Are there any storage or pickup timing details the patient should know before coming in?",
       ],
@@ -470,7 +486,7 @@ function buildPlaceWorkflow(place, medicationProfile, medication) {
     return {
       workflow_label: medicationProfile.workflow_label,
       match_reason: matchReason,
-      next_step: `Ask whether ${medication} in the prescribed strength can be filled today before sending the prescription here.`,
+      next_step: `Ask whether ${withStrengthQualifier(medication)} can be filled today before sending the prescription here.`,
       inventory_note: `${place.name} is a real Google Places result, but ${medication} stock is not live-verified in PharmaPath.`,
     };
   }
@@ -500,7 +516,7 @@ function buildPlaceWorkflow(place, medicationProfile, medication) {
     return {
       workflow_label: medicationProfile.workflow_label,
       match_reason: matchReason,
-      next_step: `Ask about the exact ${medication} dose, refrigeration handling, and when the next shipment is expected.`,
+      next_step: `Ask about ${withDoseQualifier(medication)}, refrigeration handling, and when the next shipment is expected.`,
       inventory_note: `${place.name} is a real Google Places result, but PharmaPath does not have live cold-chain inventory data.`,
     };
   }

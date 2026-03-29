@@ -64,7 +64,7 @@ const methodologyGuide = [
     title: "Handled search inputs",
     value: "Indexed server-side",
     detail:
-      "Medication typeahead hits a normalized FDA-backed index served from PharmaPath, while location stays constrained to the handled city and ZIP-backed entries in this build.",
+      "Medication typeahead hits a normalized FDA-backed index plus a clearly isolated demo-only catalog, while location stays constrained to the handled city and ZIP-backed entries in this build.",
   },
   {
     title: "Medication context",

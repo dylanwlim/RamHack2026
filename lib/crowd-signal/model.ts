@@ -76,10 +76,11 @@ export type CrowdSignalSummary = {
     | "mixed_signal"
     | "likely_unavailable"
     | "not_enough_data";
-  confidenceLabel: "High confidence" | "Medium confidence" | "Low confidence";
+  confidenceLabel: string;
   likelihood: number;
   confidence: number;
   agreement: number;
+  agreementDisplay: string;
   reportCount: number;
   lastReportedAt: Date | null;
   positiveWeight: number;
@@ -87,4 +88,7 @@ export type CrowdSignalSummary = {
   explanation: string;
   freshnessNote: string;
   mixedSignal: boolean;
+  sparseData: boolean;
+  stale: boolean;
+  direction: "positive" | "negative" | "mixed" | "none";
 };

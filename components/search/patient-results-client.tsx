@@ -253,7 +253,13 @@ function DoseGrid({ doses }: { doses: ReturnType<typeof buildDoseAvailability> }
 }
 
 /** Manufacturer status rows — like airline availability per flight */
-function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerRows> }) {
+function ManufacturerList({
+  rows,
+  isDemo = false,
+}: {
+  rows: ReturnType<typeof buildManufacturerRows>;
+  isDemo?: boolean;
+}) {
   const [showAll, setShowAll] = useState(false);
   if (!rows.length) return null;
   const visible = showAll ? rows : rows.slice(0, 5);
@@ -262,7 +268,7 @@ function ManufacturerList({ rows }: { rows: ReturnType<typeof buildManufacturerR
     <div className="surface-panel rounded-[2rem] p-6">
       <span className="eyebrow-label">Manufacturer status</span>
       <p className="mt-3 text-xs text-slate-500">
-        FDA-listed manufacturers for matching presentations.
+        {isDemo ? "Simulated manufacturers for matching demo presentations." : "FDA-listed manufacturers for matching presentations."}
       </p>
       <div className="mt-4 divide-y divide-slate-100">
         {visible.map((r, i) => {
@@ -314,6 +320,7 @@ function ShortagePanel({
   const items = match.evidence.shortages.items;
   const activeShortages = items.filter((s) => normalizedStatus(s) === "active");
   const hasRecalls = match.evidence.recalls.recent_count > 0;
+  const isDemoMatch = Boolean(match.demo_context?.demo_only);
 
   const score = computeSeverityScore(items);
   const tier = severityTier(score);
@@ -338,12 +345,22 @@ function ShortagePanel({
     type: classifyInsight(text),
     text,
   }));
+  const tierSublabel = isDemoMatch ? "Simulated demo medication context" : tier.sublabel;
 
   return (
     <>
       {/* ── Hero verdict card ── */}
       <div className={`surface-panel rounded-[2rem] p-6 sm:p-7 border ${tier.tailwindBorder} ${tier.tailwindBg}`}>
-        <span className="eyebrow-label">FDA Drug Shortage Intelligence</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow-label">
+            {isDemoMatch ? "Demo Medication Intelligence" : "FDA Drug Shortage Intelligence"}
+          </span>
+          {isDemoMatch ? (
+            <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+              Demo
+            </span>
+          ) : null}
+        </div>
 
         {/* Big verdict */}
         <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
@@ -351,7 +368,7 @@ function ShortagePanel({
             <div className={`text-2xl font-bold tracking-tight ${tier.tailwindText}`}>
               {tier.label}
             </div>
-            <div className="mt-1 text-sm text-slate-600">{tier.sublabel}</div>
+            <div className="mt-1 text-sm text-slate-600">{tierSublabel}</div>
           </div>
           <div className="text-right">
             <div className={`text-4xl font-black tabular-nums ${tier.tailwindText}`}>{score}</div>
@@ -384,8 +401,9 @@ function ShortagePanel({
         )}
 
         <div className="mt-4 text-[10px] text-slate-400">
-          Shortage data as of {formatDisplayDate(drugData.data_freshness.shortages_last_updated)} ·
-          Recalls as of {formatDisplayDate(drugData.data_freshness.recalls_last_updated)}
+          {isDemoMatch
+            ? `Simulated demo context • ${match.demo_context?.simulated_user_count || 0} seeded demo users`
+            : `Shortage data as of ${formatDisplayDate(drugData.data_freshness.shortages_last_updated)} · Recalls as of ${formatDisplayDate(drugData.data_freshness.recalls_last_updated)}`}
         </div>
       </div>
 
@@ -393,7 +411,7 @@ function ShortagePanel({
       <DoseGrid doses={doses} />
 
       {/* ── Manufacturer status ── */}
-      <ManufacturerList rows={mfgRows} />
+      <ManufacturerList rows={mfgRows} isDemo={isDemoMatch} />
 
 
       {/* ── Insights ── */}
@@ -460,8 +478,19 @@ function ShortagePanel({
       ) : null}
 
       <div className="rounded-[1.5rem] border border-slate-200 bg-white/60 px-5 py-4 text-xs leading-6 text-slate-500">
-        Data from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated daily.
-        Informational only — confirm with your pharmacist or prescriber before making any decisions.
+        {isDemoMatch ? (
+          <>
+            <strong>Simulated demo medication data.</strong> {match.demo_context?.note} Strengths,
+            contributor counts, and shortage context are demo-only and kept separate from the
+            FDA-backed catalog.
+          </>
+        ) : (
+          <>
+            Data from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated
+            daily. Informational only — confirm with your pharmacist or prescriber before making
+            any decisions.
+          </>
+        )}
       </div>
     </>
   );
@@ -584,6 +613,9 @@ export function PatientResultsClient() {
 
   const extraResults = pharmacyData?.results.slice(1) || [];
   const visibleExtras = showAll ? extraResults : extraResults.slice(0, 4);
+  const isDemoMedication = Boolean(
+    pharmacyData?.medication_profile.demo_only || featuredMatch?.demo_context?.demo_only || drugData?.data_source === "demo",
+  );
 
   function getCrowdSignalForPharmacy(result: PharmacySearchResponse["results"][number]) {
     const signalKey = buildSignalKey({
@@ -606,8 +638,9 @@ export function PatientResultsClient() {
               Nearby pharmacies on the left. Medication signal on the right.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              This page keeps the live nearby lookup and the FDA-derived medication signal together,
-              while staying explicit that they answer different questions.
+              {isDemoMedication
+                ? "This page keeps the live nearby lookup and a clearly labeled demo medication profile together, while staying explicit that the medication context is simulated."
+                : "This page keeps the live nearby lookup and the FDA-derived medication signal together, while staying explicit that they answer different questions."}
             </p>
           </div>
 
@@ -642,7 +675,25 @@ export function PatientResultsClient() {
               <div className="surface-panel min-h-[28rem] rounded-[2rem] p-6" />
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <>
+              {isDemoMedication ? (
+                <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/85 px-5 py-4 text-sm leading-6 text-amber-950">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="eyebrow-label text-amber-700">Demo medication</span>
+                    <span className="rounded-full border border-amber-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+                      Simulated
+                    </span>
+                  </div>
+                  <p className="mt-2">
+                    {pharmacyData?.medication_profile.demo_note || featuredMatch?.demo_context?.note}
+                  </p>
+                  <p className="mt-1 text-amber-900/80">
+                    {pharmacyData?.medication_profile.simulated_user_count || featuredMatch?.demo_context?.simulated_user_count || 0} seeded demo users are configured for this fictional medication variant. Live pharmacy results stay real, and pharmacy-specific crowd reports remain a separate layer.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="space-y-6">
                 <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
                   <div className="flex flex-wrap items-center justify-between gap-4">
@@ -722,6 +773,7 @@ export function PatientResultsClient() {
                         <div className="mt-5">
                           <CrowdSignalCard
                             medicationQuery={query}
+                            medicationContext={pharmacyData?.medication_profile}
                             pharmacy={{
                               name: pharmacyData.recommended.name,
                               address: pharmacyData.recommended.address,
@@ -783,6 +835,7 @@ export function PatientResultsClient() {
                                 <div className="mt-3">
                                   <CrowdSignalCard
                                     medicationQuery={query}
+                                    medicationContext={pharmacyData?.medication_profile}
                                     pharmacy={{
                                       name: result.name,
                                       address: result.address,
@@ -819,6 +872,9 @@ export function PatientResultsClient() {
                           {pharmacyData.guidance.demo_boundary} Community reports sit on top of the
                           live nearby list as a separate, weighted layer rather than as a claim of
                           verified shelf inventory.
+                          {pharmacyData.medication_profile.demo_only
+                            ? " This medication profile is simulated for the demo and is intentionally separated from FDA-backed medication intelligence."
+                            : ""}
                         </p>
                         {!crowdReady ? (
                           <div className="mt-3 flex items-center gap-2 text-slate-500">
@@ -868,7 +924,8 @@ export function PatientResultsClient() {
                   />
                 )}
               </div>
-            </div>
+              </div>
+            </>
           )}
         </div>
       </section>

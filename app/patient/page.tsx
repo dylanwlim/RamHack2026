@@ -17,8 +17,8 @@ export default function PatientPage() {
                 Search a medication and location without pretending the stock is guaranteed.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Pharmacy Finder keeps one live nearby list, one FDA-derived signal, and the next
-                question to ask. It stays useful by keeping those jobs separate.
+                Pharmacy Finder keeps one live nearby list, one clearly sourced medication signal,
+                and the next question to ask. It stays useful by keeping those jobs separate.
               </p>
             </div>
 

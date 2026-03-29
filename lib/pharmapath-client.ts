@@ -30,6 +30,14 @@ export type PharmacySearchResponse = {
     key: string;
     label: string;
     workflow_label: string;
+    source?: "openfda" | "demo";
+    demo_only?: boolean;
+    demo_note?: string | null;
+    simulated_user_count?: number | null;
+    medication_label?: string;
+    selected_strength?: string | null;
+    dosage_form?: string | null;
+    formulation?: string | null;
   };
   guidance: {
     title: string;
@@ -71,6 +79,15 @@ export type DrugIntelligenceResponse = {
     raw: string;
   };
   featured_match_id?: string | null;
+  data_source?: "openfda" | "demo";
+  demo_context?: {
+    demo_only: boolean;
+    source_label: string;
+    note: string | null;
+    simulated_user_count: number | null;
+    selected_strength: string | null;
+    selected_label: string | null;
+  };
   data_freshness: {
     ndc_last_updated?: string | null;
     shortages_last_updated?: string | null;
@@ -88,6 +105,15 @@ export type DrugIntelligenceResponse = {
     routes: string[];
     dosage_forms: string[];
     application_numbers: string[];
+    data_source?: "openfda" | "demo";
+    demo_context?: {
+      demo_only: boolean;
+      source_label: string;
+      note: string | null;
+      simulated_user_count: number | null;
+      selected_strength: string | null;
+      selected_label: string | null;
+    };
     access_signal: {
       level: "steadier" | "mixed" | "higher-friction";
       label: string;

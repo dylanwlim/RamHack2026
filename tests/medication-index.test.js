@@ -135,6 +135,37 @@ test("exact medication search returns the canonical display label used for selec
   });
 
   assert.equal(results.length, 1);
-  assert.equal(results[0].label, "Concerta 18 mg");
-  assert.equal(results[0].value, "Concerta 18 mg");
+  assert.equal(results[0].label, "Concerta");
+  assert.equal(results[0].matchedStrength, "18 mg");
+  assert.ok(results[0].strengths.some((strength) => strength.value === "18 mg"));
+  assert.ok(results[0].strengths.some((strength) => strength.value === "54 mg"));
+});
+
+test("medication search groups real catalog strengths under one selectable option", async () => {
+  const { results } = await searchMedicationOptions("Adderall", {
+    limit: 5,
+  });
+
+  const adderallEr = results.find((result) => result.label === "Adderall ER");
+  const adderallIr = results.find((result) => result.label === "Adderall IR");
+
+  assert.ok(adderallEr);
+  assert.ok(adderallIr);
+  assert.ok(adderallEr.strengths.length > 2);
+  assert.ok(adderallIr.strengths.length > 2);
+  assert.equal(adderallEr.source, "openfda");
+});
+
+test("demo medications stay searchable and isolated from the FDA-backed catalog", async () => {
+  const { results } = await searchMedicationOptions("Vellocet ER 20 mg", {
+    exact: true,
+    limit: 1,
+  });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].label, "Vellocet ER");
+  assert.equal(results[0].source, "demo");
+  assert.equal(results[0].demoOnly, true);
+  assert.equal(results[0].simulatedUserCount, 100);
+  assert.equal(results[0].matchedStrength, "20 mg");
 });
