@@ -496,7 +496,16 @@ export function PatientResultsClient() {
       return null;
     }
 
-    return drugData.matches[0];
+    // Prefer the match pointed to by featured_match_id, then the one with the
+    // most active listings (most data), then fall back to index 0.
+    if (drugData.featured_match_id) {
+      const pinned = drugData.matches.find((m) => m.id === drugData.featured_match_id);
+      if (pinned) return pinned;
+    }
+
+    return drugData.matches.reduce((best, m) =>
+      (m.active_listing_count ?? 0) > (best.active_listing_count ?? 0) ? m : best,
+    );
   }, [drugData]);
 
   useEffect(() => {

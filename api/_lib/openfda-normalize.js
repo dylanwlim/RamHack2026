@@ -908,7 +908,15 @@ function buildDrugIntelligencePayload({
       referenceDate,
     ),
   );
-  const featured = matches[0] || null;
+  // Pick the match with the most data: prefer active shortages, then most
+  // active listings, then fall back to first result.
+  const featured =
+    matches.find((m) => m.evidence?.shortages?.active_count > 0) ||
+    matches.reduce(
+      (best, m) => ((m.active_listing_count ?? 0) > (best.active_listing_count ?? 0) ? m : best),
+      matches[0],
+    ) ||
+    null;
 
   return {
     status: "ok",
