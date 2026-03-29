@@ -23,30 +23,30 @@ const routeVisualMeta: Record<
   }
 > = {
   patient: {
-    panelTitle: "Patient route",
+    panelTitle: "Patient page",
     panelLabel: "Call-ready view",
     sections: [
       {
-        title: "Nearby list",
+        title: "Nearby pharmacies",
         value: "Google Places live",
-        detail: "Real pharmacies, distance, hours, ratings, and Maps links stay grounded in live nearby search.",
+        detail: "Pharmacies, distance, hours, ratings, and Maps links from a live nearby search.",
       },
       {
-        title: "Access signal",
+        title: "Access info",
         value: "Medication-wide estimate",
-        detail: "The signal frames the next question without implying that a store already has the medication.",
+        detail: "FDA data helps frame the right question without implying that a store already has the medication.",
       },
       {
         title: "Next question",
         value: "Call before assuming",
-        detail: "The route stays short so the user can move from search to a real confirmation call quickly.",
+        detail: "Kept short so the user can move from search to a confirmation call quickly.",
       },
     ],
-    footer: "Inventory still requires direct confirmation with the pharmacy.",
+    footer: "",
     accentColor: "#156d95",
   },
   prescriber: {
-    panelTitle: "Prescriber route",
+    panelTitle: "Prescriber page",
     panelLabel: "Evidence-first view",
     sections: [
       {
@@ -57,19 +57,19 @@ const routeVisualMeta: Record<
       {
         title: "Manufacturer spread",
         value: "Breadth matters",
-        detail: "The route keeps formulation, route, and manufacturer context together so backup planning is grounded in the evidence returned.",
+        detail: "Formulation and manufacturer context together so backup planning is grounded in actual data.",
       },
       {
         title: "Alternative planning",
         value: "Visible earlier",
-        detail: "When friction is higher, the route makes it easier to think through alternatives before repeated failed pharmacy calls.",
+        detail: "When friction is higher, it's easier to think through alternatives before repeated failed pharmacy calls.",
       },
     ],
-    footer: "No claim that a pharmacy can fill the medication right now is made on this route.",
+    footer: "",
     accentColor: "#159a83",
   },
   methodology: {
-    panelTitle: "Methodology route",
+    panelTitle: "Methodology page",
     panelLabel: "Trust boundary",
     sections: [
       {
@@ -80,15 +80,15 @@ const routeVisualMeta: Record<
       {
         title: "Config health",
         value: "/api/health",
-        detail: "The methodology view still exposes deployment health and integration status without collapsing it into the patient-facing story.",
+        detail: "Deployment health and integration status are visible here without cluttering the patient-facing pages.",
       },
       {
-        title: "Boundary copy",
+        title: "Honest language",
         value: "Truthful positioning",
-        detail: "The route makes the language explicit before the demo overstates what the data can actually guarantee.",
+        detail: "Makes the language explicit so the app never overstates what the data can actually guarantee.",
       },
     ],
-    footer: "Store shelf inventory remains unknown until a pharmacy confirms it directly.",
+    footer: "",
     accentColor: "#d97706",
   },
 };
@@ -131,9 +131,11 @@ function RouteVisualPanel({
         ))}
       </div>
 
-      <div className="mt-6 border-t border-slate-200/80 pt-4">
-        <p className="text-sm leading-6 text-slate-500">{panel.footer}</p>
-      </div>
+      {panel.footer ? (
+        <div className="mt-6 border-t border-slate-200/80 pt-4">
+          <p className="text-sm leading-6 text-slate-500">{panel.footer}</p>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -208,12 +210,8 @@ export function WorkflowShowcase() {
         <div className="grid items-start gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
           <div className="space-y-8">
             <div>
-              <span className="eyebrow-label">Route structure</span>
-              <h2 className="mt-6 section-title">Three focused surfaces instead of one noisy dashboard.</h2>
-              <p className="mt-4 section-copy">
-                The template’s section rhythm is preserved, but the product story is rewritten around
-                the actual PharmaPath flow: patient search, prescriber evidence, and methodology.
-              </p>
+              <span className="eyebrow-label">Pages</span>
+              <h2 className="mt-6 section-title">Three pages for three outlooks.</h2>
             </div>
 
             <AnimatePresence mode="wait" custom={direction}>
@@ -243,7 +241,7 @@ export function WorkflowShowcase() {
                   ))}
                 </ul>
                 <Link href={active.href} className="template-button-primary">
-                  Open {active.id} route
+                  Open {active.id} page
                 </Link>
               </motion.div>
             </AnimatePresence>
@@ -260,7 +258,7 @@ export function WorkflowShowcase() {
                         ? "w-8 bg-slate-900"
                         : "w-2 bg-slate-400/30 hover:bg-slate-400/50"
                     }`}
-                    aria-label={`Show ${item.id} route`}
+                    aria-label={`Show ${item.id} page`}
                   />
                 ))}
               </div>
@@ -270,7 +268,7 @@ export function WorkflowShowcase() {
                   type="button"
                   onClick={prevSlide}
                   className="rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-100"
-                  aria-label="Previous route"
+                  aria-label="Previous page"
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path
@@ -286,7 +284,7 @@ export function WorkflowShowcase() {
                   type="button"
                   onClick={nextSlide}
                   className="rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-100"
-                  aria-label="Next route"
+                  aria-label="Next page"
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path
@@ -302,7 +300,7 @@ export function WorkflowShowcase() {
             </div>
           </div>
 
-          <div className="relative h-[420px] overflow-hidden">
+          <div className="relative h-[520px] overflow-hidden">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={active.id}

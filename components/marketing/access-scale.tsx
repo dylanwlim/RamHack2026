@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { homeStats } from "@/lib/content";
 import { motionEase, motionTiming } from "@/lib/motion";
 
 type DataPoint = {
@@ -42,13 +41,10 @@ const generateDataPoints = (): DataPoint[] => {
 
 export function AccessScaleSection() {
   const [isVisible, setIsVisible] = useState(false);
-  const [typingComplete, setTypingComplete] = useState(false);
   const [dataPoints] = useState<DataPoint[]>(generateDataPoints);
 
   useEffect(() => {
     setIsVisible(true);
-    const timer = window.setTimeout(() => setTypingComplete(true), 1000);
-    return () => window.clearTimeout(timer);
   }, []);
 
   return (
@@ -56,30 +52,10 @@ export function AccessScaleSection() {
       <div className="site-shell">
         <div className="grid grid-cols-12 gap-5 gap-y-16">
           <div className="col-span-12 relative z-10 md:col-span-6">
-            <div className="relative mb-12 inline-flex h-6 items-center px-2 font-mono uppercase text-xs text-[#146e96]">
-              <div className="flex items-center gap-1 overflow-hidden">
-                <motion.span
-                  initial={{ width: 0 }}
-                  animate={{ width: "auto" }}
-                  transition={{ duration: motionTiming.hero, ease: motionEase.emphasis }}
-                  className="block whitespace-nowrap"
-                >
-                  Signal model
-                </motion.span>
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: typingComplete ? [1, 0.35, 1, 0.35] : 0 }}
-                  transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                  className="block h-2 w-2 rounded-full bg-[#167E6C]"
-                  style={{ boxShadow: "0 0 18px rgba(22, 126, 108, 0.48)" }}
-                />
-              </div>
-            </div>
-
             <h2 className="mb-6 text-[40px] font-normal leading-tight tracking-tight text-[#111A4A]">
               Nearby discovery stays live{" "}
               <span className="opacity-40">
-                while the medication story stays honest.
+                while the medication info stays honest.
               </span>
             </h2>
 
@@ -148,41 +124,6 @@ export function AccessScaleSection() {
             </div>
           </div>
 
-          <div className="col-span-12 pt-14 md:pt-20">
-            <div className="overflow-visible pb-5">
-              <div className="grid grid-cols-12 gap-5 relative z-10">
-                {homeStats.map((stat, index) => (
-                  <div key={`${stat.value}-${stat.description}`} className="col-span-6 md:col-span-3">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
-                      animate={
-                        isVisible
-                          ? {
-                              opacity: [0, 1, 1],
-                              y: [20, 0, 0],
-                              filter: ["blur(4px)", "blur(0px)", "blur(0px)"],
-                            }
-                          : undefined
-                      }
-                      transition={{
-                        duration: 1.5,
-                        delay: index * 0.2,
-                        ease: motionEase.stat,
-                      }}
-                      className="flex flex-col gap-2"
-                    >
-                      <span className="text-2xl font-medium leading-[26.4px] tracking-tight text-[#146e96]">
-                        {stat.value}
-                      </span>
-                      <p className="m-0 whitespace-pre-line text-xs leading-[13.2px] text-[#7C7F88]">
-                        {stat.description}
-                      </p>
-                    </motion.div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>

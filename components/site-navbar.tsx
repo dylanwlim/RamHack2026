@@ -9,7 +9,7 @@ import { motionEase, motionTiming } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Story", href: "/#story" },
+  { label: "Overview", href: "/" },
   { label: "Patient", href: "/patient" },
   { label: "Prescriber", href: "/prescriber" },
   { label: "Methodology", href: "/methodology" },
@@ -29,6 +29,7 @@ export function SiteNavbar() {
 
   useEffect(() => {
     setIsOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
 
   return (
