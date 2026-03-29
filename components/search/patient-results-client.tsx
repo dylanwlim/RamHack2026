@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, ExternalLink, LoaderCircle, MapPin, PhoneCall } from "lucide-react";
@@ -21,20 +20,139 @@ import {
 
 const client = createPharmaPathClient();
 
-function buildFreshnessLine(payload: DrugIntelligenceResponse) {
-  const entries = [
-    payload.data_freshness.ndc_last_updated
-      ? `Listings ${formatDisplayDate(payload.data_freshness.ndc_last_updated)}`
-      : "",
-    payload.data_freshness.shortages_last_updated
-      ? `Shortages ${formatDisplayDate(payload.data_freshness.shortages_last_updated)}`
-      : "",
-    payload.data_freshness.recalls_last_updated
-      ? `Recalls ${formatDisplayDate(payload.data_freshness.recalls_last_updated)}`
-      : "",
-  ].filter(Boolean);
+type Match = DrugIntelligenceResponse["matches"][number];
 
-  return entries.length ? entries.join(" · ") : "FDA freshness unavailable for this request.";
+function ShortagePanel({
+  match,
+  drugData,
+}: {
+  match: Match;
+  drugData: DrugIntelligenceResponse;
+  query: string;
+  location: string;
+}) {
+  const activeShortages = match.evidence.shortages.items.filter(
+    (s) => s.status?.toLowerCase() === "active",
+  );
+  const hasShortage = match.evidence.shortages.active_count > 0;
+  const hasRecalls = match.evidence.recalls.recent_count > 0;
+
+  const signalColor =
+    match.access_signal.level === "higher-friction"
+      ? "border-rose-200 bg-rose-50"
+      : match.access_signal.level === "mixed"
+        ? "border-amber-200 bg-amber-50"
+        : "border-emerald-200 bg-emerald-50";
+
+  return (
+    <>
+      {/* Header card */}
+      <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span className="eyebrow-label">FDA Drug Shortage Intelligence</span>
+            <h2 className="mt-4 text-2xl tracking-tight text-slate-950">{match.display_name}</h2>
+          </div>
+          <SignalBadge signal={match.access_signal} />
+        </div>
+
+        <div className={`mt-5 rounded-[1.4rem] border p-4 text-sm leading-6 ${signalColor}`}>
+          <p className="font-medium text-slate-900">{match.access_signal.patient_summary}</p>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <MetricPill label="Active shortages" value={String(match.evidence.shortages.active_count)} />
+          <MetricPill label="Recent recalls" value={String(match.evidence.recalls.recent_count)} />
+          <MetricPill label="Manufacturers" value={String(match.manufacturers.length)} />
+          <MetricPill label="FDA listings" value={String(match.active_listing_count)} />
+        </div>
+
+        <p className="mt-4 text-xs text-slate-400">
+          Shortages updated {formatDisplayDate(drugData.data_freshness.shortages_last_updated)} ·
+          Recalls {formatDisplayDate(drugData.data_freshness.recalls_last_updated)}
+        </p>
+      </div>
+
+      {/* Active shortage entries */}
+      {hasShortage ? (
+        <div className="surface-panel rounded-[2rem] p-6">
+          <span className="eyebrow-label">Active shortage entries</span>
+          <div className="mt-5 space-y-3">
+            {activeShortages.slice(0, 5).map((s, i) => (
+              <div key={i} className="rounded-[1.2rem] border border-rose-100 bg-rose-50 p-4">
+                {s.presentation ? (
+                  <div className="text-sm font-medium text-slate-900">{s.presentation}</div>
+                ) : null}
+                {s.shortageReason ? (
+                  <div className="mt-1 text-sm text-slate-600">
+                    <span className="font-medium">Reason:</span> {s.shortageReason}
+                  </div>
+                ) : null}
+                {s.availability ? (
+                  <div className="mt-1 text-sm text-slate-600">
+                    <span className="font-medium">Availability:</span> {s.availability}
+                  </div>
+                ) : null}
+                {s.updateLabel ? (
+                  <div className="mt-1 text-xs text-slate-400">Updated {s.updateLabel}</div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="surface-panel rounded-[2rem] p-6">
+          <span className="eyebrow-label">Shortage status</span>
+          <p className="mt-4 text-base leading-7 text-slate-600">
+            No active shortage entries found in the FDA database for this medication family.
+          </p>
+        </div>
+      )}
+
+      {/* What this means for you */}
+      <div className="surface-panel rounded-[2rem] p-6">
+        <span className="eyebrow-label">What this means for you</span>
+        <CalloutList className="mt-5" items={match.patient_view.what_may_make_it_harder.length
+          ? match.patient_view.what_may_make_it_harder
+          : match.access_signal.reasoning}
+        />
+      </div>
+
+      {/* Questions to ask */}
+      <div className="surface-panel rounded-[2rem] p-6">
+        <span className="eyebrow-label">Questions to ask your pharmacist</span>
+        <CalloutList className="mt-5" items={match.patient_view.questions_to_ask} />
+      </div>
+
+      {/* Recent recalls (only if present) */}
+      {hasRecalls ? (
+        <div className="surface-panel rounded-[2rem] p-6">
+          <span className="eyebrow-label">Recent recall activity</span>
+          <div className="mt-5 space-y-3">
+            {match.evidence.recalls.items.slice(0, 3).map((r, i) => (
+              <div key={i} className="rounded-[1.2rem] border border-amber-100 bg-amber-50 p-4">
+                {r.productDescription ? (
+                  <div className="text-sm font-medium text-slate-900">{r.productDescription}</div>
+                ) : null}
+                {r.reason ? (
+                  <div className="mt-1 text-sm text-slate-600">{r.reason}</div>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                  {r.classification ? <span>Class {r.classification}</span> : null}
+                  {r.reportDateLabel ? <span>{r.reportDateLabel}</span> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-4 text-xs leading-6 text-slate-500">
+        Data from the <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated daily.
+        Informational only — always confirm with your pharmacist or prescriber.
+      </div>
+    </>
+  );
 }
 
 export function PatientResultsClient() {
@@ -324,96 +442,17 @@ export function PatientResultsClient() {
                 {drugError ? (
                   <div className="surface-panel rounded-[2rem] border-rose-200 bg-rose-50 p-6 text-rose-700">
                     <div className="text-sm font-medium uppercase tracking-[0.18em]">
-                      Medication signal unavailable
+                      Shortage data unavailable
                     </div>
                     <p className="mt-3 text-base leading-7">{drugError}</p>
                   </div>
                 ) : featuredMatch ? (
-                  <>
-                    <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                          <span className="eyebrow-label">FDA-derived access signal</span>
-                          <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
-                            {featuredMatch.display_name}
-                          </h2>
-                          <p className="mt-2 text-sm uppercase tracking-[0.18em] text-slate-500">
-                            {featuredMatch.canonical_label}
-                          </p>
-                        </div>
-                        <SignalBadge signal={featuredMatch.access_signal} />
-                      </div>
-
-                      <p className="mt-5 text-base leading-7 text-slate-700">
-                        {featuredMatch.patient_view.summary}
-                      </p>
-
-                      <div className="mt-6 grid grid-cols-2 gap-3">
-                        <MetricPill
-                          label="FDA listings"
-                          value={String(featuredMatch.active_listing_count)}
-                        />
-                        <MetricPill
-                          label="Manufacturers"
-                          value={String(featuredMatch.manufacturers.length)}
-                        />
-                        <MetricPill
-                          label="Shortage entries"
-                          value={String(featuredMatch.evidence.shortages.active_count)}
-                        />
-                        <MetricPill
-                          label="Recent recalls"
-                          value={String(featuredMatch.evidence.recalls.recent_count)}
-                        />
-                      </div>
-
-                      <p className="mt-5 text-sm leading-6 text-slate-500">
-                        Dataset freshness: {buildFreshnessLine(drugData)}
-                      </p>
-                    </div>
-
-                    <div className="surface-panel rounded-[2rem] p-6">
-                      <span className="eyebrow-label">What we know</span>
-                      <CalloutList className="mt-5" items={featuredMatch.patient_view.what_we_know} />
-                    </div>
-
-                    <div className="surface-panel rounded-[2rem] p-6">
-                      <span className="eyebrow-label">What may make it harder</span>
-                      <CalloutList
-                        className="mt-5"
-                        items={featuredMatch.patient_view.what_may_make_it_harder}
-                      />
-                    </div>
-
-                    <div className="surface-panel rounded-[2rem] p-6">
-                      <span className="eyebrow-label">Questions to ask next</span>
-                      <CalloutList className="mt-5" items={featuredMatch.patient_view.questions_to_ask} />
-                      <div className="mt-6 flex flex-wrap gap-3">
-                        <Link
-                          href={`/drug?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
-                          className="rounded-full bg-slate-950 px-[18px] py-[15px] text-sm font-medium leading-4 text-white transition-all duration-200 hover:rounded-2xl"
-                        >
-                          Open drug detail
-                        </Link>
-                        <Link
-                          href={`/prescriber?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
-                          className="rounded-full border border-slate-300 px-[18px] py-[15px] text-sm font-medium leading-4 text-slate-900 transition-all duration-200 hover:rounded-2xl"
-                        >
-                          Open prescriber view
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="surface-panel rounded-[2rem] p-6">
-                      <span className="eyebrow-label">Important limitation</span>
-                      <CalloutList className="mt-5" items={featuredMatch.patient_view.unavailable} />
-                    </div>
-                  </>
+                  <ShortagePanel match={featuredMatch} drugData={drugData!} query={query} location={location} />
                 ) : (
                   <EmptyState
                     eyebrow="No FDA match"
-                    title={`No clear FDA medication family surfaced for “${query}”.`}
-                    body="The nearby pharmacy list can still be live even when the FDA match is weak. Try simplifying the medication name or removing extra wording."
+                    title={`No shortage data found for "${query}".`}
+                    body="No active shortage records matched this medication in the FDA database. Try simplifying the medication name."
                   />
                 )}
               </div>
