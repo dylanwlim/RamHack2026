@@ -46,7 +46,7 @@ Public setup and operational details are intentionally kept out of this README.
 ## Contact
 
 - Email: [contact@pharmapath.org](mailto:contact@pharmapath.org)
-- GitHub: [dylanwlim/RamHack2026](https://github.com/dylanwlim/RamHack2026)
+- GitHub: [dylanwlim/PharmaPath](https://github.com/dylanwlim/PharmaPath)
 
 ## Notes
 
