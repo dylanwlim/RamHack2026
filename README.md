@@ -38,8 +38,8 @@ PharmaPath is in active development. The current public experience is centered o
 
 The safest way to understand the product is through the public app:
 
-- Live app: [pharmapath-blue.vercel.app](https://pharmapath-blue.vercel.app/)
-- Public methodology page: [pharmapath-blue.vercel.app/methodology](https://pharmapath-blue.vercel.app/methodology)
+- Live app: [pharmapath.org](https://www.pharmapath.org/)
+- Public methodology page: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
 
 Public setup and operational details are intentionally kept out of this README.
 
