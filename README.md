@@ -32,7 +32,7 @@ Delays in finding a medication can create stress, wasted time, repeated calls, a
 
 ## Current Status
 
-PharmaPath is in active development. The current public experience is centered on pharmacy discovery, medication lookup, and transparent communication around medication-access uncertainty.
+PharmaPath is centered on pharmacy discovery, medication lookup, and transparent communication around medication-access uncertainty.
 
 ## Getting Started
 
