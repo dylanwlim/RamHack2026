@@ -520,7 +520,7 @@ export function PrescriberClient() {
             action="/prescriber"
             initialQuery={query}
             submitLabel="Search medication"
-            helper="Search the FDA-backed medication catalog or the isolated demo medication set when the question is clinical planning, not store-level inventory."
+            helper="Search the FDA-backed medication catalog or the clearly isolated fictional medication set when the question is clinical planning, not store-level inventory."
           />
         </div>
       </section>
@@ -530,9 +530,9 @@ export function PrescriberClient() {
           <div className="site-shell">
             <ExampleScenarioGrid
               mode="prescriber"
-              eyebrow="Example scenarios"
+              eyebrow="Quick starts"
               title="Four useful starting points for Medication Lookup."
-              description="These show credible medication lookups that surface formulation, shortage, recall, and manufacturer context immediately, with demo-only entries kept clearly separate."
+              description="These surface formulation, shortage, recall, and manufacturer context immediately, with any fictional seeded entries kept clearly separate."
             />
           </div>
         </section>
@@ -670,7 +670,7 @@ export function PrescriberClient() {
                         ? `/patient/results?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`
                         : `/patient`
                     }
-                    className="template-button-secondary text-sm"
+                    className="action-button-secondary text-sm"
                   >
                     Open Pharmacy Finder
                   </Link>

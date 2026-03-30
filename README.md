@@ -24,7 +24,6 @@ Signed-in contributors can submit pharmacy-specific availability reports. Report
 | `/patient` | Patient search form |
 | `/patient/results?query=...&location=...` | Patient results with pharmacy list + access signal |
 | `/prescriber?query=...&id=...` | Prescriber intelligence view |
-| `/drug?query=...&id=...` | Drug detail page |
 | `/methodology` | Data sources, signal methodology, and limitations |
 | `/login` | Contributor login |
 | `/register` | Contributor registration |

@@ -65,7 +65,7 @@ const methodologyGuide = [
     title: "Handled search inputs",
     value: "Indexed server-side",
     detail:
-      "Medication typeahead hits a normalized FDA-backed index plus a clearly isolated demo-only catalog, while location accepts freeform Google-backed searches such as city/state, ZIP, address, pharmacy name, and landmark queries.",
+      "Medication typeahead hits a normalized FDA-backed index plus a clearly isolated fictional medication catalog, while location accepts freeform Google-backed searches such as city/state, ZIP, address, pharmacy name, and landmark queries.",
   },
   {
     title: "Medication context",
@@ -86,7 +86,6 @@ export default function MethodologyPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        {/* Hero */}
         <section className="px-4 pb-16 pt-28 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
             <div>
@@ -119,7 +118,6 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* Data sources */}
         <section className="px-4 pb-24 sm:px-6 lg:px-8">
           <div className="site-shell">
             <span className="eyebrow-label">Data sources</span>
@@ -142,7 +140,6 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* Boundaries and health */}
         <section className="px-4 pb-16 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="surface-panel rounded-[2rem] p-6 sm:p-7">

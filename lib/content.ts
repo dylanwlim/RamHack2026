@@ -1,6 +1,4 @@
-import {
-  searchScenarios,
-} from "./search-options";
+import { searchScenarios } from "./search-options";
 
 export type FeaturedSearch = {
   id: string;
@@ -17,25 +15,6 @@ export const featuredSearches: FeaturedSearch[] = searchScenarios.map((scenario)
   location: scenario.location,
   description: scenario.description,
 }));
-
-export const homeStats = [
-  {
-    value: "4",
-    description: "FDA datasets\ntranslated into one signal",
-  },
-  {
-    value: "2",
-    description: "Pharmacy Finder and Medication\nLookup kept separate",
-  },
-  {
-    value: "1",
-    description: "Live nearby pharmacy\nlookup route",
-  },
-  {
-    value: "0",
-    description: "Fake claims about\nverified inventory",
-  },
-];
 
 export const workflowShowcase = [
   {
@@ -72,22 +51,11 @@ export const workflowShowcase = [
     bullets: [
       "Live config status from /api/health",
       "Known vs inferred vs unavailable",
-      "Truthful copy for demos and live use",
+      "Truthful copy without overclaiming",
     ],
     href: "/methodology",
     accent: "from-amber-100 via-white to-orange-50",
   },
-];
-
-export const sourceRail = [
-  "Google Maps Platform",
-  "FDA Listing Records",
-  "Drug Shortages",
-  "Drugs@FDA",
-  "Recall Enforcement",
-  "User Reports",
-  "Nearby Ranking",
-  "Access Routing",
 ];
 
 export const homeFaqs = [
@@ -104,6 +72,6 @@ export const homeFaqs = [
   {
     question: "Where does PharmaPath get its data?",
     answer:
-      "Nearby pharmacy search uses Google Maps Platform for freeform location autocomplete, resolution, and live nearby pharmacy results. Medication evidence comes from FDA records, including listings, shortage files, recall notices, and approval history. Clearly labeled demo-only medication entries stay isolated from that FDA-backed catalog. When signed-in users submit reports, those appear as a separate crowd layer rather than as public-source inventory proof.",
+      "Nearby pharmacy search uses Google Maps Platform for freeform location autocomplete, resolution, and live nearby pharmacy results. Medication evidence comes from FDA records, including listings, shortage files, recall notices, and approval history. Any clearly labeled fictional medication entries stay isolated from that FDA-backed catalog. When signed-in users submit reports, those appear as a separate crowd layer rather than as public-source inventory proof.",
   },
 ];

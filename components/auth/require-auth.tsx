@@ -65,13 +65,13 @@ export function SignedOutContributionPrompt({ nextPath }: { nextPath: string }) 
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
               href={`/login?next=${encodeURIComponent(nextPath)}`}
-              className="template-button-primary text-sm"
+              className="action-button-primary text-sm"
             >
               Log in
             </Link>
             <Link
               href={`/register?next=${encodeURIComponent(nextPath)}`}
-              className="template-button-secondary text-sm"
+              className="action-button-secondary text-sm"
             >
               Register
             </Link>

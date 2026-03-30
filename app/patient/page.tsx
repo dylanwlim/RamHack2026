@@ -31,13 +31,13 @@ export default function PatientPage() {
           <div className="site-shell">
             <ExampleScenarioGrid
               mode="patient"
-              eyebrow="Example searches"
-              title="Four demo-ready searches, each tuned to a real workflow."
+              eyebrow="Quick starts"
+              title="Four quick-start searches, each tuned to a real workflow."
               description="Use these to move through realistic medication and location combinations without implying store-level inventory."
             />
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/prescriber" className="template-button-secondary text-sm">
+              <Link href="/prescriber" className="action-button-secondary text-sm">
                 Open Medication Lookup
               </Link>
             </div>

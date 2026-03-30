@@ -284,7 +284,7 @@ export function WorkflowShowcase() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={active.href} className="template-button-primary">
+                  <Link href={active.href} className="action-button-primary">
                     Open {activeMeta.panelTitle}
                   </Link>
                 </motion.div>

@@ -156,7 +156,7 @@ export function MedicationQueryForm({
       <button
         type="submit"
         disabled={isPending || isResolving}
-        className="template-button-primary relative z-40 mt-5 disabled:cursor-wait disabled:opacity-70"
+        className="action-button-primary relative z-40 mt-5 disabled:cursor-wait disabled:opacity-70"
       >
         {isPending || isResolving ? "Loading..." : submitLabel}
       </button>

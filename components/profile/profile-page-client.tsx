@@ -116,7 +116,7 @@ export function ProfilePageClient() {
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{profile?.email || user?.email}</p>
               </div>
-              <Link href="/settings" className="template-button-secondary text-sm">
+              <Link href="/settings" className="action-button-secondary text-sm">
                 Edit settings
               </Link>
             </div>

@@ -52,13 +52,13 @@ export function HeroSection() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/patient"
-                  className="template-button-primary"
+                  className="action-button-primary"
                 >
                   Open Pharmacy Finder
                 </Link>
                 <Link
                   href="/prescriber"
-                  className="template-button-secondary"
+                  className="action-button-secondary"
                 >
                   Open Medication Lookup
                 </Link>

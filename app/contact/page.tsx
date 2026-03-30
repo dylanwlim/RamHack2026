@@ -125,7 +125,7 @@ export default function ContactPage() {
                   <button
                     type="button"
                     onClick={() => setStatus("idle")}
-                    className="template-button-secondary mt-8 text-sm"
+                    className="action-button-secondary mt-8 text-sm"
                   >
                     Send another message
                   </button>
@@ -213,7 +213,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={status === "sending"}
-                    className="template-button-primary flex w-full items-center justify-center gap-2 disabled:opacity-60"
+                    className="action-button-primary flex w-full items-center justify-center gap-2 disabled:opacity-60"
                   >
                     <Send className="h-4 w-4" strokeWidth={1.75} />
                     {status === "sending" ? "Sending…" : "Send message"}
