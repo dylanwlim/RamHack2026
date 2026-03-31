@@ -8,12 +8,10 @@ import {
   setPersistence,
   type Auth,
 } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
 import { firebaseConfig, isFirebaseConfigured } from "@/lib/firebase/config";
 
 let cachedApp: FirebaseApp | null = null;
 let cachedAuth: Auth | null = null;
-let cachedDb: Firestore | null = null;
 
 export function getFirebaseApp() {
   if (!isFirebaseConfigured) {
@@ -38,19 +36,6 @@ export function getFirebaseAuth() {
   }
 
   return cachedAuth;
-}
-
-export function getFirebaseDb() {
-  const app = getFirebaseApp();
-  if (!app) {
-    return null;
-  }
-
-  if (!cachedDb) {
-    cachedDb = getFirestore(app);
-  }
-
-  return cachedDb;
 }
 
 export async function setAuthPersistence(mode: "local" | "session") {

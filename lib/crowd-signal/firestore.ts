@@ -20,7 +20,7 @@ import {
   getTrustTier,
   normalizeMedicationKey,
 } from "@/lib/crowd-signal/scoring";
-import { getFirebaseDb } from "@/lib/firebase/client";
+import { getFirebaseDb } from "@/lib/firebase/firestore-client";
 import { toDate } from "@/lib/firebase/firestore-utils";
 import { createDefaultProfile } from "@/lib/profile/profile-defaults";
 import {
