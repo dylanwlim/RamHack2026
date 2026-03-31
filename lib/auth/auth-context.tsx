@@ -9,17 +9,8 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  updateProfile as updateFirebaseProfile,
-  type User,
-} from "firebase/auth";
+import type { User } from "firebase/auth";
 import { formatAuthError } from "@/lib/auth/auth-errors";
-import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/client";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
 
@@ -88,8 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pendingSignUpProfileRef = useRef<PendingSignUpProfile | null>(null);
 
   useEffect(() => {
-    const auth = getFirebaseAuth();
-    if (!auth || !isFirebaseConfigured) {
+    if (!isFirebaseConfigured) {
       setStatus("unauthenticated");
       setProfileLoading(false);
       return () => undefined;
@@ -99,13 +89,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let unsubscribeAuth: () => void = () => undefined;
     let isActive = true;
 
-    void import("@/lib/profile/profile-service")
-      .then(({ ensureUserProfile, subscribeToUserProfile }) => {
+    void Promise.all([
+      import("firebase/auth"),
+      import("@/lib/firebase/client"),
+    ])
+      .then(async ([firebaseAuth, firebaseClient]) => {
         if (!isActive) {
           return;
         }
 
-        unsubscribeAuth = onAuthStateChanged(auth, async (nextUser) => {
+        const auth = firebaseClient.getFirebaseAuth();
+        if (!auth) {
+          setStatus("unauthenticated");
+          setProfileLoading(false);
+          return;
+        }
+
+        unsubscribeAuth = firebaseAuth.onAuthStateChanged(auth, async (nextUser) => {
           unsubscribeProfile();
           setUser(nextUser);
 
@@ -119,28 +119,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setStatus("authenticated");
           setProfileLoading(true);
 
-          const pendingSignUpProfile = pendingSignUpProfileRef.current;
-          const pendingSignUpEmail = pendingSignUpProfile?.email || "";
-          const nextUserEmail = nextUser.email?.trim().toLowerCase() || "";
-          const bootstrapOverrides =
-            pendingSignUpEmail && pendingSignUpEmail === nextUserEmail
-              ? pendingSignUpProfile?.overrides || {}
-              : {};
-
           try {
-            await ensureUserProfile(nextUser, bootstrapOverrides);
-          } catch {
-            // Profile creation is retried on explicit writes later.
-          } finally {
-            if (pendingSignUpEmail && pendingSignUpEmail === nextUserEmail) {
-              pendingSignUpProfileRef.current = null;
+            const { ensureUserProfile, subscribeToUserProfile } = await import("@/lib/profile/profile-service");
+            if (!isActive) {
+              return;
             }
-          }
 
-          unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
-            setProfile(nextProfile);
+            const pendingSignUpProfile = pendingSignUpProfileRef.current;
+            const pendingSignUpEmail = pendingSignUpProfile?.email || "";
+            const nextUserEmail = nextUser.email?.trim().toLowerCase() || "";
+            const bootstrapOverrides =
+              pendingSignUpEmail && pendingSignUpEmail === nextUserEmail
+                ? pendingSignUpProfile?.overrides || {}
+                : {};
+
+            try {
+              await ensureUserProfile(nextUser, bootstrapOverrides);
+            } catch {
+              // Profile creation is retried on explicit writes later.
+            } finally {
+              if (pendingSignUpEmail && pendingSignUpEmail === nextUserEmail) {
+                pendingSignUpProfileRef.current = null;
+              }
+            }
+
+            unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
+              setProfile(nextProfile);
+              setProfileLoading(false);
+            });
+          } catch {
+            if (!isActive) {
+              return;
+            }
+
+            setProfile(null);
             setProfileLoading(false);
-          });
+          }
         });
       })
       .catch(() => {
@@ -169,14 +183,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       profileLoading,
       async signIn(input) {
-        const auth = getFirebaseAuth();
+        const [
+          firebaseAuth,
+          firebaseClient,
+        ] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        const auth = firebaseClient.getFirebaseAuth();
         if (!auth) {
           throw new Error(ACCOUNT_ACCESS_UNAVAILABLE);
         }
 
         try {
-          await setAuthPersistence(input.remember ? "local" : "session");
-          await signInWithEmailAndPassword(
+          await firebaseClient.setAuthPersistence(input.remember ? "local" : "session");
+          await firebaseAuth.signInWithEmailAndPassword(
             auth,
             input.email.trim(),
             input.password,
@@ -186,7 +207,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async signUp(input) {
-        const auth = getFirebaseAuth();
+        const [
+          firebaseAuth,
+          firebaseClient,
+        ] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        const auth = firebaseClient.getFirebaseAuth();
         if (!auth) {
           throw new Error(ACCOUNT_ACCESS_UNAVAILABLE);
         }
@@ -201,15 +229,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         try {
-          await setAuthPersistence("local");
-          const credential = await createUserWithEmailAndPassword(
+          await firebaseClient.setAuthPersistence("local");
+          const credential = await firebaseAuth.createUserWithEmailAndPassword(
             auth,
             normalizedEmail,
             input.password,
           );
           accountCreated = true;
 
-          await updateFirebaseProfile(credential.user, {
+          await firebaseAuth.updateProfile(credential.user, {
             displayName: profileOverrides.displayName || "",
           });
 
@@ -222,21 +250,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async signOut() {
-        const auth = getFirebaseAuth();
+        const [
+          firebaseAuth,
+          firebaseClient,
+        ] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        const auth = firebaseClient.getFirebaseAuth();
         if (!auth) {
           return;
         }
 
-        await firebaseSignOut(auth);
+        await firebaseAuth.signOut(auth);
       },
       async sendResetEmail(email: string) {
-        const auth = getFirebaseAuth();
+        const [
+          firebaseAuth,
+          firebaseClient,
+        ] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        const auth = firebaseClient.getFirebaseAuth();
         if (!auth) {
           throw new Error(ACCOUNT_ACCESS_UNAVAILABLE);
         }
 
         try {
-          await sendPasswordResetEmail(auth, email.trim());
+          await firebaseAuth.sendPasswordResetEmail(auth, email.trim());
         } catch (error) {
           throw new Error(formatAuthError(error));
         }
@@ -248,7 +290,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
           if (input.displayName?.trim() && input.displayName.trim() !== user.displayName) {
-            await updateFirebaseProfile(user, {
+            const firebaseAuth = await import("firebase/auth");
+            await firebaseAuth.updateProfile(user, {
               displayName: input.displayName.trim(),
             });
           }

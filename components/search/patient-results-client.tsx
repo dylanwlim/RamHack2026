@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, ExternalLink, LoaderCircle, MapPin, PhoneCall } from "lucide-react";
 import { CrowdSignalCard } from "@/components/crowd-signal/crowd-signal-card";
@@ -491,16 +490,30 @@ function ShortagePanel({
   );
 }
 
-export function PatientResultsClient() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get("query")?.trim() || "";
-  const location = searchParams.get("location")?.trim() || "";
-  const locationPlaceId = searchParams.get("locationPlaceId")?.trim() || "";
-  const radiusMiles = Number(searchParams.get("radiusMiles") || 5);
-  const sortBy = (searchParams.get("sortBy") || "best_match") as "best_match" | "distance" | "rating";
-  const onlyOpenNow = searchParams.get("onlyOpenNow") === "true";
+export function PatientResultsClient({
+  initialQuery = "",
+  initialLocation = "",
+  initialLocationPlaceId = "",
+  initialRadiusMiles,
+  initialSortBy = "best_match",
+  initialOnlyOpenNow,
+}: {
+  initialQuery?: string;
+  initialLocation?: string;
+  initialLocationPlaceId?: string;
+  initialRadiusMiles?: string;
+  initialSortBy?: "best_match" | "distance" | "rating";
+  initialOnlyOpenNow?: string;
+}) {
+  const query = initialQuery.trim();
+  const location = initialLocation.trim();
+  const locationPlaceId = initialLocationPlaceId.trim();
+  const radiusMiles = Number(initialRadiusMiles || 5);
+  const sortBy = initialSortBy || "best_match";
+  const onlyOpenNow = initialOnlyOpenNow === "true";
   const { user } = useAuth();
   const lastSavedRecentSearchKeyRef = useRef<string | null>(null);
+  const hasSearchInput = Boolean(query && location);
 
   const [pharmacyData, setPharmacyData] = useState<PharmacySearchResponse | null>(null);
   const [drugData, setDrugData] = useState<DrugIntelligenceResponse | null>(null);
@@ -508,7 +521,7 @@ export function PatientResultsClient() {
   const [drugError, setDrugError] = useState<string | null>(null);
   const [crowdSignals, setCrowdSignals] = useState<Record<string, ReturnType<typeof buildCrowdSignalMap>[string]>>({});
   const [crowdReady, setCrowdReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(hasSearchInput);
   const [showAll, setShowAll] = useState(false);
 
   const featuredMatch = useMemo(() => {

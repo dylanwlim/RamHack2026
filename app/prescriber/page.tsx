@@ -1,17 +1,28 @@
-import { Suspense } from "react";
 import { PageTransitionShell } from "@/components/page-transition-shell";
 import { PrescriberClient } from "@/components/search/prescriber-client";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
 
-export default function PrescriberPage() {
+type PrescriberPageProps = {
+  searchParams: Promise<{
+    query?: string;
+    id?: string;
+    location?: string;
+  }>;
+};
+
+export default async function PrescriberPage({ searchParams }: PrescriberPageProps) {
+  const params = await searchParams;
+
   return (
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <Suspense fallback={<div className="px-6 py-32 text-center text-slate-500">Loading...</div>}>
-          <PrescriberClient />
-        </Suspense>
+        <PrescriberClient
+          initialQuery={params.query}
+          initialMatchId={params.id}
+          initialLocation={params.location}
+        />
       </PageTransitionShell>
       <SiteFooter />
     </>

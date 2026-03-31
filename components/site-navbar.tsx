@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { motionEase, motionTiming } from "@/lib/motion";
 import { SiteBrand } from "@/components/site-brand";
 import { cn } from "@/lib/utils";
 
@@ -122,82 +120,77 @@ export function SiteNavbar() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isOpen ? (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: motionTiming.base, ease: motionEase.standard }}
-            className="border-t border-slate-200 bg-white/95 backdrop-blur-md md:hidden"
-          >
-            <div className="site-shell flex flex-col gap-2 py-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              {isSignedIn ? (
-                <>
-                  <Link
-                    href="/profile"
-                    className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/settings"
-                    className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Settings
-                  </Link>
-                  <button
-                    type="button"
-                    className="px-3 py-3 text-left text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
-                    onClick={() => {
-                      setIsOpen(false);
-                      void signOut();
-                    }}
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Register
-                  </Link>
-                </>
-              )}
+      <div
+        className={cn(
+          "overflow-hidden border-t border-slate-200 bg-white/95 backdrop-blur-md transition-[max-height,opacity] duration-300 ease-out md:hidden",
+          isOpen ? "max-h-[70vh] opacity-100" : "pointer-events-none max-h-0 opacity-0",
+        )}
+      >
+        <div className="site-shell flex flex-col gap-2 py-4">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
+              onClick={() => setIsOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+          {isSignedIn ? (
+            <>
               <Link
-                href="/patient"
-                className="action-button-primary mt-2"
+                href="/profile"
+                className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
                 onClick={() => setIsOpen(false)}
               >
-                Start Search
+                Profile
               </Link>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+              <Link
+                href="/settings"
+                className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
+                onClick={() => setIsOpen(false)}
+              >
+                Settings
+              </Link>
+              <button
+                type="button"
+                className="px-3 py-3 text-left text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
+                onClick={() => {
+                  setIsOpen(false);
+                  void signOut();
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
+                onClick={() => setIsOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="px-3 py-3 text-lg font-normal text-slate-700 transition-colors duration-200 hover:text-[#156d95]"
+                onClick={() => setIsOpen(false)}
+              >
+                Register
+              </Link>
+            </>
+          )}
+          <Link
+            href="/patient"
+            className="action-button-primary mt-2"
+            onClick={() => setIsOpen(false)}
+          >
+            Start Search
+          </Link>
+        </div>
+      </div>
     </nav>
   );
 }
