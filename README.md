@@ -22,7 +22,7 @@ It combines nearby pharmacy discovery, medication-access context, and clear pati
 
 1. Use Node `22.x`.
 2. Run `npm ci`.
-3. Copy `.env.example` to `.env.local` if you need local secret overrides for `GOOGLE_API_KEY`, `OPENFDA_API_KEY`, or `RESEND_API_KEY`.
+3. Copy `.env.example` to `.env.local` if you need local secret overrides for `GOOGLE_API_KEY`, `OPENFDA_API_KEY`, `RESEND_API_KEY`, `CONTACT_EMAIL`, or `CONTACT_FROM_EMAIL`.
 4. Run `npm run dev`.
 
 For Cloudflare preview or deployment flows, copy `.dev.vars.example` to `.dev.vars` and populate the Worker secrets locally.

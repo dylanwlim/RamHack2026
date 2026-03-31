@@ -14,7 +14,8 @@ Production now runs on Cloudflare Workers for both `https://pharmapath.org` and 
 - `NEXT_PUBLIC_FIREBASE_*` values in `wrangler.jsonc`
 - Local Worker secrets live in `.dev.vars`
 - Cloudflare Worker secrets: `GOOGLE_API_KEY`, `OPENFDA_API_KEY`
-- Optional: `RESEND_API_KEY` enables inline `/contact` delivery; without it the contact form falls back to `mailto:contact@pharmapath.org`
+- Optional contact secrets: `RESEND_API_KEY`, `CONTACT_EMAIL`, `CONTACT_FROM_EMAIL`
+- Without `RESEND_API_KEY`, the contact form falls back to `mailto:contact@pharmapath.org`
 
 ## Validation Commands
 

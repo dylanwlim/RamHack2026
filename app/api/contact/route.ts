@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL?.trim() || "contact@pharmapath.org";
+const CONTACT_FROM_EMAIL =
+  process.env.CONTACT_FROM_EMAIL?.trim() || "PharmaPath Contact <onboarding@resend.dev>";
 const MAX_NAME_LENGTH = 80;
 const MAX_EMAIL_LENGTH = 320;
 const MAX_SUBJECT_LENGTH = 140;
 const MAX_MESSAGE_LENGTH = 4000;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_SUBMISSIONS_PER_WINDOW = 5;
+const RATE_LIMIT_STORE = new Map<string, { count: number; resetAt: number }>();
 
 interface ContactPayload {
   name: string;
@@ -45,7 +50,67 @@ function isSameOriginRequest(request: Request) {
     return true;
   }
 
-  return origin === new URL(request.url).origin;
+  try {
+    const originUrl = new URL(origin);
+    const requestUrl = new URL(request.url);
+    const requestProto =
+      request.headers.get("x-forwarded-proto")?.trim() || requestUrl.protocol.replace(/:$/, "");
+    const requestHost =
+      request.headers.get("x-forwarded-host")?.trim() ||
+      request.headers.get("host")?.trim() ||
+      requestUrl.host;
+
+    return originUrl.protocol === `${requestProto}:` && originUrl.host === requestHost;
+  } catch {
+    return false;
+  }
+}
+
+function getClientIp(request: Request) {
+  const candidate =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers
+      .get("x-forwarded-for")
+      ?.split(",")
+      .map((value) => value.trim())
+      .find(Boolean) ||
+    request.headers.get("x-real-ip");
+
+  return candidate?.trim() || null;
+}
+
+function enforceRateLimit(clientIp: string | null) {
+  if (!clientIp) {
+    return null;
+  }
+
+  const now = Date.now();
+
+  for (const [key, value] of RATE_LIMIT_STORE.entries()) {
+    if (value.resetAt <= now) {
+      RATE_LIMIT_STORE.delete(key);
+    }
+  }
+
+  const current = RATE_LIMIT_STORE.get(clientIp);
+
+  if (!current || current.resetAt <= now) {
+    RATE_LIMIT_STORE.set(clientIp, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return null;
+  }
+
+  if (current.count >= MAX_SUBMISSIONS_PER_WINDOW) {
+    return {
+      retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1000)),
+    };
+  }
+
+  current.count += 1;
+  RATE_LIMIT_STORE.set(clientIp, current);
+  return null;
 }
 
 function getLogErrorDetails(error: unknown) {
@@ -70,6 +135,19 @@ export async function POST(request: Request) {
   try {
     if (!isSameOriginRequest(request)) {
       return NextResponse.json({ error: "Cross-site form posts are not allowed." }, { status: 403 });
+    }
+
+    const rateLimitResult = enforceRateLimit(getClientIp(request));
+    if (rateLimitResult) {
+      return NextResponse.json(
+        { error: "Too many contact submissions. Please try again shortly." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimitResult.retryAfterSeconds),
+          },
+        },
+      );
     }
 
     const body: unknown = await request.json();
@@ -121,7 +199,7 @@ export async function POST(request: Request) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const result = await resend.emails.send({
-      from: "PharmaPath Contact <onboarding@resend.dev>",
+      from: CONTACT_FROM_EMAIL,
       to: CONTACT_EMAIL,
       replyTo: email,
       subject: `[PharmaPath Contact] ${subject}`,
