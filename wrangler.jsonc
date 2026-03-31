@@ -17,6 +17,18 @@
       "service": "pharmapath"
     }
   ],
+  "routes": [
+    {
+      "pattern": "pharmapath.org",
+      "zone_name": "pharmapath.org",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.pharmapath.org",
+      "zone_name": "pharmapath.org",
+      "custom_domain": true
+    }
+  ],
   "images": {
     "binding": "IMAGES"
   },
