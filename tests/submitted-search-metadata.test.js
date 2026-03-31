@@ -35,6 +35,39 @@ test("submitted search metadata builds an openFDA medication profile without ind
   });
 });
 
+test("submitted search metadata rebuilds a demo medication profile without index resolution", () => {
+  const profile = buildMedicationProfileFromSubmittedSearch(
+    {
+      medication: "Vellocet ER 20 mg",
+    },
+    {
+      medicationSource: "demo",
+      medicationSelectedStrength: "20 mg",
+    },
+  );
+
+  assert.equal(profile?.canonicalLabel, "Vellocet ER 20 mg");
+  assert.equal(profile?.workflowCategory, "maintenance_refill");
+  assert.equal(profile?.source, "demo");
+  assert.equal(profile?.demoOnly, true);
+  assert.equal(profile?.selectedStrength, "20 mg");
+  assert.equal(profile?.medicationLabel, "Vellocet ER");
+});
+
+test("submitted search metadata returns null when openFDA workflow metadata is missing", () => {
+  const profile = buildMedicationProfileFromSubmittedSearch(
+    {
+      medication: "Custom Therapy",
+    },
+    {
+      medicationSource: "openfda",
+      medicationLabel: "Custom Therapy Injection",
+    },
+  );
+
+  assert.equal(profile, null);
+});
+
 test("submitted search metadata builds a resolved location from client coordinates", () => {
   const location = buildResolvedLocationFromSubmittedSearch(
     {

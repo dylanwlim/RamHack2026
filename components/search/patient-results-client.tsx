@@ -605,7 +605,22 @@ export function PatientResultsClient() {
     return () => {
       cancelled = true;
     };
-  }, [query, location, locationPlaceId, radiusMiles, sortBy, onlyOpenNow]);
+  }, [
+    query,
+    location,
+    locationPlaceId,
+    medicationSource,
+    medicationWorkflowCategory,
+    medicationLabel,
+    medicationSelectedStrength,
+    medicationDosageForm,
+    medicationFormulation,
+    locationLat,
+    locationLng,
+    radiusMiles,
+    sortBy,
+    onlyOpenNow,
+  ]);
 
   useEffect(() => {
     if (!query) {

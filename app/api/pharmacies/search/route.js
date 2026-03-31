@@ -79,18 +79,22 @@ async function handleSearch(request) {
       locationLng: readMetadataValue(body, searchParams, "locationLng"),
     };
 
-    const medicationProfile =
-      buildMedicationProfileFromSubmittedSearch(input, metadata) ||
-      (await resolveMedicationProfile(input.medication));
-    const resolvedLocation =
-      buildResolvedLocationFromSubmittedSearch(input, metadata) ||
-      (await resolveLocationInput(
-        {
-          query: input.location,
-          placeId: input.locationPlaceId,
-        },
-        apiKey,
-      ));
+    const submittedMedicationProfile = buildMedicationProfileFromSubmittedSearch(input, metadata);
+    const submittedResolvedLocation = buildResolvedLocationFromSubmittedSearch(input, metadata);
+    const [medicationProfile, resolvedLocation] = await Promise.all([
+      submittedMedicationProfile
+        ? Promise.resolve(submittedMedicationProfile)
+        : resolveMedicationProfile(input.medication),
+      submittedResolvedLocation
+        ? Promise.resolve(submittedResolvedLocation)
+        : resolveLocationInput(
+            {
+              query: input.location,
+              placeId: input.locationPlaceId,
+            },
+            apiKey,
+          ),
+    ]);
     const searchResult = await searchNearbyPharmacies({
       medication: medicationProfile.canonicalLabel,
       medicationProfileKey: medicationProfile.workflowCategory,
