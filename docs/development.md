@@ -24,3 +24,9 @@ This document keeps local development guidance intentionally short. Public docum
 - Some features depend on private configuration that is intentionally omitted from public documentation.
 - If you need access to the full local experience, request the required credentials from a maintainer.
 - Release operations and credential handling are maintained outside the public docs set.
+
+## Deploy Notifications
+
+- Cloudflare deploy notifications require the Worker secret `DISCORD_DEPLOY_WEBHOOK_URL`.
+- Preview deploy notifications depend on `preview_urls` staying enabled in `wrangler.jsonc`.
+- `npm run cloudflare:upload` notifies after a successful preview upload, and `npm run cloudflare:deploy` notifies after a successful production deploy. Notification failures do not fail the deploy.

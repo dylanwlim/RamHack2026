@@ -24,8 +24,10 @@
     "medications:sync": "node scripts/medications/sync-openfda-index.mjs",
     "cloudflare:build": "npm run medications:build-assets && opennextjs-cloudflare build",
     "cloudflare:preview": "npm run cloudflare:build && opennextjs-cloudflare preview",
-    "cloudflare:deploy": "npm run cloudflare:build && opennextjs-cloudflare deploy",
-    "cloudflare:upload": "npm run cloudflare:build && opennextjs-cloudflare upload",
+    "cloudflare:deploy": "node scripts/cloudflare/deploy-with-notification.mjs production",
+    "cloudflare:deploy:raw": "npm run cloudflare:build && opennextjs-cloudflare deploy",
+    "cloudflare:upload": "node scripts/cloudflare/deploy-with-notification.mjs preview",
+    "cloudflare:upload:raw": "npm run cloudflare:build && opennextjs-cloudflare upload",
     "cloudflare:typegen": "wrangler types --env-interface CloudflareEnv types/cloudflare-env.d.ts"
   },
   "dependencies": {

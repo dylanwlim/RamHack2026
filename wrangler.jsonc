@@ -3,10 +3,14 @@
   "main": ".open-next/worker.js",
   "name": "pharmapath",
   "workers_dev": true,
+  "preview_urls": true,
   "compatibility_date": "2025-09-27",
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "version_metadata": {
+    "binding": "VERSION_METADATA"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
