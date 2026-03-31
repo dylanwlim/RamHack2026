@@ -408,7 +408,7 @@ export function PharmacySearchForm({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-6 text-slate-600">
-            Nearby pharmacies come from live Google Places. Stock still needs a direct call.
+            Nearby pharmacies come from a live search. Stock still needs a direct call.
           </p>
           <button
             type="submit"

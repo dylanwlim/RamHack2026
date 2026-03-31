@@ -21,10 +21,10 @@ export const workflowShowcase = [
     id: "patient",
     title: "Pharmacy Finder keeps the first call path tight.",
     summary:
-      "Search the FDA-backed medication catalog plus any Google-resolved location to load the nearby list, one access read, and the next question to ask.",
+      "Search a medication and location to load the nearby list, one access read, and the next question to ask.",
     bullets: [
-      "Nearby list from Google Places",
-      "Medication-wide FDA context, not store inventory",
+      "Live nearby search",
+      "Medication-wide access context, not store inventory",
       "Call-ready questions without fake certainty",
     ],
     href: "/patient",
@@ -47,10 +47,10 @@ export const workflowShowcase = [
     id: "methodology",
     title: "Methodology keeps the boundary explicit.",
     summary:
-      "See which parts come directly from Google Maps and FDA records, which parts are inferred, and which questions still require a pharmacy call.",
+      "See which parts come from the live search, which parts come from medication reference records, and which questions still require a pharmacy call.",
     bullets: [
-      "Live config status from /api/health",
       "Known vs inferred vs unavailable",
+      "Call-ready guardrails",
       "Truthful copy without overclaiming",
     ],
     href: "/methodology",
@@ -62,7 +62,7 @@ export const homeFaqs = [
   {
     question: "Does PharmaPath know whether a pharmacy has the medication in stock right now?",
     answer:
-      "No. PharmaPath can show live nearby pharmacy results from Google Places, but stock still has to be confirmed directly with the pharmacy. The medication info is derived from FDA listing, shortage, approval, and recall data, not from shelf-level inventory feeds.",
+      "No. PharmaPath can show a live nearby pharmacy list and medication access context, but stock still has to be confirmed directly with the pharmacy.",
   },
   {
     question: "Why separate the pharmacy and medication pages?",
@@ -70,8 +70,8 @@ export const homeFaqs = [
       "Pharmacy Finder is built for the nearby call list and next outreach step. Medication Lookup keeps the evidence trail together: shortage status, manufacturer breadth, formulation spread, and recall context.",
   },
   {
-    question: "Where does PharmaPath get its data?",
+    question: "What kind of information does PharmaPath use?",
     answer:
-      "Nearby pharmacy search uses Google Maps Platform for freeform location autocomplete, resolution, and live nearby pharmacy results. Medication evidence comes from FDA records, including listings, shortage files, recall notices, and approval history. Any clearly labeled fictional medication entries stay isolated from that FDA-backed catalog. When signed-in users submit reports, those appear as a separate crowd layer rather than as public-source inventory proof.",
+      "PharmaPath combines a live nearby pharmacy search with medication reference and supply context. Clearly labeled fictional entries stay separate from the main catalog, and contributor reports are shown as their own layer rather than as proof of inventory.",
   },
 ];

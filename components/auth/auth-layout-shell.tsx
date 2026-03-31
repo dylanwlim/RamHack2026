@@ -8,14 +8,14 @@ function Logo() {
 
 const testimonial = {
   quote:
-    "PharmaPath keeps the nearby pharmacy search credible by separating live location data, FDA context, and community reporting instead of blurring them together.",
+    "PharmaPath keeps the nearby pharmacy search credible by separating live search results, medication context, and community reporting instead of blurring them together.",
   author: "Dylan Lim",
   role: "Hackathon Product Lead",
   company: "RamHack 2026",
 };
 
 const stats = [
-  { value: "Live", label: "Google Places pharmacy discovery" },
+  { value: "Live", label: "Nearby pharmacy discovery" },
   { value: "Weighted", label: "Crowd reports by trust + recency" },
   { value: "Truthful", label: "No false stock claims" },
 ];

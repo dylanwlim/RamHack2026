@@ -48,7 +48,7 @@ function LoginPageInner() {
     setErrors({});
 
     if (!firebaseReady) {
-      setErrors({ form: firebaseMessage || "Firebase authentication is not configured." });
+      setErrors({ form: firebaseMessage || "Account access is temporarily unavailable right now." });
       return;
     }
 

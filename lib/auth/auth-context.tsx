@@ -20,7 +20,7 @@ import {
 } from "firebase/auth";
 import { formatAuthError } from "@/lib/auth/auth-errors";
 import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/client";
-import { isFirebaseConfigured, missingFirebaseEnv } from "@/lib/firebase/config";
+import { isFirebaseConfigured } from "@/lib/firebase/config";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -63,6 +63,7 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const ACCOUNT_ACCESS_UNAVAILABLE = "Account access is temporarily unavailable right now.";
 
 function buildSignUpProfileOverrides(input: SignUpInput): Partial<UserProfileRecord> {
   const displayName = input.displayName.trim();
@@ -162,9 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       firebaseReady: isFirebaseConfigured,
-      firebaseMessage: isFirebaseConfigured
-        ? null
-        : `Firebase is missing: ${missingFirebaseEnv.join(", ")}`,
+      firebaseMessage: isFirebaseConfigured ? null : ACCOUNT_ACCESS_UNAVAILABLE,
       user,
       profile,
       status,
@@ -172,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signIn(input) {
         const auth = getFirebaseAuth();
         if (!auth) {
-          throw new Error("Firebase authentication is not configured.");
+          throw new Error(ACCOUNT_ACCESS_UNAVAILABLE);
         }
 
         try {
@@ -189,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signUp(input) {
         const auth = getFirebaseAuth();
         if (!auth) {
-          throw new Error("Firebase authentication is not configured.");
+          throw new Error(ACCOUNT_ACCESS_UNAVAILABLE);
         }
 
         const normalizedEmail = input.email.trim().toLowerCase();
@@ -233,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async sendResetEmail(email: string) {
         const auth = getFirebaseAuth();
         if (!auth) {
-          throw new Error("Firebase authentication is not configured.");
+          throw new Error(ACCOUNT_ACCESS_UNAVAILABLE);
         }
 
         try {

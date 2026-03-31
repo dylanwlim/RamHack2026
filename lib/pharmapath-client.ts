@@ -194,9 +194,7 @@ export type DrugIntelligenceResponse = {
 
 export type HealthResponse = {
   status: string;
-  data_source?: string;
-  google_api_configured?: boolean;
-  openfda_api_key_configured?: boolean;
+  checked_at?: string;
 };
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -381,7 +379,7 @@ export function createPharmaPathClient({
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(getErrorMessage(payload, "Unable to load health status."));
+        throw new Error(getErrorMessage(payload, "Unable to load service status."));
       }
 
       return payload as HealthResponse;

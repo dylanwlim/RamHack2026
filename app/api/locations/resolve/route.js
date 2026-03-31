@@ -41,7 +41,7 @@ async function handleResolve(request) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          error: "Google location resolution is not configured yet.",
+          error: "Location search is temporarily unavailable.",
         },
         { status: 503 },
       );

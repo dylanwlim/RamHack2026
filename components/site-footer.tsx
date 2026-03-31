@@ -51,7 +51,7 @@ export function SiteFooter() {
             <div className="mb-4">
               <SiteBrand className="mb-2" wordmarkClassName="text-2xl font-medium" />
               <p className="max-w-xs text-sm leading-5 text-[#666666]">
-                Live nearby pharmacy search with FDA context. FDA signals are shown as guidance, not guarantees.
+                Live nearby pharmacy search with medication access context. Guidance is meant to support better calls, not guarantee stock.
               </p>
             </div>
           </motion.div>

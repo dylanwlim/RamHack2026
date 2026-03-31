@@ -28,13 +28,13 @@ const routeVisualMeta: Record<
     sections: [
       {
         title: "Nearby pharmacies",
-        value: "Google Places live",
-        detail: "Pharmacies, distance, hours, ratings, and Maps links from a live nearby search.",
+        value: "Live nearby list",
+        detail: "Pharmacies, distance, hours, ratings, and map links from a live nearby search.",
       },
       {
         title: "Access info",
         value: "Medication-wide estimate",
-        detail: "FDA data helps frame the right question without implying that a store already has the medication.",
+        detail: "Medication context helps frame the right question without implying that a store already has the medication.",
       },
       {
         title: "Next question",
@@ -75,12 +75,12 @@ const routeVisualMeta: Record<
       {
         title: "Known vs inferred",
         value: "Boundaries surfaced",
-        detail: "The app distinguishes what comes directly from Google Places and openFDA from what is inferred or still unknown.",
+        detail: "The app distinguishes what comes directly from the live nearby search from what is inferred or still unknown.",
       },
       {
-        title: "Config health",
-        value: "/api/health",
-        detail: "Deployment health and integration status are visible here without cluttering the main pages.",
+        title: "Call readiness",
+        value: "Next steps visible",
+        detail: "Each view is designed to shorten the next call instead of overselling certainty.",
       },
       {
         title: "Honest language",
@@ -249,7 +249,7 @@ export function WorkflowShowcase() {
             </h2>
             <p className="mt-4 max-w-[40rem] text-lg leading-7 text-slate-600">
               Pharmacy Finder handles the nearby call list, Medication Lookup keeps the evidence
-              trail intact, and Methodology marks the boundary between direct data and inference.
+              trail intact, and Methodology marks the boundary between direct information and inference.
             </p>
           </div>
 

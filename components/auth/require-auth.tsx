@@ -27,10 +27,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
       <div className="surface-panel rounded-[2rem] p-8 text-left">
         <div className="flex items-center gap-3 text-slate-900">
           <LockKeyhole className="h-5 w-5 text-[#156d95]" />
-          <h2 className="text-2xl tracking-tight">Account access needs Firebase first.</h2>
+          <h2 className="text-2xl tracking-tight">Account access is temporarily unavailable.</h2>
         </div>
         <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-          {firebaseMessage || "Firebase Authentication is not configured yet."}
+          {firebaseMessage || "Please try again later."}
         </p>
       </div>
     );

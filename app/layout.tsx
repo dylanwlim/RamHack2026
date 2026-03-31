@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PharmaPath",
   description:
-    "Find nearby pharmacies with live Google Places results, then layer FDA shortage and access signals on top without overstating inventory certainty.",
+    "Find nearby pharmacies, review medication access context, and move to clearer next steps without overstating stock certainty.",
   icons: {
     icon: "/favicon.svg",
   },

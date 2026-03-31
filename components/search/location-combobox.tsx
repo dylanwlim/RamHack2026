@@ -228,7 +228,7 @@ export function LocationCombobox({
             <div id={listboxId} role="listbox" className="max-h-72 space-y-1 overflow-y-auto p-2">
               {loadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-amber-200 bg-amber-50/85 px-4 py-4 text-sm leading-6 text-amber-800">
-                  {loadError || "Unable to load Google location suggestions right now."} Press Enter to search this text directly.
+                  {loadError || "Unable to load location suggestions right now."} Press Enter to search this text directly.
                 </div>
               ) : loadState === "idle" ? (
                 <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
@@ -236,7 +236,7 @@ export function LocationCombobox({
                 </div>
               ) : loadState === "loading" && !visibleOptions.length ? (
                 <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
-                  Searching Google Places...
+                  Searching locations...
                 </div>
               ) : visibleOptions.length ? (
                 visibleOptions.map((option, index) => {

@@ -36,15 +36,15 @@ export function HeroSection() {
                 transition={{ duration: 0.4, ease: motionEase.emphasis, delay: 0.6 }}
                 className="eyebrow-label gap-1 text-slate-500"
               >
-                Live nearby lookup + FDA access data
+                Nearby search + medication context
                 <ArrowRight className="h-[0.72em] w-[0.72em]" />
               </motion.span>
               <h1 className="mt-6 max-w-[11ch] text-[3.5rem] leading-[3.75rem] tracking-tight text-[#202020] sm:text-[4rem] sm:leading-[4.15rem]">
                 Find the closest pharmacy worth calling first.
               </h1>
               <p className="mt-6 max-w-[32rem] text-lg leading-7 text-[#404040]">
-                PharmaPath finds nearby pharmacies, layers FDA access data on top, and is
-                upfront about what it can and can&apos;t confirm.
+                PharmaPath finds nearby pharmacies, adds medication access context, and stays
+                explicit about what it can and can&apos;t confirm.
               </p>
             </div>
 
@@ -108,7 +108,7 @@ export function HeroSection() {
                     <MapPin className="h-5 w-5 text-[#156d95]" />
                     <div>
                       <p className="text-sm text-slate-500">Nearby pharmacies</p>
-                      <p className="text-lg font-medium text-[#202020]">Google Places live</p>
+                      <p className="text-lg font-medium text-[#202020]">Live nearby search</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-slate-600">
@@ -126,12 +126,12 @@ export function HeroSection() {
                     <Stethoscope className="h-5 w-5 text-sky-300" />
                     <div>
                       <p className="text-sm text-slate-300">Medication context</p>
-                      <p className="text-lg font-medium">FDA-sourced access info</p>
+                      <p className="text-lg font-medium">Reference-based access info</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-slate-300">
-                    Shortages, approvals, manufacturer breadth, and recalls, all in plain
-                    language.
+                    Shortages, formulation breadth, manufacturer spread, and recall context in
+                    plain language.
                   </p>
                 </motion.div>
 

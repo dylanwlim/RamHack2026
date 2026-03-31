@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
     }
 
     if (!firebaseReady) {
-      setError(firebaseMessage || "Firebase authentication is not configured.");
+      setError(firebaseMessage || "Account access is temporarily unavailable right now.");
       return;
     }
 

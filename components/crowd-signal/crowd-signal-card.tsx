@@ -175,7 +175,7 @@ export function CrowdSignalCard({
 
       {isDemoMedication ? (
         <p className="mt-2 text-xs leading-5 text-amber-900/85">
-          {medicationContext?.demo_note} {medicationContext?.simulated_user_count || 0} seeded demo users are configured for this fictional medication, but pharmacy-specific live report counts remain separate from that simulated context.
+          {medicationContext?.demo_note} {medicationContext?.simulated_user_count || 0} seeded demo users are associated with this fictional medication, but pharmacy-specific live report counts remain separate from that simulated context.
         </p>
       ) : null}
 

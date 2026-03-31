@@ -34,7 +34,7 @@ export async function GET(request) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          error: "Google location autocomplete is not configured yet.",
+          error: "Location suggestions are temporarily unavailable.",
         },
         { status: 503 },
       );

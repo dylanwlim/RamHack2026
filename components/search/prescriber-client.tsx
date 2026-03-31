@@ -60,7 +60,7 @@ function severityTier(score: number): SeverityTier {
   if (score <= 10)
     return {
       label: "Usually fillable",
-      sublabel: "No active shortage in FDA data",
+      sublabel: "No active shortage signal in current records",
       color: "#22c55e",
       tailwindText: "text-emerald-700",
       tailwindBg: "bg-emerald-50",
@@ -226,7 +226,7 @@ function ManufacturerList({
     <div className="surface-panel rounded-[2rem] p-6">
       <span className="eyebrow-label">Manufacturer status</span>
       <p className="mt-3 text-xs text-slate-500">
-        {isDemo ? "Simulated manufacturers for matching demo presentations." : "FDA-listed manufacturers for matching presentations."}
+        {isDemo ? "Simulated manufacturers for matching demo presentations." : "Listed manufacturers for matching presentations."}
       </p>
       <div className="mt-4 divide-y divide-slate-100">
         {visible.map((r, i) => {
@@ -303,7 +303,7 @@ function ShortageEvidencePanel({
       <div className={`surface-panel rounded-[2rem] p-6 sm:p-7 border ${tier.tailwindBorder} ${tier.tailwindBg}`}>
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow-label">
-            {isDemoMatch ? "Demo Medication Intelligence" : "FDA Drug Shortage Intelligence"}
+            {isDemoMatch ? "Demo Medication Intelligence" : "Medication access snapshot"}
           </span>
           {isDemoMatch ? (
             <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
@@ -360,11 +360,11 @@ function ShortageEvidencePanel({
       {/* ── Manufacturer status ── */}
       <ManufacturerList rows={mfgRows} isDemo={isDemoMatch} />
 
-      {/* ── Active FDA shortage entries ── */}
+      {/* ── Active shortage entries ── */}
       {activeShortages.length > 0 ? (
         <div className="surface-panel rounded-[2rem] p-6">
           <span className="eyebrow-label">
-            {isDemoMatch ? "Active simulated shortage entries" : "Active FDA shortage entries"}
+            {isDemoMatch ? "Active simulated shortage entries" : "Active shortage entries"}
           </span>
           <div className="mt-5 space-y-3">
             {activeShortages.slice(0, 6).map((s, i) => (
@@ -426,13 +426,13 @@ function ShortageEvidencePanel({
         {isDemoMatch ? (
           <>
             <strong>Simulated demo medication data.</strong> {match.demo_context?.note} This
-            profile is isolated from the FDA-backed catalog and exists only for the hackathon demo.
+            profile is isolated from the main medication catalog and exists only for the demo.
           </>
         ) : (
           <>
-            Data from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated
-            daily. Informational only — confirm with your pharmacist or prescriber before making
-            any decisions.
+            Medication access context is refreshed regularly from public reference records.
+            Informational only — confirm with your pharmacist or prescriber before making any
+            decisions.
           </>
         )}
       </div>
@@ -519,7 +519,7 @@ export function PrescriberClient() {
             action="/prescriber"
             initialQuery={query}
             submitLabel="Search medication"
-            helper="Search the FDA-backed medication catalog or the clearly isolated fictional medication set when the question is clinical planning, not store-level inventory."
+            helper="Search the medication catalog or the clearly isolated fictional medication set when the question is clinical planning, not store-level inventory."
           />
         </div>
       </section>
@@ -561,9 +561,9 @@ export function PrescriberClient() {
             </div>
           ) : !selectedMatch ? (
             <EmptyState
-              eyebrow="No FDA match"
-              title={`No clear FDA medication family surfaced for "${query}".`}
-              body="Try a cleaner brand or generic name so the prescriber evidence can attach to a more specific FDA family."
+              eyebrow="No clear match"
+              title={`No clear medication family surfaced for "${query}".`}
+              body="Try a cleaner brand or generic name so the prescriber view can attach to a more specific match."
             />
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -588,7 +588,7 @@ export function PrescriberClient() {
                   </p>
                   {selectedMatch.demo_context?.demo_only ? (
                     <p className="mt-3 text-sm leading-6 text-amber-900">
-                      {selectedMatch.demo_context.note} {selectedMatch.demo_context.simulated_user_count || 0} seeded demo users are configured for this variant, and the signal remains explicitly simulated.
+                      {selectedMatch.demo_context.note} {selectedMatch.demo_context.simulated_user_count || 0} seeded demo users are included for this variant, and the signal remains explicitly simulated.
                     </p>
                   ) : null}
                   <p className="mt-5 max-w-3xl text-base leading-7 text-slate-700">
@@ -620,10 +620,10 @@ export function PrescriberClient() {
                       {selectedMatch.prescriber_view.should_consider_alternatives
                         ? selectedMatch.demo_context?.demo_only
                           ? "The simulated demo signal supports discussing backup formulations earlier so the presentation can show formulation-aware decision making."
-                          : "FDA shortage data supports considering alternatives earlier. Discuss backup formulations or therapeutic substitutes with the patient."
+                          : "Current shortage signals support considering alternatives earlier. Discuss backup formulations or therapeutic substitutes with the patient."
                         : selectedMatch.demo_context?.demo_only
                           ? "The simulated demo signal does not force an immediate change, but it still keeps strength and release-type alternatives visible."
-                          : "No strong FDA trigger to abandon the current plan. Monitor fill status and have alternatives ready if the patient reports difficulty."}
+                          : "No strong shortage trigger suggests abandoning the current plan. Monitor fill status and have alternatives ready if the patient reports difficulty."}
                     </p>
                   </div>
                 </div>
@@ -652,7 +652,7 @@ export function PrescriberClient() {
                     {selectedMatch.manufacturers.length > 0 && (
                       <div>
                         <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
-                          {selectedMatch.demo_context?.demo_only ? "Simulated manufacturers" : "FDA-listed manufacturers"}
+                          {selectedMatch.demo_context?.demo_only ? "Simulated manufacturers" : "Listed manufacturers"}
                         </div>
                         <div className="mt-3">
                           <TagList items={selectedMatch.manufacturers} />

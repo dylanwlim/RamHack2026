@@ -65,7 +65,7 @@ function severityTier(score: number): SeverityTier {
   if (score <= 10)
     return {
       label: "Usually fillable",
-      sublabel: "No active shortage in FDA data",
+      sublabel: "No active shortage signal in current records",
       color: "#22c55e",
       tailwindText: "text-emerald-700",
       tailwindBg: "bg-emerald-50",
@@ -264,7 +264,7 @@ function ManufacturerList({
     <div className="surface-panel rounded-[2rem] p-6">
       <span className="eyebrow-label">Manufacturer status</span>
       <p className="mt-3 text-xs text-slate-500">
-        {isDemo ? "Simulated manufacturers for matching demo presentations." : "FDA-listed manufacturers for matching presentations."}
+        {isDemo ? "Simulated manufacturers for matching demo presentations." : "Listed manufacturers for matching presentations."}
       </p>
       <div className="mt-4 divide-y divide-slate-100">
         {visible.map((r, i) => {
@@ -348,7 +348,7 @@ function ShortagePanel({
       <div className={`surface-panel rounded-[2rem] p-6 sm:p-7 border ${tier.tailwindBorder} ${tier.tailwindBg}`}>
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow-label">
-            {isDemoMatch ? "Demo Medication Intelligence" : "FDA Drug Shortage Intelligence"}
+            {isDemoMatch ? "Demo Medication Intelligence" : "Medication access snapshot"}
           </span>
           {isDemoMatch ? (
             <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
@@ -477,13 +477,13 @@ function ShortagePanel({
           <>
             <strong>Simulated demo medication data.</strong> {match.demo_context?.note} Strengths,
             contributor counts, and shortage context are demo-only and kept separate from the
-            FDA-backed catalog.
+            main medication catalog.
           </>
         ) : (
           <>
-            Data from <strong>FDA openFDA Drug Shortages &amp; Enforcement APIs</strong>. Updated
-            daily. Informational only — confirm with your pharmacist or prescriber before making
-            any decisions.
+            Medication access context is refreshed regularly from public reference records.
+            Informational only — confirm with your pharmacist or prescriber before making any
+            decisions.
           </>
         )}
       </div>
@@ -778,7 +778,7 @@ export function PatientResultsClient() {
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
               {isDemoMedication
                 ? "This page keeps the live nearby lookup and a clearly labeled demo medication profile together, while staying explicit that the medication context is simulated."
-                : "This page keeps the live nearby lookup and the FDA-derived medication signal together, while staying explicit that they answer different questions."}
+                : "This page keeps the live nearby lookup and medication access context together, while staying explicit that they answer different questions."}
             </p>
           </div>
 
@@ -801,7 +801,7 @@ export function PatientResultsClient() {
             <EmptyState
               eyebrow="Ready when you are"
               title="Enter both a medication and a location to load Pharmacy Finder."
-              body="PharmaPath will combine a live nearby pharmacy lookup with FDA-based access context, without claiming any pharmacy has the medication confirmed on the shelf."
+              body="PharmaPath combines a live nearby pharmacy lookup with medication access context without claiming any pharmacy has the medication confirmed on the shelf."
             />
           ) : isLoading ? (
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -827,7 +827,7 @@ export function PatientResultsClient() {
                     {pharmacyData?.medication_profile.demo_note || featuredMatch?.demo_context?.note}
                   </p>
                   <p className="mt-1 text-amber-900/80">
-                    {pharmacyData?.medication_profile.simulated_user_count || featuredMatch?.demo_context?.simulated_user_count || 0} seeded demo users are configured for this fictional medication variant. Live pharmacy results stay real, and pharmacy-specific crowd reports remain a separate layer.
+                    {pharmacyData?.medication_profile.simulated_user_count || featuredMatch?.demo_context?.simulated_user_count || 0} seeded demo users are included for this fictional medication variant. Live pharmacy results stay real, and pharmacy-specific crowd reports remain a separate layer.
                   </p>
                 </div>
               ) : null}
@@ -931,7 +931,7 @@ export function PatientResultsClient() {
                               rel="noreferrer"
                               className="action-button-dark text-sm"
                             >
-                              Open in Google Maps
+                              Open map
                             </a>
                           ) : null}
                           <div className="inline-flex items-center gap-2 text-sm text-slate-500">
@@ -1012,7 +1012,7 @@ export function PatientResultsClient() {
                           live nearby list as a separate, weighted layer rather than as a claim of
                           verified shelf inventory.
                           {pharmacyData.medication_profile.demo_only
-                            ? " This medication profile is simulated for the demo and is intentionally separated from FDA-backed medication intelligence."
+                            ? " This medication profile is simulated for the demo and is intentionally separated from the main medication reference flow."
                             : ""}
                         </p>
                         {!crowdReady ? (
@@ -1057,9 +1057,9 @@ export function PatientResultsClient() {
                   </>
                 ) : (
                   <EmptyState
-                    eyebrow="No FDA match"
+                    eyebrow="No clear match"
                     title={`No shortage data found for "${query}".`}
-                    body="No active shortage records matched this medication in the FDA database. Try simplifying the medication name."
+                    body="No active shortage records matched this medication. Try simplifying the medication name."
                   />
                 )}
               </div>

@@ -51,7 +51,7 @@ async function handleSearch(request) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          error: "Google pharmacy search is not configured yet.",
+          error: "Nearby pharmacy search is temporarily unavailable.",
         },
         { status: 503 },
       );
