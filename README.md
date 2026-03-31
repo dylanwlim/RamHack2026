@@ -40,16 +40,6 @@ PharmaPath is designed to reduce that friction. It helps users build a better sh
 
 - App: [pharmapath.org](https://pharmapath.org)
 - Methodology: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
-- Product overview: [docs/product-overview.md](./docs/product-overview.md)
-
-## Development
-
-1. Use Node `22.x`.
-2. Run `npm ci`.
-3. Run `npm run dev`.
-4. Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before shipping changes.
-
-Additional developer notes live in [docs/development.md](./docs/development.md). Private configuration and release operations are intentionally not documented in the public README.
 
 ## Contact
 
