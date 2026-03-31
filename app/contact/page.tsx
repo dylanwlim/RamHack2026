@@ -24,6 +24,7 @@ interface FormState {
   email: string;
   subject: string;
   message: string;
+  website: string;
 }
 
 interface ContactResponse {
@@ -32,7 +33,7 @@ interface ContactResponse {
   fallbackMode?: "mailto";
 }
 
-const empty: FormState = { name: "", email: "", subject: "", message: "" };
+const empty: FormState = { name: "", email: "", subject: "", message: "", website: "" };
 
 function buildMailtoHref(form: FormState, email: string) {
   const subject = form.subject.trim() || "PharmaPath contact";
@@ -210,6 +211,21 @@ export default function ContactPage() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="contact-website" className="sr-only">
+                      Website
+                    </label>
+                    <input
+                      id="contact-website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={form.website}
+                      onChange={(e) => update("website", e.target.value)}
+                      className="hidden"
+                    />
                   </div>
 
                   <div>
