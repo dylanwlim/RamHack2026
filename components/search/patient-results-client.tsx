@@ -11,9 +11,7 @@ import {
   type PharmacySearchResponse,
 } from "@/lib/pharmapath-client";
 import { useAuth } from "@/lib/auth/auth-context";
-import { subscribeToCrowdReportsForMedication } from "@/lib/crowd-signal/firestore";
 import { buildCrowdSignalMap, buildSignalKey } from "@/lib/crowd-signal/scoring";
-import { saveRecentSearch } from "@/lib/profile/profile-service";
 import { PharmacySearchForm } from "@/components/search/pharmacy-search-form";
 import {
   CalloutList,
@@ -630,12 +628,31 @@ export function PatientResultsClient() {
     }
 
     setCrowdReady(false);
-    const unsubscribe = subscribeToCrowdReportsForMedication(query, (reports) => {
-      setCrowdSignals(buildCrowdSignalMap(reports));
-      setCrowdReady(true);
-    });
+    let cancelled = false;
+    let unsubscribe: () => void = () => undefined;
 
-    return () => unsubscribe();
+    void import("@/lib/crowd-signal/firestore")
+      .then(({ subscribeToCrowdReportsForMedication }) => {
+        if (cancelled) {
+          return;
+        }
+
+        unsubscribe = subscribeToCrowdReportsForMedication(query, (reports) => {
+          setCrowdSignals(buildCrowdSignalMap(reports));
+          setCrowdReady(true);
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCrowdSignals({});
+          setCrowdReady(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [query]);
 
   useEffect(() => {
@@ -643,11 +660,15 @@ export function PatientResultsClient() {
       return;
     }
 
-    void saveRecentSearch(user.uid, {
-      medication: query,
-      location,
-      radiusMiles,
-    });
+    void import("@/lib/profile/profile-service")
+      .then(({ saveRecentSearch }) =>
+        saveRecentSearch(user.uid, {
+          medication: query,
+          location,
+          radiusMiles,
+        }),
+      )
+      .catch(() => undefined);
   }, [location, query, radiusMiles, user]);
 
   const extraResults = pharmacyData?.results.slice(1) || [];

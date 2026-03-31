@@ -15,11 +15,26 @@ const {
   OPENFDA_NDC_BULK_URL,
   createMedicationAggregator,
 } = require("../lib/medications/normalize");
-const { SNAPSHOT_PATH } = require("../lib/medications/index-store");
+const {
+  SEARCH_ASSET_DIR,
+  SEARCH_BUCKETS_DIR,
+  SEARCH_MANIFEST_PATH,
+  SNAPSHOT_PATH,
+  buildMedicationSearchAssets,
+} = require("../lib/medications/index-store");
 const { chain } = streamChain;
 const { parser } = streamJson;
 const { pick } = pickModule;
 const { streamArray } = streamArrayModule;
+
+function serializeGzipJson(payload) {
+  return zlib.gzipSync(`${JSON.stringify(payload)}\n`);
+}
+
+async function writeGzipJson(targetPath, payload) {
+  await fs.mkdir(path.dirname(targetPath), { recursive: true });
+  await fs.writeFile(targetPath, serializeGzipJson(payload));
+}
 
 async function downloadBulkZip(url) {
   const response = await fetch(url, {
@@ -113,18 +128,28 @@ async function main() {
   const zipPath = await downloadBulkZip(OPENFDA_NDC_BULK_URL);
   const sourceLastUpdated = await parseDatasetLastUpdated(zipPath);
   const snapshot = await buildSnapshotFromZip(zipPath, sourceLastUpdated);
+  const { manifest, buckets } = buildMedicationSearchAssets(snapshot);
 
   await fs.mkdir(path.dirname(SNAPSHOT_PATH), { recursive: true });
-  const serialized = `${JSON.stringify(snapshot)}\n`;
-  await fs.writeFile(SNAPSHOT_PATH, zlib.gzipSync(serialized));
+  await fs.writeFile(SNAPSHOT_PATH, serializeGzipJson(snapshot));
+  await fs.rm(SEARCH_ASSET_DIR, { recursive: true, force: true });
+  await fs.mkdir(SEARCH_BUCKETS_DIR, { recursive: true });
+  await writeGzipJson(SEARCH_MANIFEST_PATH, manifest);
+  await Promise.all(
+    Object.entries(buckets).map(([bucketKey, options]) =>
+      writeGzipJson(path.join(SEARCH_BUCKETS_DIR, `${bucketKey}.json.gz`), options),
+    ),
+  );
 
   console.log(
     JSON.stringify(
       {
         snapshotPath: SNAPSHOT_PATH,
+        searchManifestPath: SEARCH_MANIFEST_PATH,
         sourceLastUpdated,
         counts: snapshot.counts,
         featuredMedicationIds: snapshot.featuredMedicationIds.length,
+        searchBucketCount: Object.keys(buckets).length,
       },
       null,
       2,

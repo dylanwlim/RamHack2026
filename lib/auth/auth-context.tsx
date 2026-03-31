@@ -18,13 +18,8 @@ import {
   type User,
 } from "firebase/auth";
 import { formatAuthError } from "@/lib/auth/auth-errors";
-import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/client";
+import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/auth-client";
 import { isFirebaseConfigured, missingFirebaseEnv } from "@/lib/firebase/config";
-import {
-  ensureUserProfile,
-  saveUserProfile,
-  subscribeToUserProfile,
-} from "@/lib/profile/profile-service";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -78,34 +73,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let unsubscribeProfile: () => void = () => undefined;
+    let unsubscribeAuth: () => void = () => undefined;
+    let isActive = true;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (nextUser) => {
-      unsubscribeProfile();
-      setUser(nextUser);
+    void import("@/lib/profile/profile-service")
+      .then(({ ensureUserProfile, subscribeToUserProfile }) => {
+        if (!isActive) {
+          return;
+        }
 
-      if (!nextUser) {
+        unsubscribeAuth = onAuthStateChanged(auth, async (nextUser) => {
+          unsubscribeProfile();
+          setUser(nextUser);
+
+          if (!nextUser) {
+            setProfile(null);
+            setStatus("unauthenticated");
+            setProfileLoading(false);
+            return;
+          }
+
+          setStatus("authenticated");
+          setProfileLoading(true);
+
+          try {
+            await ensureUserProfile(nextUser);
+          } catch {
+            // Profile creation is retried on explicit writes later.
+          }
+
+          unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
+            setProfile(nextProfile);
+            setProfileLoading(false);
+          });
+        });
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
         setProfile(null);
         setStatus("unauthenticated");
         setProfileLoading(false);
-        return;
-      }
-
-      setStatus("authenticated");
-      setProfileLoading(true);
-
-      try {
-        await ensureUserProfile(nextUser);
-      } catch {
-        // Profile creation is retried on explicit writes later.
-      }
-
-      unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
-        setProfile(nextProfile);
-        setProfileLoading(false);
       });
-    });
 
     return () => {
+      isActive = false;
       unsubscribeProfile();
       unsubscribeAuth();
     };
@@ -134,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             input.email.trim(),
             input.password,
           );
+          const { ensureUserProfile } = await import("@/lib/profile/profile-service");
           await ensureUserProfile(credential.user);
         } catch (error) {
           throw new Error(formatAuthError(error));
@@ -152,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             input.email.trim(),
             input.password,
           );
+          const { ensureUserProfile } = await import("@/lib/profile/profile-service");
 
           await updateFirebaseProfile(credential.user, {
             displayName: input.displayName.trim(),
@@ -204,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           }
 
+          const { saveUserProfile } = await import("@/lib/profile/profile-service");
           await saveUserProfile(user, input);
         } catch (error) {
           throw new Error(formatAuthError(error));

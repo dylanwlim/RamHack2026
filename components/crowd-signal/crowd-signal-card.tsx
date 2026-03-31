@@ -6,7 +6,6 @@ import Link from "next/link";
 import { LoaderCircle, MessageSquarePlus, Send } from "lucide-react";
 import { SignedOutContributionPrompt } from "@/components/auth/require-auth";
 import { AuthButton } from "@/components/auth/auth-primitives";
-import { submitCrowdReport } from "@/lib/crowd-signal/firestore";
 import {
   computeCrowdSignal,
 } from "@/lib/crowd-signal/scoring";
@@ -100,6 +99,7 @@ export function CrowdSignalCard({
       setError(null);
       setFeedback(null);
 
+      const { submitCrowdReport } = await import("@/lib/crowd-signal/firestore");
       await submitCrowdReport({
         actor: user,
         profile,

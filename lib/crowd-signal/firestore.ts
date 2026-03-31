@@ -23,8 +23,8 @@ import {
 } from "@/lib/crowd-signal/scoring";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { toDate } from "@/lib/firebase/firestore-utils";
+import { createDefaultProfile } from "@/lib/profile/profile-defaults";
 import {
-  createDefaultProfile,
   ensureUserProfile,
   mapProfileDoc,
 } from "@/lib/profile/profile-service";
