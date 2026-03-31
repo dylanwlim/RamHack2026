@@ -6,7 +6,7 @@ const {
   getSearchInput,
   resolveLocationInput,
   searchNearbyPharmacies,
-} = require("../../../../api/_lib/pharmacy-search");
+} = require("../../../../lib/server/pharmacy-search");
 const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
 const {
   buildMedicationProfileFromSubmittedSearch,

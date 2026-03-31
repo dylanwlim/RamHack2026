@@ -8,7 +8,7 @@ const {
   buildCandidateContexts,
   buildDrugIntelligencePayload,
   buildSearchPhrases,
-} = require("../api/_lib/openfda-normalize");
+} = require("../lib/server/openfda-normalize");
 
 test("buildSearchPhrases keeps the raw query and release-aware lookup fallbacks", () => {
   assert.deepEqual(buildSearchPhrases("Adderall XR 20 mg"), [

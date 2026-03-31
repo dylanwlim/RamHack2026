@@ -6,7 +6,7 @@ const assert = require("node:assert/strict");
 const {
   getSearchInput,
   resolveLocationInput,
-} = require("../api/_lib/pharmacy-search");
+} = require("../lib/server/pharmacy-search");
 
 function createJsonResponse(payload, status = 200) {
   return {

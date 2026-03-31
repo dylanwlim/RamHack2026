@@ -2,7 +2,7 @@ import { createRequire } from "module";
 import { NextResponse } from "next/server";
 
 const require = createRequire(import.meta.url);
-const { autocompleteLocationSuggestions } = require("../../../../api/_lib/pharmacy-search");
+const { autocompleteLocationSuggestions } = require("../../../../lib/server/pharmacy-search");
 
 export const dynamic = "force-dynamic";
 

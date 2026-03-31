@@ -15,7 +15,6 @@ import type { CrowdReportRecord, CrowdReportType } from "@/lib/crowd-signal/mode
 import {
   buildPharmacyKey,
   buildSignalKey,
-  computeTrustWeight,
   extractFormulationDescriptor,
   extractStrengthDescriptor,
   getTrustTier,

@@ -8,12 +8,12 @@ const {
   searchNdcRecords,
   searchRecallsForCandidate,
   searchShortagesForCandidate,
-} = require("../../../api/_lib/openfda");
+} = require("../../../lib/server/openfda");
 const {
   buildCandidateContexts,
   buildDrugIntelligencePayload,
   buildSearchPhrases,
-} = require("../../../api/_lib/openfda-normalize");
+} = require("../../../lib/server/openfda-normalize");
 const { buildDemoDrugIntelligencePayload } = require("../../../lib/medications/demo");
 
 export const dynamic = "force-dynamic";

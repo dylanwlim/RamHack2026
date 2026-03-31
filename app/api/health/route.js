@@ -2,7 +2,7 @@ import { createRequire } from "module";
 import { NextResponse } from "next/server";
 
 const require = createRequire(import.meta.url);
-const { getOpenFdaApiKey } = require("../../../api/_lib/openfda");
+const { getOpenFdaApiKey } = require("../../../lib/server/openfda");
 
 export const dynamic = "force-dynamic";
 

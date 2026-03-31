@@ -27,7 +27,7 @@ jobs:
         run: npm ci
 
       - name: Rebuild medication index snapshot
-        run: npm run sync:medications
+        run: npm run medications:sync
 
       - name: Commit refreshed snapshot
         run: |
