@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { ExampleScenarioGrid } from "@/components/search/example-scenario-grid";
@@ -442,11 +441,18 @@ function ShortageEvidencePanel({
 
 // ─── page component ────────────────────────────────────────────────────────
 
-export function PrescriberClient() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get("query")?.trim() || "";
-  const matchId = searchParams.get("id")?.trim() || "";
-  const location = searchParams.get("location")?.trim() || "";
+export function PrescriberClient({
+  initialQuery = "",
+  initialMatchId = "",
+  initialLocation = "",
+}: {
+  initialQuery?: string;
+  initialMatchId?: string;
+  initialLocation?: string;
+}) {
+  const query = initialQuery.trim();
+  const matchId = initialMatchId.trim();
+  const location = initialLocation.trim();
   const showExampleScenarios = !query;
   const [payload, setPayload] = useState<DrugIntelligenceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
