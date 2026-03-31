@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type ComponentType } from "react";
 import { Clock3, LoaderCircle, MapPin, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
-import { listCrowdReportsForUser } from "@/lib/crowd-signal/firestore";
+import type { CrowdReportRecord } from "@/lib/crowd-signal/model";
 import { getTrustTier } from "@/lib/crowd-signal/scoring";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -60,7 +60,7 @@ function MetricCard({
 
 export function ProfilePageClient() {
   const { user, profile } = useAuth();
-  const [contributions, setContributions] = useState<Awaited<ReturnType<typeof listCrowdReportsForUser>>>([]);
+  const [contributions, setContributions] = useState<CrowdReportRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -71,7 +71,8 @@ export function ProfilePageClient() {
     let cancelled = false;
     setIsLoading(true);
 
-    listCrowdReportsForUser(user.uid)
+    void import("@/lib/crowd-signal/firestore")
+      .then(({ listCrowdReportsForUser }) => listCrowdReportsForUser(user.uid))
       .then((items) => {
         if (!cancelled) {
           setContributions(items);

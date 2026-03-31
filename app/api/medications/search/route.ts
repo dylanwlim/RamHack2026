@@ -16,6 +16,7 @@ function sanitizeText(value: string | null) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const assetBaseUrl = new URL(request.url).origin;
     const query = sanitizeText(searchParams.get("q") || searchParams.get("query"));
     const exact = ["1", "true", "yes"].includes(
       sanitizeText(searchParams.get("exact")).toLowerCase(),
@@ -24,7 +25,11 @@ export async function GET(request: Request) {
       Math.max(Number(searchParams.get("limit")) || DEFAULT_SEARCH_LIMIT, 1),
       12,
     );
-    const { results, snapshot } = await searchMedicationOptions(query, { limit, exact });
+    const { results, snapshot } = await searchMedicationOptions(query, {
+      limit,
+      exact,
+      assetBaseUrl,
+    });
 
     return NextResponse.json({
       status: "ok",

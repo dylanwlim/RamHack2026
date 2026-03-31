@@ -25,7 +25,7 @@ const footerSections = [
     title: "Repo",
     links: [
       { label: "GitHub", href: "https://github.com/dylanwlim/RamHack2026" },
-      { label: "Live app", href: "https://pharmapath-blue.vercel.app/" },
+      { label: "Live app", href: "https://pharmapath.org/" },
     ],
   },
   {

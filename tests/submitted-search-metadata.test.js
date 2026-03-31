@@ -102,3 +102,18 @@ test("submitted search metadata builds a resolved location from client coordinat
     street_number: null,
   });
 });
+
+test("submitted search metadata ignores missing client coordinates", () => {
+  const location = buildResolvedLocationFromSubmittedSearch(
+    {
+      location: "10011",
+      locationPlaceId: "",
+    },
+    {
+      locationLat: null,
+      locationLng: null,
+    },
+  );
+
+  assert.equal(location, null);
+});

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const CONTACT_EMAIL = process.env.CONTACT_EMAIL ?? "";
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL?.trim() || "contact@pharmapath.org";
 
 interface ContactPayload {
   name: string;
@@ -43,12 +43,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Message must be at least 10 characters." }, { status: 400 });
     }
 
-    if (!CONTACT_EMAIL) {
-      return NextResponse.json({ error: "Contact email is not configured." }, { status: 500 });
-    }
-
     if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: "Email service is not configured." }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: "Inline email delivery is temporarily unavailable. Use the direct email fallback.",
+          fallbackEmail: CONTACT_EMAIL,
+          fallbackMode: "mailto",
+        },
+        { status: 503 },
+      );
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);

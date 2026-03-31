@@ -3,6 +3,7 @@
 const OPENFDA_BASE_URL = "https://api.fda.gov";
 const DEFAULT_TIMEOUT_MS = 12000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_REQUEST_CACHE_ENTRIES = 64;
 const REQUEST_CACHE = new Map();
 
 function sendJson(res, statusCode, payload) {
@@ -33,7 +34,28 @@ function getCacheKey(url) {
   return url.toString();
 }
 
+function pruneRequestCache() {
+  const expiresBefore = Date.now() - CACHE_TTL_MS;
+
+  for (const [key, cached] of REQUEST_CACHE.entries()) {
+    if (cached.storedAt < expiresBefore) {
+      REQUEST_CACHE.delete(key);
+    }
+  }
+
+  while (REQUEST_CACHE.size > MAX_REQUEST_CACHE_ENTRIES) {
+    const oldestKey = REQUEST_CACHE.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+
+    REQUEST_CACHE.delete(oldestKey);
+  }
+}
+
 function getCachedPayload(url) {
+  pruneRequestCache();
+
   const key = getCacheKey(url);
   const cached = REQUEST_CACHE.get(key);
 
@@ -54,6 +76,7 @@ function setCachedPayload(url, payload) {
     storedAt: Date.now(),
     payload,
   });
+  pruneRequestCache();
 }
 
 function escapePhrase(value) {

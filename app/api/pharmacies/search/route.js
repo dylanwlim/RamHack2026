@@ -41,6 +41,7 @@ async function handleSearch(request) {
   try {
     const body = await readRequestBody(request);
     const searchParams = request.nextUrl.searchParams;
+    const assetBaseUrl = new URL(request.url).origin;
     const input = getSearchInput(
       {
         method: request.method,
@@ -84,7 +85,7 @@ async function handleSearch(request) {
     const [medicationProfile, resolvedLocation] = await Promise.all([
       submittedMedicationProfile
         ? Promise.resolve(submittedMedicationProfile)
-        : resolveMedicationProfile(input.medication),
+        : resolveMedicationProfile(input.medication, { assetBaseUrl }),
       submittedResolvedLocation
         ? Promise.resolve(submittedResolvedLocation)
         : resolveLocationInput(

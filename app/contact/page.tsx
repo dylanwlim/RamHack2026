@@ -26,7 +26,25 @@ interface FormState {
   message: string;
 }
 
+interface ContactResponse {
+  error?: string;
+  fallbackEmail?: string;
+  fallbackMode?: "mailto";
+}
+
 const empty: FormState = { name: "", email: "", subject: "", message: "" };
+
+function buildMailtoHref(form: FormState, email: string) {
+  const subject = form.subject.trim() || "PharmaPath contact";
+  const body = [
+    `Name: ${form.name.trim() || "Not provided"}`,
+    `Email: ${form.email.trim() || "Not provided"}`,
+    "",
+    form.message.trim(),
+  ].join("\n");
+
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export default function ContactPage() {
   const [form, setForm] = useState<FormState>(empty);
@@ -49,9 +67,16 @@ export default function ContactPage() {
         body: JSON.stringify(form),
       });
 
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as ContactResponse;
 
       if (!res.ok) {
+        if (data.fallbackMode === "mailto" && data.fallbackEmail) {
+          window.location.assign(buildMailtoHref(form, data.fallbackEmail));
+          setStatus("idle");
+          setErrorMsg("");
+          return;
+        }
+
         setErrorMsg(data.error ?? "Something went wrong. Please try again.");
         setStatus("error");
         return;

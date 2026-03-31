@@ -10,7 +10,7 @@ import {
   AuthLabel,
 } from "@/components/auth/auth-primitives";
 import { useAuth } from "@/lib/auth/auth-context";
-import { createDefaultProfile } from "@/lib/profile/profile-service";
+import { createDefaultProfile } from "@/lib/profile/profile-defaults";
 
 type SettingsFormState = {
   displayName: string;

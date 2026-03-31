@@ -3,13 +3,20 @@
 import type { User } from "firebase/auth";
 import {
   doc,
+  getDoc,
   onSnapshot,
   runTransaction,
+  setDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { getTrustTier } from "@/lib/crowd-signal/scoring";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { toDate } from "@/lib/firebase/firestore-utils";
+import {
+  createDefaultProfile,
+  deriveDisplayName,
+  deriveNameParts,
+} from "@/lib/profile/profile-defaults";
 import type { RecentSearchEntry, UserProfileRecord } from "@/lib/profile/profile-types";
 
 const ALLOWED_SEARCH_RADII = [2, 5, 10, 25] as const;
@@ -21,32 +28,6 @@ type RawRecentSearchEntry = {
   radiusMiles?: number;
   createdAt?: unknown;
 };
-
-function titleCase(value: string) {
-  return value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function deriveDisplayName(user: Pick<User, "displayName" | "email">) {
-  if (user.displayName?.trim()) {
-    return user.displayName.trim();
-  }
-
-  const emailPrefix = user.email?.split("@")[0] || "PharmaPath User";
-  return titleCase(emailPrefix.replace(/[._-]+/g, " "));
-}
-
-function deriveNameParts(displayName: string) {
-  const [firstName = "", ...rest] = displayName.trim().split(/\s+/);
-  return {
-    firstName,
-    lastName: rest.join(" "),
-  };
-}
 
 function cleanString(value: unknown, fallback = "") {
   if (typeof value === "string") {
@@ -70,35 +51,6 @@ function cleanSearchRadius(value: unknown) {
   return ALLOWED_SEARCH_RADII.includes(nextValue as (typeof ALLOWED_SEARCH_RADII)[number])
     ? nextValue
     : 5;
-}
-
-export function createDefaultProfile(user: ProfileUser): UserProfileRecord {
-  const displayName = deriveDisplayName(user);
-  const names = deriveNameParts(displayName);
-
-  return {
-    uid: user.uid,
-    email: user.email || "",
-    displayName,
-    firstName: names.firstName,
-    lastName: names.lastName,
-    city: "",
-    state: "",
-    zipCode: "",
-    defaultLocationLabel: "",
-    preferredSearchRadius: 5,
-    publicContributorAlias: false,
-    contributorAlias: displayName,
-    notifyCrowdUpdates: true,
-    notifyShortageChanges: true,
-    notifySavedSearchUpdates: false,
-    contributionCount: 0,
-    contributionLevel: getTrustTier(0).label,
-    createdAt: null,
-    updatedAt: null,
-    lastContributionAt: null,
-    recentSearches: [],
-  };
 }
 
 function normalizeProfileRecord(
@@ -275,40 +227,35 @@ export async function saveRecentSearch(
   }
 
   const profileRef = doc(db, "profiles", uid);
-
-  await runTransaction(db, async (transaction) => {
-    const snapshot = await transaction.get(profileRef);
-    const existing = snapshot.exists() ? mapProfileDoc(snapshot.id, snapshot.data()) : null;
-
-    const nextEntry = {
-      medication: input.medication.trim(),
-      location: input.location.trim(),
-      radiusMiles: input.radiusMiles,
-      createdAt: new Date().toISOString(),
-    };
-
-    const currentEntries = (existing?.recentSearches || [])
-      .map((entry) => ({
-        medication: entry.medication,
-        location: entry.location,
-        radiusMiles: entry.radiusMiles,
-        createdAt: entry.createdAt?.toISOString() || new Date().toISOString(),
-      }))
-      .filter(
-        (entry) =>
-          !(
-            entry.medication.toLowerCase() === nextEntry.medication.toLowerCase() &&
-            entry.location.toLowerCase() === nextEntry.location.toLowerCase()
-          ),
-      );
-
-    transaction.set(
-      profileRef,
-      {
-        recentSearches: [nextEntry, ...currentEntries].slice(0, 6),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true },
+  const snapshot = await getDoc(profileRef);
+  const existing = snapshot.exists() ? mapProfileDoc(snapshot.id, snapshot.data()) : null;
+  const nextEntry = {
+    medication: input.medication.trim(),
+    location: input.location.trim(),
+    radiusMiles: input.radiusMiles,
+    createdAt: new Date().toISOString(),
+  };
+  const currentEntries = (existing?.recentSearches || [])
+    .map((entry) => ({
+      medication: entry.medication,
+      location: entry.location,
+      radiusMiles: entry.radiusMiles,
+      createdAt: entry.createdAt?.toISOString() || new Date().toISOString(),
+    }))
+    .filter(
+      (entry) =>
+        !(
+          entry.medication.toLowerCase() === nextEntry.medication.toLowerCase() &&
+          entry.location.toLowerCase() === nextEntry.location.toLowerCase()
+        ),
     );
-  });
+
+  await setDoc(
+    profileRef,
+    {
+      recentSearches: [nextEntry, ...currentEntries].slice(0, 6),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
 }
