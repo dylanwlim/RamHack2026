@@ -1,3 +1,9 @@
+if (process.argv.includes("dev")) {
+  void import("@opennextjs/cloudflare").then(({ initOpenNextCloudflareForDev }) =>
+    initOpenNextCloudflareForDev(),
+  );
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -6,5 +12,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-
-import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
