@@ -10,12 +10,6 @@ Finding a medication can be frustrating for simple reasons: the closest pharmacy
 
 PharmaPath is designed to reduce that friction. It helps users build a better shortlist, understand likely access difficulty, and move into a call or prescribing decision with clearer context.
 
-## Who It Helps
-
-- Patients and caregivers trying to fill a prescription with less guesswork.
-- Prescribers who want quick access context before routing a prescription.
-- Contributors who want to add lightweight reports that can help future searches.
-
 ## Core Experiences
 
 - `Pharmacy Finder`: Search by medication and location, review nearby options, and start with a tighter first-call path.
