@@ -9,6 +9,8 @@ backend/.venv/
 .playwright-cli/
 node_modules/
 .next/
+.open-next/
+.wrangler/
 out/
 template/
 authflows/

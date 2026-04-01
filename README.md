@@ -83,8 +83,10 @@ data/
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | No | Analytics only |
+| `RESEND_API_KEY` | Optional | Required for `POST /api/contact` |
+| `CONTACT_EMAIL` | Optional | Required for `POST /api/contact` |
 
-On Vercel, set all of the above in both Preview and Production environments.
+For Cloudflare Workers previews and production deploys, set the same values on the target Worker/account. If you use a shared Cloudflare account, make sure Preview and Production both receive the required secrets/vars.
 
 ## Running locally
 
@@ -103,13 +105,41 @@ npm run build
 npm run start
 ```
 
+## Cloudflare deployment
+
+PharmaPath is being moved onto Cloudflare Workers with OpenNext. The repo includes:
+
+- `wrangler.jsonc` for the Worker entrypoint and bindings
+- `open-next.config.ts` for the OpenNext Cloudflare adapter
+- `npm run cf:build`
+- `npm run cf:preview`
+- `npm run cf:deploy`
+- `npm run cf:whoami`
+
+Recommended setup notes:
+
+- Use a non-OneDrive working directory when possible. OpenNext on Windows produced file-lock issues in a OneDrive-backed path during this audit.
+- `npm run cf:preview` and `npm run cf:deploy` require Cloudflare auth via Wrangler.
+- The shared Cloudflare account must grant an account-scoped developer-platform role. Domain-only roles are not enough for Workers/Pages APIs.
+
+Quick start:
+
+```bash
+npm install
+npm run cf:whoami
+npm run cf:build
+npm run cf:preview
+```
+
+If you are targeting the shared team account, verify that `wrangler whoami` shows a Cloudflare account role with Workers access before attempting preview or deploy.
+
 ## Medication index
 
 The medication autocomplete is backed by a normalized snapshot of the openFDA NDC bulk dataset. It supports brand name, generic name, ingredient, strength, dosage form, route, and NDC matching.
 
 - **Rebuild locally:** `npm run sync:medications`
 - **Checked-in snapshot:** `data/medication-index.snapshot.json.gz`
-- **Automated refresh:** GitHub Actions workflow (`.github/workflows/medication-index-sync.yml`) runs daily at 07:17 UTC, commits any snapshot changes to `main`, and Vercel picks up the deploy automatically.
+- **Automated refresh:** GitHub Actions workflow (`.github/workflows/medication-index-sync.yml`) runs daily at 07:17 UTC and commits any snapshot changes to `main`. Your Cloudflare deploy flow should pick that up if the repo is connected through Workers Builds, or you can deploy manually with Wrangler.
 
 ## Deploying Firestore rules and indexes
 
