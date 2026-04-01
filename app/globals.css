@@ -22,7 +22,7 @@
   --input: oklch(0.98 0.003 255);
   --ring: oklch(0.72 0.07 235);
   --radius: 1rem;
-  --shadow-soft: 0 1px 1px rgba(11, 22, 44, 0.04), 0 16px 40px rgba(11, 22, 44, 0.08);
+  --shadow-soft: 0 1px 1px rgba(11, 22, 44, 0.03), 0 12px 34px rgba(11, 22, 44, 0.06);
   --motion-fast: 150ms;
   --motion-base: 300ms;
   --motion-slow: 600ms;
@@ -110,11 +110,11 @@
   }
 
   .eyebrow-label {
-    @apply inline-flex h-6 items-center gap-1.5 px-2 font-mono text-[0.72rem] uppercase tracking-[0.08em] text-slate-500;
+    @apply inline-flex h-5 items-center gap-1.5 px-1.5 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-slate-500;
   }
 
   .surface-panel {
-    @apply rounded-[2rem] border border-white/80 bg-white/88 backdrop-blur-xl;
+    @apply rounded-[1.85rem] border border-white/80 bg-white/88 backdrop-blur-xl;
     box-shadow: var(--shadow-soft);
   }
 
@@ -140,24 +140,24 @@
   }
 
   .flat-chip {
-    @apply inline-flex items-center gap-2 rounded-lg border border-black/5 bg-white/78 px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-[0_1px_1px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[background-color,border-color,color,transform] duration-150 hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/12;
+    @apply inline-flex items-center gap-2 rounded-lg border border-black/5 bg-white/78 px-2.5 py-1.5 text-[0.92rem] font-medium text-slate-700 shadow-[0_1px_1px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[background-color,border-color,color,transform] duration-150 hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/12;
     transition-timing-function: var(--ease-button);
   }
 
   .search-field-stack {
-    @apply grid min-w-0 content-start gap-2;
+    @apply grid min-w-0 content-start gap-1.5;
   }
 
   .search-field-label {
-    @apply inline-flex min-h-5 items-center text-[0.72rem] uppercase tracking-[0.18em] text-slate-500;
+    @apply inline-flex min-h-5 items-center text-[0.69rem] uppercase tracking-[0.18em] text-slate-500;
   }
 
   .search-field-helper-slot {
-    @apply min-h-[2.7rem];
+    @apply min-h-[2.1rem];
   }
 
   .search-field-helper {
-    @apply text-[0.78rem] leading-5 text-slate-500;
+    @apply text-[0.74rem] leading-5 text-slate-500;
   }
 
   .search-field-error {
@@ -165,7 +165,7 @@
   }
 
   .search-field-input {
-    @apply h-[3.75rem] w-full min-w-0 rounded-[1.2rem] border border-slate-200 bg-white px-4 text-[1.02rem] leading-6 text-slate-900 outline-none transition-[border-color,box-shadow,background-color,color] duration-150 placeholder:text-slate-400 focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400;
+    @apply h-[3.35rem] w-full min-w-0 rounded-[1.08rem] border border-slate-200 bg-white px-4 text-[0.98rem] leading-6 text-slate-900 outline-none transition-[border-color,box-shadow,background-color,color] duration-150 placeholder:text-slate-400 focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.85),
       0 1px 1px rgba(15, 23, 42, 0.03);
@@ -174,7 +174,7 @@
   }
 
   .search-select-control {
-    @apply h-[3.75rem] w-full min-w-0 rounded-[1.2rem] border border-slate-200 bg-white px-4 text-[1.02rem] leading-6 text-slate-900 outline-none transition-[border-color,box-shadow,background-color,color] duration-150 focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400;
+    @apply h-[3.35rem] w-full min-w-0 rounded-[1.08rem] border border-slate-200 bg-white px-4 text-[0.98rem] leading-6 text-slate-900 outline-none transition-[border-color,box-shadow,background-color,color] duration-150 focus:border-[#156d95] focus:ring-4 focus:ring-[#156d95]/10 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.85),
       0 1px 1px rgba(15, 23, 42, 0.03);
@@ -182,7 +182,7 @@
   }
 
   .search-toggle-control {
-    @apply flex min-h-[3.75rem] w-full items-center gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 text-[1.02rem] leading-6 text-slate-700 transition-[border-color,box-shadow,background-color,color] duration-150;
+    @apply flex min-h-[3.35rem] w-full items-center gap-2.5 rounded-[1.08rem] border border-slate-200 bg-slate-50 px-3.5 text-[0.98rem] leading-6 text-slate-700 transition-[border-color,box-shadow,background-color,color] duration-150;
     touch-action: manipulation;
   }
 
@@ -191,11 +191,11 @@
   }
 
   .search-floating-panel {
-    @apply absolute left-0 right-0 z-[80] overflow-hidden rounded-[1.4rem] border border-slate-200/95 bg-white/98 shadow-[0_28px_70px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/5 backdrop-blur-xl;
+    @apply absolute left-0 right-0 z-[80] overflow-hidden rounded-[1.25rem] border border-slate-200/95 bg-white/98 shadow-[0_22px_56px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/5 backdrop-blur-xl;
   }
 
   .search-floating-scroll {
-    @apply overflow-y-auto p-2.5;
+    @apply overflow-y-auto p-2;
     scrollbar-width: thin;
     scrollbar-color: rgba(100, 116, 139, 0.6) transparent;
   }
@@ -221,17 +221,17 @@
   }
 
   .action-button-primary {
-    @apply inline-flex items-center justify-center rounded-full bg-[#156d95] px-[18px] py-[15px] text-base leading-4 text-white transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-[#12597a] active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/14;
+    @apply inline-flex items-center justify-center rounded-full bg-[#156d95] px-[17px] py-[13px] text-[0.96rem] leading-4 text-white transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-[#12597a] active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/14;
     transition-timing-function: var(--ease-button);
   }
 
   .action-button-secondary {
-    @apply inline-flex items-center justify-center rounded-full border border-[#202020] bg-transparent px-[18px] py-[15px] text-base leading-4 text-[#202020] transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-white/70 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/12;
+    @apply inline-flex items-center justify-center rounded-full border border-[#202020] bg-transparent px-[17px] py-[13px] text-[0.96rem] leading-4 text-[#202020] transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-white/70 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/12;
     transition-timing-function: var(--ease-button);
   }
 
   .action-button-dark {
-    @apply inline-flex items-center justify-center rounded-full bg-slate-950 px-[18px] py-[15px] text-base leading-4 text-white transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-slate-900 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-950/10;
+    @apply inline-flex items-center justify-center rounded-full bg-slate-950 px-[17px] py-[13px] text-[0.96rem] leading-4 text-white transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-slate-900 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-950/10;
     transition-timing-function: var(--ease-button);
   }
 

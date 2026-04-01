@@ -35,7 +35,7 @@ type LocationComboboxProps = {
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 const EMPTY_HINT =
-  "Search by city, ZIP, address, pharmacy, or landmark. Press Enter to search the exact text, or use Arrow keys to choose a suggestion.";
+  "Search by city, ZIP, address, pharmacy, or landmark. Press Enter to use the typed text or Arrow keys to choose a suggestion.";
 
 export function LocationCombobox({
   label,
@@ -261,20 +261,20 @@ export function LocationCombobox({
                   {loadError || "Unable to load location suggestions right now."} Press Enter to search this text directly.
                 </div>
               ) : loadState === "idle" ? (
-                <div className="rounded-[1rem] border border-slate-200/90 bg-slate-50/90 px-4 py-4">
+                <div className="rounded-[0.95rem] border border-slate-200/90 bg-slate-50/90 px-4 py-3.5">
                   <p className="text-sm font-medium text-slate-900">
                     {selectedPlaceId && value.trim()
-                      ? "Current selection is ready to use."
+                      ? "Current location is ready to search."
                       : "Start typing to search nearby."}
                   </p>
                   <p
                     id={helperId}
-                    className="mt-1 text-sm leading-6 text-slate-500"
+                    className="mt-1 text-[0.82rem] leading-5 text-slate-500"
                   >
                     {EMPTY_HINT}
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-                    {["Queens, NY", "32751", "CVS Orlando", "350 5th Ave"].map((example) => (
+                  <div className="mt-2.5 flex flex-wrap gap-2 text-[0.72rem] text-slate-500">
+                    {["Queens, NY", "32751", "CVS Orlando"].map((example) => (
                       <span
                         key={example}
                         className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1"
@@ -285,7 +285,7 @@ export function LocationCombobox({
                   </div>
                 </div>
               ) : loadState === "loading" && !visibleOptions.length ? (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   Searching locations…
                 </div>
               ) : visibleOptions.length ? (
@@ -301,7 +301,7 @@ export function LocationCombobox({
                       role="option"
                       aria-selected={isSelected}
                       className={cn(
-                        "flex w-full items-start justify-between gap-4 rounded-[1rem] border px-3.5 py-3.5 text-left transition-colors duration-150",
+                        "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
                         isHighlighted
                           ? "border-[#156d95]/18 bg-[#156d95]/8"
                           : "border-transparent hover:bg-slate-100/80",
@@ -316,12 +316,12 @@ export function LocationCombobox({
                           <span className="break-words text-sm font-medium leading-5 text-slate-900">
                             {option.primaryText}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                             {option.typeLabel}
                           </span>
                         </div>
                         {option.secondaryText ? (
-                          <p className="mt-1 break-words text-xs leading-5 text-slate-500">
+                          <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
                             {option.secondaryText}
                           </p>
                         ) : null}
@@ -330,7 +330,7 @@ export function LocationCombobox({
                   );
                 })
               ) : (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   No live suggestions yet. Press Enter to search this text directly.
                 </div>
               )}

@@ -73,12 +73,12 @@ export function MetricPill({
   return (
     <div
       className={cn(
-        "rounded-[1.15rem] border border-black/5 bg-white/80 px-4 py-3.5 shadow-[0_1px_1px_rgba(0,0,0,0.04)]",
+        "rounded-[1.05rem] border border-black/5 bg-white/82 px-3.5 py-3 shadow-[0_1px_1px_rgba(0,0,0,0.04)]",
         className,
       )}
     >
-      <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-500">{label}</div>
-      <div className="mt-1 text-xl font-medium tracking-tight tabular-nums text-slate-900">{value}</div>
+      <div className="text-[0.64rem] uppercase tracking-[0.18em] text-slate-500">{label}</div>
+      <div className="mt-1 text-[1.35rem] font-medium tracking-tight tabular-nums text-slate-900">{value}</div>
     </div>
   );
 }
@@ -91,9 +91,9 @@ export function CalloutList({
   className?: string;
 }) {
   return (
-    <ul className={cn("space-y-3", className)}>
+    <ul className={cn("space-y-2.5", className)}>
       {items.map((item) => (
-        <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700 sm:text-base">
+        <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700">
           <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]" />
           <span>{item}</span>
         </li>
@@ -134,10 +134,10 @@ export function EmptyState({
   body: string;
 }) {
   return (
-    <div className="surface-panel rounded-[2rem] p-8 text-left">
+    <div className="surface-panel rounded-[1.85rem] p-6 text-left sm:p-7">
       <span className="eyebrow-label">{eyebrow}</span>
-      <h2 className="mt-5 text-2xl tracking-tight text-balance text-slate-900">{title}</h2>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{body}</p>
+      <h2 className="mt-4 text-[1.75rem] tracking-tight text-balance text-slate-900 sm:text-[1.95rem]">{title}</h2>
+      <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-slate-600">{body}</p>
     </div>
   );
 }

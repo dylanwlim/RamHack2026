@@ -236,7 +236,7 @@ export function MedicationCombobox({
                   {loadError || "Unable to load medication matches right now."}
                 </div>
               ) : loadState === "loading" && !visibleOptions.length ? (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   Loading medication matches…
                 </div>
               ) : visibleOptions.length ? (
@@ -252,7 +252,7 @@ export function MedicationCombobox({
                       role="option"
                       aria-selected={isSelected}
                       className={cn(
-                        "flex w-full items-start justify-between gap-4 rounded-[1rem] border px-3.5 py-3.5 text-left transition-colors duration-150",
+                        "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
                         isHighlighted
                           ? "border-[#156d95]/18 bg-[#156d95]/8"
                           : "border-transparent hover:bg-slate-100/80",
@@ -271,12 +271,12 @@ export function MedicationCombobox({
                             {option.label}
                           </span>
                           {option.badge ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                               {option.badge}
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-1 break-words text-xs leading-5 text-slate-500">
+                        <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
                           {option.description}
                         </p>
                       </div>
@@ -284,7 +284,7 @@ export function MedicationCombobox({
                   );
                 })
               ) : (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   {emptyMessage}
                 </div>
               )}

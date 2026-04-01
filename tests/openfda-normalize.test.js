@@ -184,7 +184,7 @@ test("buildDrugIntelligencePayload labels shortage-driven cases as higher fricti
   assert.equal(payload.featured_match_id, payload.matches[0].id);
 });
 
-test("pickFeaturedMatch prefers shortage-backed matches before broader listing volume", () => {
+test("pickFeaturedMatch keeps the highest query-relevance match first", () => {
   const featured = pickFeaturedMatch([
     {
       id: "brand-shell",
@@ -198,5 +198,5 @@ test("pickFeaturedMatch prefers shortage-backed matches before broader listing v
     },
   ]);
 
-  assert.equal(featured.id, "shortage-backed");
+  assert.equal(featured.id, "brand-shell");
 });

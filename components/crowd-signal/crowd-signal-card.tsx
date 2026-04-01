@@ -32,7 +32,7 @@ function crowdTone(summary: CrowdSignalSummary) {
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1rem] border border-slate-200 bg-white/90 px-3 py-2">
+    <div className="rounded-[0.9rem] border border-slate-200 bg-white/90 px-3 py-2">
       <div className="text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">{label}</div>
       <div className="mt-1 text-sm font-medium text-slate-900">{value}</div>
     </div>
@@ -125,17 +125,17 @@ export function CrowdSignalCard({
   }
 
   return (
-    <div className={cn("rounded-[1.5rem] border border-slate-200 bg-white/92 p-4", compact && "p-3")}>
+    <div className={cn("rounded-[1.35rem] border border-slate-200 bg-white/92 p-3.5", compact && "p-3")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+          <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-500">
             Crowd availability signal
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={cn("rounded-full border px-3 py-1 text-sm font-medium", crowdTone(resolvedSummary))}>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <span className={cn("rounded-full border px-3 py-1 text-[0.9rem] font-medium", crowdTone(resolvedSummary))}>
               {resolvedSummary.label}
             </span>
-            <span className="text-sm text-slate-500">{resolvedSummary.confidenceLabel}</span>
+            <span className="text-[0.82rem] text-slate-500">{resolvedSummary.confidenceLabel}</span>
           </div>
         </div>
 
@@ -144,7 +144,7 @@ export function CrowdSignalCard({
             <AuthButton
               type="button"
               variant="outline"
-              className="h-10 px-4 text-sm"
+              className="h-9 px-3.5 text-sm"
               onClick={() => {
                 setFeedback(null);
                 setError(null);
@@ -158,38 +158,38 @@ export function CrowdSignalCard({
         </div>
       </div>
 
-      <p className={cn("mt-3 text-sm leading-6 text-slate-600", compact && "text-[0.92rem]")}>
+      <p className={cn("mt-2.5 text-sm leading-6 text-slate-600", compact && "text-[0.9rem]")}>
         {resolvedSummary.explanation}
       </p>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <MiniMetric label="Likelihood" value={likelihoodDisplay} />
         <MiniMetric label={isDemoMedication ? "Live reports" : "Reports"} value={String(resolvedSummary.reportCount)} />
         <MiniMetric label="Freshness" value={resolvedSummary.freshnessNote} />
         <MiniMetric label="Consensus" value={resolvedSummary.agreementDisplay} />
       </div>
 
-      <p className="mt-3 text-xs leading-5 text-slate-500">
+      <p className="mt-2.5 text-[0.74rem] leading-5 text-slate-500">
         Crowd reports are weighted by contributor history and recency, and sparse samples stay conservative. Direct pharmacy confirmation is still recommended before sending someone to pick up a prescription.
       </p>
 
       {isDemoMedication ? (
-        <p className="mt-2 text-xs leading-5 text-amber-900/85">
+        <p className="mt-2 text-[0.74rem] leading-5 text-amber-900/85">
           {medicationContext?.demo_note} {medicationContext?.simulated_user_count || 0} seeded demo users are associated with this fictional medication, but pharmacy-specific live report counts remain separate from that simulated context.
         </p>
       ) : null}
 
-      {feedback ? <p className="mt-3 text-sm text-emerald-700">{feedback}</p> : null}
-      {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
+      {feedback ? <p className="mt-2.5 text-sm text-emerald-700">{feedback}</p> : null}
+      {error ? <p className="mt-2.5 text-sm text-rose-700">{error}</p> : null}
 
       {status !== "authenticated" && !compact ? (
-        <div className="mt-4">
+        <div className="mt-3">
           <SignedOutContributionPrompt nextPath={nextPath} />
         </div>
       ) : null}
 
       {status !== "authenticated" && compact ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
           <span>Want to improve this signal?</span>
           <Link
             href={`/login?next=${encodeURIComponent(nextPath)}`}
@@ -201,14 +201,14 @@ export function CrowdSignalCard({
       ) : null}
 
       {isOpen && status === "authenticated" && firebaseReady ? (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4">
+        <form onSubmit={handleSubmit} className="mt-3 space-y-3.5 rounded-[1.15rem] border border-slate-200 bg-slate-50/70 p-3.5">
           <div className="grid gap-2 sm:grid-cols-2">
             {CROWD_REPORT_TYPES.map((type) => (
               <button
                 key={type.id}
                 type="button"
                 className={cn(
-                  "rounded-[1rem] border px-4 py-3 text-left text-sm transition-all",
+                  "rounded-[0.95rem] border px-3.5 py-3 text-left text-sm transition-all",
                   reportType === type.id
                     ? "border-[#156d95] bg-[#156d95]/8 text-slate-950 shadow-sm"
                     : "border-slate-200 bg-white text-slate-600 hover:border-[#156d95]/25 hover:text-slate-900",
@@ -227,7 +227,7 @@ export function CrowdSignalCard({
             </label>
             <textarea
               id={`${pharmacy.name}-note`}
-              className="min-h-[96px] w-full rounded-[1rem] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus-visible:border-[#156d95] focus-visible:ring-[3px] focus-visible:ring-[#156d95]/12"
+              className="min-h-[84px] w-full rounded-[0.95rem] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus-visible:border-[#156d95] focus-visible:ring-[3px] focus-visible:ring-[#156d95]/12"
               placeholder="Example: Tech said they had two boxes left but recommended calling before driving over."
               maxLength={240}
               value={note}
@@ -236,12 +236,12 @@ export function CrowdSignalCard({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs leading-5 text-slate-500">
+            <p className="text-[0.74rem] leading-5 text-slate-500">
               Reports are tied to your contribution history, and stale reports decay automatically.
             </p>
             <AuthButton
               type="submit"
-              className="h-11 px-5"
+              className="h-10 px-4.5"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

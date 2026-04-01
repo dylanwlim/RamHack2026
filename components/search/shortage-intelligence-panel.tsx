@@ -336,14 +336,14 @@ function AccessMeter({ score }: { score: number }) {
   const clamped = Math.max(4, Math.min(96, score));
 
   return (
-    <div className="mt-5">
-      <div className="relative h-4 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500">
+    <div className="mt-4">
+      <div className="relative h-3.5 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500">
         <span
-          className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-slate-950 shadow-md"
-          style={{ left: `calc(${clamped}% - 0.625rem)` }}
+          className="absolute top-1/2 h-4.5 w-4.5 -translate-y-1/2 rounded-full border-2 border-white bg-slate-950 shadow-md"
+          style={{ left: `calc(${clamped}% - 0.55rem)` }}
         />
       </div>
-      <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-slate-400">
+      <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-slate-400">
         <span>Lower friction</span>
         <span>Higher friction</span>
       </div>
@@ -357,9 +357,9 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[2rem] p-6">
+    <div className="surface-panel rounded-[1.7rem] p-5">
       <span className="eyebrow-label">Dose coverage</span>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
         {rows.map((row) => {
           const toneClass =
             row.availabilityPercent === 100
@@ -371,7 +371,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
           return (
             <div
               key={row.label}
-              className={`rounded-[1.25rem] border p-4 ${toneClass}`}
+              className={`rounded-[1.05rem] border p-3.5 ${toneClass}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold">{row.label}</span>
@@ -379,7 +379,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
                   {row.availabilityPercent}%
                 </span>
               </div>
-              <p className="mt-2 text-xs leading-5 opacity-80">
+              <p className="mt-1.5 text-[0.74rem] leading-5 opacity-80">
                 {row.availableCount} producing / {row.totalCount} total matching entries
               </p>
             </div>
@@ -401,11 +401,11 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <div className="surface-panel rounded-[2rem] p-6">
+    <div className="surface-panel rounded-[1.7rem] p-5">
       <span className="eyebrow-label">Manufacturer status</span>
-      <div className="mt-5 divide-y divide-slate-100">
+      <div className="mt-4 divide-y divide-slate-100">
         {visibleRows.map((row) => (
-          <div key={row.name} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
+          <div key={row.name} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
             <span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${row.statusDotClass}`} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -417,11 +417,11 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
                 ) : null}
               </div>
               {row.strengths.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {row.strengths.map((strength) => (
                     <span
                       key={`${row.name}-${strength}`}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600"
+                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600"
                     >
                       {strength}
                     </span>
@@ -438,7 +438,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
       {hiddenCount > 0 ? (
         <button
           type="button"
-          className="mt-4 text-sm font-medium text-[#156d95]"
+          className="mt-3 text-sm font-medium text-[#156d95]"
           onClick={() => setShowAll((value) => !value)}
         >
           {showAll ? "Show fewer" : `Show ${hiddenCount} more`}
@@ -458,16 +458,16 @@ function RecallActivityCard({
   }
 
   return (
-    <div className="surface-panel rounded-[2rem] p-6">
+    <div className="surface-panel rounded-[1.7rem] p-5">
       <span className="eyebrow-label">Recent recall activity</span>
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {items.slice(0, 4).map((recall, index) => {
           const classification = formatRecallClassification(recall.classification);
 
           return (
             <div
               key={`${recall.productDescription ?? "recall"}-${index}`}
-              className="rounded-[1.25rem] border border-amber-200 bg-amber-50 p-4"
+              className="rounded-[1.05rem] border border-amber-200 bg-amber-50 p-3.5"
             >
               {recall.productDescription ? (
                 <div className="text-sm font-semibold text-slate-950">
@@ -480,7 +480,7 @@ function RecallActivityCard({
               {recall.reason ? (
                 <p className="mt-2 text-sm leading-6 text-slate-700">{recall.reason}</p>
               ) : null}
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+              <div className="mt-2.5 flex flex-wrap gap-2 text-xs text-slate-500">
                 {classification ? (
                   <span className="rounded-full bg-amber-200 px-2 py-1 font-semibold text-amber-900">
                     {classification}
@@ -502,16 +502,16 @@ function PatientMeaningCard({ items }: { items: string[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[2rem] p-6">
+    <div className="surface-panel rounded-[1.7rem] p-5">
       <span className="eyebrow-label">What this means for you</span>
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {items.map((item) => {
           const tone = classifyPatientInsight(item);
 
           return (
             <div
               key={item}
-              className={`flex gap-3 rounded-[1.25rem] border p-4 text-sm leading-6 ${tone.panelClass}`}
+              className={`flex gap-3 rounded-[1.05rem] border px-3.5 py-3 text-sm leading-6 ${tone.panelClass}`}
             >
               <span className="mt-0.5 shrink-0 font-bold" aria-hidden>
                 {tone.icon}
@@ -531,13 +531,13 @@ function ActiveShortageEntriesCard({ items }: { items: ShortageItem[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[2rem] p-6">
+    <div className="surface-panel rounded-[1.7rem] p-5">
       <span className="eyebrow-label">Active shortage entries</span>
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {items.slice(0, 6).map((item, index) => (
           <div
             key={`${item.companyName ?? "shortage"}-${item.presentation ?? index}`}
-            className="rounded-[1.25rem] border border-rose-200 bg-rose-50 p-4"
+            className="rounded-[1.05rem] border border-rose-200 bg-rose-50 p-3.5"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -554,7 +554,7 @@ function ActiveShortageEntriesCard({ items }: { items: ShortageItem[] }) {
                 </span>
               ) : null}
             </div>
-            <div className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+            <div className="mt-2.5 space-y-2 text-sm leading-6 text-slate-700">
               {item.shortageReason ? (
                 <p>
                   <span className="font-semibold text-slate-900">Reason:</span> {item.shortageReason}
@@ -584,7 +584,7 @@ function SnapshotFooter({
 }) {
   if (isDemoMatch) {
     return (
-      <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4 text-xs leading-6 text-amber-950">
+      <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-3.5 text-[0.74rem] leading-5 text-amber-950">
         <strong>Demo medication context only.</strong> {note || "This isolated fictional medication data stays separate from the live catalog."}
       </div>
     );
@@ -596,7 +596,7 @@ function SnapshotFooter({
       : "This medication view uses public shortage, recall, and listing records to support planning. Local inventory, wholesaler allocation, and payer constraints still need separate verification.";
 
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white/70 px-5 py-4 text-xs leading-6 text-slate-600">
+    <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 px-4 py-3.5 text-[0.74rem] leading-5 text-slate-600">
       {body}
     </div>
   );
@@ -645,10 +645,14 @@ export function ShortageIntelligencePanel({
   match,
   dataFreshness,
   variant,
+  selectedMedicationLabel,
+  selectedStrength,
 }: {
   match: Match;
   dataFreshness: DrugIntelligenceResponse["data_freshness"];
   variant: Variant;
+  selectedMedicationLabel?: string | null;
+  selectedStrength?: string | null;
 }) {
   const isDemoMatch = Boolean(match.demo_context?.demo_only);
   const [referenceTime] = useState(() => Date.now());
@@ -657,11 +661,21 @@ export function ShortageIntelligencePanel({
     isDemoMatch,
     referenceTime,
   );
+  const normalizedSelectedLabel = selectedMedicationLabel?.trim().toLowerCase() || "";
+  const selectedContextLabel = [selectedMedicationLabel?.trim(), selectedStrength?.trim()]
+    .filter(Boolean)
+    .join(" • ");
+  const showMatchedFamilyLabel =
+    Boolean(normalizedSelectedLabel) &&
+    normalizedSelectedLabel !== match.display_name.trim().toLowerCase();
+  const familyContextNote = selectedStrength
+    ? "Dose and manufacturer rows summarize the matched product family around the selected presentation. They can include sibling strengths in the same formulation."
+    : "This snapshot reflects the top matched medication family for the current search, not a live local inventory readout.";
 
   return (
     <>
       <div
-        className={`surface-panel rounded-[2rem] border p-6 sm:p-7 ${snapshot.band.panelClass} ${snapshot.band.borderClass}`}
+        className={`surface-panel rounded-[1.75rem] border p-5 sm:p-6 ${snapshot.band.panelClass} ${snapshot.band.borderClass}`}
       >
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow-label">
@@ -674,17 +688,34 @@ export function ShortageIntelligencePanel({
           ) : null}
         </div>
 
+        <div className="mt-3 rounded-[1.1rem] border border-white/70 bg-white/72 px-4 py-3">
+          <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
+            Context shown
+          </div>
+          <div className="mt-1 text-[1rem] font-semibold tracking-tight text-slate-950">
+            {selectedContextLabel || match.display_name}
+          </div>
+          {showMatchedFamilyLabel ? (
+            <div className="mt-1 text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">
+              Matched family: {match.display_name}
+            </div>
+          ) : null}
+          <p className="mt-1 text-[0.8rem] leading-5 text-slate-600">
+            {familyContextNote}
+          </p>
+        </div>
+
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className={`text-2xl font-bold tracking-tight ${snapshot.band.textClass}`}>
+            <div className={`text-[1.65rem] font-bold tracking-tight ${snapshot.band.textClass}`}>
               {snapshot.band.label}
             </div>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-700">
+            <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-700">
               {snapshot.band.summary}
             </p>
           </div>
           <div className="text-right">
-            <div className={`text-4xl font-black tabular-nums ${snapshot.band.textClass}`}>
+            <div className={`text-[2.8rem] font-black tabular-nums ${snapshot.band.textClass}`}>
               {snapshot.score}
             </div>
             <div className="text-xs uppercase tracking-[0.16em] text-slate-500">out of 100</div>
@@ -693,25 +724,25 @@ export function ShortageIntelligencePanel({
 
         <AccessMeter score={snapshot.score} />
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[1.25rem] border border-white/70 bg-white/70 p-4">
-            <div className="text-xl font-semibold text-slate-950">
+        <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
+          <div className="rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
+            <div className="text-[1.2rem] font-semibold text-slate-950">
               {snapshot.activeItems.length}
             </div>
             <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
               Active shortage entries
             </div>
           </div>
-          <div className="rounded-[1.25rem] border border-white/70 bg-white/70 p-4">
-            <div className="text-xl font-semibold text-slate-950">
+          <div className="rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
+            <div className="text-[1.2rem] font-semibold text-slate-950">
               {formatDuration(snapshot.durationDays)}
             </div>
             <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
               Running duration
             </div>
           </div>
-          <div className="rounded-[1.25rem] border border-white/70 bg-white/70 p-4">
-            <div className="text-xl font-semibold text-slate-950">
+          <div className="rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
+            <div className="text-[1.2rem] font-semibold text-slate-950">
               {snapshot.lastUpdateLabel}
             </div>
             <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
@@ -721,17 +752,17 @@ export function ShortageIntelligencePanel({
         </div>
 
         {snapshot.primaryReason ? (
-          <div className="mt-3 rounded-[1.25rem] border border-white/70 bg-white/70 p-4">
+          <div className="mt-2.5 rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
             <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
               Primary shortage reason
             </div>
-            <p className="mt-2 text-sm font-medium leading-6 text-slate-900">
+            <p className="mt-1.5 text-sm font-medium leading-6 text-slate-900">
               {snapshot.primaryReason}
             </p>
           </div>
         ) : null}
 
-        <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+        <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-slate-400">
           {buildFreshnessLabel(dataFreshness, isDemoMatch)}
         </p>
       </div>
@@ -742,9 +773,9 @@ export function ShortageIntelligencePanel({
       {variant === "patient" ? (
         <>
           <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
-          <div className="surface-panel rounded-[2rem] p-6">
+          <div className="surface-panel rounded-[1.7rem] p-5">
             <span className="eyebrow-label">Questions to ask your pharmacist</span>
-            <CalloutList className="mt-5" items={match.patient_view.questions_to_ask} />
+            <CalloutList className="mt-4" items={match.patient_view.questions_to_ask} />
           </div>
         </>
       ) : (
