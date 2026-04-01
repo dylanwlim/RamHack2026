@@ -406,6 +406,31 @@ function buildGoogleMapsUrl(place) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`;
 }
 
+function buildPhoneLink(phoneNumber) {
+  const normalizedPhoneNumber = sanitizeText(phoneNumber);
+
+  if (!normalizedPhoneNumber) {
+    return null;
+  }
+
+  const dialableNumber = normalizedPhoneNumber
+    .replace(/[^+\d]/g, "")
+    .replace(/(?!^)\+/g, "");
+
+  return dialableNumber ? `tel:${dialableNumber}` : null;
+}
+
+function extractPlacePhoneDetails(result) {
+  const formattedPhoneNumber = sanitizeText(result?.formatted_phone_number);
+  const internationalPhoneNumber = sanitizeText(result?.international_phone_number);
+
+  return {
+    phone_number: formattedPhoneNumber || internationalPhoneNumber || null,
+    international_phone_number: internationalPhoneNumber || null,
+    phone_link: buildPhoneLink(internationalPhoneNumber || formattedPhoneNumber),
+  };
+}
+
 function normalizePlace(place, center) {
   const coordinates = place.geometry?.location;
   const distanceMiles =
@@ -431,6 +456,9 @@ function normalizePlace(place, center) {
     distance_miles: distanceMiles,
     business_status: place.business_status || null,
     review_label: formatReviewLabel(place.user_ratings_total),
+    phone_number: null,
+    international_phone_number: null,
+    phone_link: null,
   };
 }
 
@@ -752,19 +780,26 @@ async function autocompleteLocationSuggestions(query, apiKey, { limit = 8, sessi
   });
 }
 
-async function getPlaceDetails(placeId, apiKey, { displayLabel, rawQuery, sessionToken } = {}) {
+async function requestPlaceDetails(
+  placeId,
+  apiKey,
+  fields,
+  {
+    sessionToken,
+    missingPlaceMessage = "A Google place ID is required to resolve this location.",
+    failureCode = "place_details_failed",
+    failureLabel = "Place details",
+  } = {},
+) {
   const normalizedPlaceId = sanitizeText(placeId);
 
   if (!normalizedPlaceId) {
-    throw createGoogleApiError("A Google place ID is required to resolve this location.", 400, "missing_place_id");
+    throw createGoogleApiError(missingPlaceMessage, 400, "missing_place_id");
   }
 
   const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
   url.searchParams.set("place_id", normalizedPlaceId);
-  url.searchParams.set(
-    "fields",
-    "address_component,formatted_address,geometry,name,place_id,type",
-  );
+  url.searchParams.set("fields", fields);
   url.searchParams.set("key", apiKey);
 
   if (sessionToken) {
@@ -775,23 +810,70 @@ async function getPlaceDetails(placeId, apiKey, { displayLabel, rawQuery, sessio
 
   if (payload.status !== "OK" || !payload.result) {
     throw createGoogleApiError(
-      payload.error_message || `Place details failed with status ${payload.status || "UNKNOWN"}.`,
+      payload.error_message || `${failureLabel} failed with status ${payload.status || "UNKNOWN"}.`,
       502,
-      "place_details_failed",
+      failureCode,
     );
   }
+
+  return payload.result;
+}
+
+async function getPlaceDetails(placeId, apiKey, { displayLabel, rawQuery, sessionToken } = {}) {
+  const result = await requestPlaceDetails(
+    placeId,
+    apiKey,
+    "address_component,formatted_address,geometry,name,place_id,type",
+    {
+      sessionToken,
+      missingPlaceMessage: "A Google place ID is required to resolve this location.",
+      failureCode: "place_details_failed",
+      failureLabel: "Place details",
+    },
+  );
 
   return buildResolvedLocation({
     rawQuery,
     displayLabel,
-    formattedAddress: payload.result.formatted_address,
-    name: payload.result.name,
-    placeId: payload.result.place_id,
-    coordinates: payload.result.geometry?.location,
-    components: payload.result.address_components,
-    types: payload.result.types,
+    formattedAddress: result.formatted_address,
+    name: result.name,
+    placeId: result.place_id,
+    coordinates: result.geometry?.location,
+    components: result.address_components,
+    types: result.types,
     resolutionSource: "place_details",
   });
+}
+
+async function getPlacePhoneDetails(placeId, apiKey, { sessionToken } = {}) {
+  const result = await requestPlaceDetails(
+    placeId,
+    apiKey,
+    "formatted_phone_number,international_phone_number,place_id",
+    {
+      sessionToken,
+      missingPlaceMessage: "A Google place ID is required to look up pharmacy contact details.",
+      failureCode: "place_phone_details_failed",
+      failureLabel: "Place phone details",
+    },
+  );
+
+  return extractPlacePhoneDetails(result);
+}
+
+async function hydratePlacePhoneDetails(place, apiKey) {
+  if (!place?.place_id) {
+    return place;
+  }
+
+  try {
+    return {
+      ...place,
+      ...(await getPlacePhoneDetails(place.place_id, apiKey)),
+    };
+  } catch {
+    return place;
+  }
 }
 
 async function geocodeLocation(location, apiKey, { displayLabel, rawQuery, components } = {}) {
@@ -936,12 +1018,19 @@ async function searchNearbyPharmacies({
         .filter((place) => place.distance_miles === null || place.distance_miles <= radiusMiles)
     : [];
 
-  const sortedResults = sortResults(normalizedResults, sortBy, medicationProfile)
-    .slice(0, MAX_RESULTS)
-    .map((place) => ({
-      ...place,
-      ...buildPlaceWorkflow(place, medicationProfile, medication),
-    }));
+  const sortedResults = await Promise.all(
+    sortResults(normalizedResults, sortBy, medicationProfile)
+      .slice(0, MAX_RESULTS)
+      .map((place) =>
+        hydratePlacePhoneDetails(
+          {
+            ...place,
+            ...buildPlaceWorkflow(place, medicationProfile, medication),
+          },
+          apiKey,
+        ),
+      ),
+  );
   const guidance = buildMedicationGuidance(medicationProfile, medication);
 
   return {

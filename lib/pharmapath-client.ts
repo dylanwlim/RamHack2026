@@ -73,6 +73,9 @@ export type PharmacySearchResponse = {
     open_now: boolean | null;
     place_id: string | null;
     google_maps_url: string | null;
+    phone_number: string | null;
+    international_phone_number: string | null;
+    phone_link: string | null;
     distance_miles: number | null;
     business_status: string | null;
     review_label: string;

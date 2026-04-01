@@ -496,6 +496,40 @@ function ShortagePanel({
   );
 }
 
+function PharmacyPhoneAction({
+  pharmacy,
+  className,
+}: {
+  pharmacy: PharmacySearchResponse["results"][number];
+  className: string;
+}) {
+  if (!pharmacy.phone_number) {
+    return null;
+  }
+
+  const label = pharmacy.phone_link ? `Call ${pharmacy.phone_number}` : `Phone ${pharmacy.phone_number}`;
+
+  if (pharmacy.phone_link) {
+    return (
+      <a
+        href={pharmacy.phone_link}
+        aria-label={`Call ${pharmacy.name} at ${pharmacy.phone_number}`}
+        className={className}
+      >
+        <PhoneCall className="h-4 w-4" />
+        <span>{label}</span>
+      </a>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <PhoneCall className="h-4 w-4" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
 export function PatientResultsClient() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query")?.trim() || "";
@@ -880,8 +914,21 @@ export function PatientResultsClient() {
                           />
                         </div>
 
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-                          {pharmacyData.recommended.google_maps_url ? (
+                        <div className="mt-5 rounded-[1.4rem] border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="inline-flex items-center gap-2 font-medium">
+                              <PhoneCall className="h-4 w-4" />
+                              Inventory still needs a direct call.
+                            </div>
+                            <PharmacyPhoneAction
+                              pharmacy={pharmacyData.recommended}
+                              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 font-semibold text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
+                            />
+                          </div>
+                        </div>
+
+                        {pharmacyData.recommended.google_maps_url ? (
+                          <div className="mt-5 flex flex-wrap items-center gap-3">
                             <a
                               href={pharmacyData.recommended.google_maps_url}
                               target="_blank"
@@ -890,12 +937,8 @@ export function PatientResultsClient() {
                             >
                               Open in Google Maps
                             </a>
-                          ) : null}
-                          <div className="inline-flex items-center gap-2 text-sm text-slate-500">
-                            <PhoneCall className="h-4 w-4" />
-                            Inventory still needs a direct call.
                           </div>
-                        </div>
+                        ) : null}
                       </div>
 
                       {visibleExtras.length ? (
@@ -942,16 +985,24 @@ export function PatientResultsClient() {
                                     compact
                                   />
                                 </div>
-                                {result.google_maps_url ? (
-                                  <a
-                                    href={result.google_maps_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-3 inline-flex items-center gap-2 text-sm text-[#156d95]"
-                                  >
-                                    View map
-                                    <ExternalLink className="h-4 w-4" />
-                                  </a>
+                                {result.phone_number || result.google_maps_url ? (
+                                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    <PharmacyPhoneAction
+                                      pharmacy={result}
+                                      className="inline-flex items-center gap-2 text-sm font-medium text-[#156d95]"
+                                    />
+                                    {result.google_maps_url ? (
+                                      <a
+                                        href={result.google_maps_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-sm text-[#156d95]"
+                                      >
+                                        View map
+                                        <ExternalLink className="h-4 w-4" />
+                                      </a>
+                                    ) : null}
+                                  </div>
                                 ) : null}
                               </div>
                             ))}
