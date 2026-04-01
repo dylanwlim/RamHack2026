@@ -11,6 +11,10 @@ import {
   type KeyboardEvent,
 } from "react";
 import {
+  getComboboxPanelPositionClasses,
+  useComboboxPanelLayout,
+} from "@/components/search/combobox-shared";
+import {
   searchLocationSuggestions,
   type LocationSuggestion,
 } from "@/lib/locations/client";
@@ -25,12 +29,13 @@ type LocationComboboxProps = {
   onValueChange: (value: string) => void;
   onSelect: (option: LocationSuggestion) => void;
   error?: string | null;
+  className?: string;
 };
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 const EMPTY_HINT =
-  "Type a city, ZIP, address, pharmacy, or landmark. You can also press Enter to search the exact text directly.";
+  "Search by city, ZIP, address, pharmacy, or landmark. Press Enter to use the typed text or Arrow keys to choose a suggestion.";
 
 export function LocationCombobox({
   label,
@@ -41,16 +46,19 @@ export function LocationCombobox({
   onValueChange,
   onSelect,
   error,
+  className,
 }: LocationComboboxProps) {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
+  const helperId = `${inputId}-helper`;
+  const errorId = `${inputId}-error`;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const deferredValue = useDeferredValue(value);
   const [isOpen, setIsOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [options, setOptions] = useState<LocationSuggestion[]>([]);
   const [lastCompletedQuery, setLastCompletedQuery] = useState<string | null>(null);
-  const [highlightedIndexState, setHighlightedIndexState] = useState(0);
+  const [highlightedIndexState, setHighlightedIndexState] = useState(-1);
   const normalizedValue = isOpen ? deferredValue.trim() : "";
   const isSearchable = normalizedValue.length >= 2;
   const loadState: LoadState = !isOpen || !isSearchable
@@ -74,8 +82,11 @@ export function LocationCombobox({
       return selectedIndex;
     }
 
-    return Math.min(highlightedIndexState, visibleOptions.length - 1);
+    return highlightedIndexState < 0
+      ? -1
+      : Math.min(highlightedIndexState, visibleOptions.length - 1);
   }, [highlightedIndexState, selectedPlaceId, visibleOptions]);
+  const { placement, maxHeight } = useComboboxPanelLayout(wrapperRef, isOpen, 336);
 
   useEffect(() => {
     if (!isOpen || !isSearchable) {
@@ -136,7 +147,7 @@ export function LocationCombobox({
     element?.scrollIntoView({ block: "nearest" });
   }, [highlightedIndex, isOpen, listboxId, visibleOptions]);
 
-  const activeOption = visibleOptions[highlightedIndex] || null;
+  const activeOption = highlightedIndex >= 0 ? visibleOptions[highlightedIndex] || null : null;
 
   const commitSelection = (option: LocationSuggestion, { submit = false } = {}) => {
     onSelect(option);
@@ -157,7 +168,7 @@ export function LocationCombobox({
       event.preventDefault();
       setIsOpen(true);
       setHighlightedIndexState((currentIndex) =>
-        visibleOptions.length ? (currentIndex + 1) % visibleOptions.length : 0,
+        visibleOptions.length ? (currentIndex + 1 + visibleOptions.length) % visibleOptions.length : -1,
       );
       return;
     }
@@ -167,13 +178,15 @@ export function LocationCombobox({
       setIsOpen(true);
       setHighlightedIndexState((currentIndex) =>
         visibleOptions.length
-          ? (currentIndex - 1 + visibleOptions.length) % visibleOptions.length
-          : 0,
+          ? currentIndex < 0
+            ? visibleOptions.length - 1
+            : (currentIndex - 1 + visibleOptions.length) % visibleOptions.length
+          : -1,
       );
       return;
     }
 
-    if (event.key === "Enter" && isOpen && activeOption) {
+    if (event.key === "Enter" && isOpen && activeOption && highlightedIndex >= 0) {
       event.preventDefault();
       commitSelection(activeOption, { submit: true });
       return;
@@ -186,28 +199,35 @@ export function LocationCombobox({
   };
 
   return (
-    <label className="space-y-2">
-      <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</span>
+    <label className={cn("search-field-stack", className)}>
+      <span className="search-field-label">{label}</span>
       <div ref={wrapperRef} className="relative">
         <input
           id={inputId}
           role="combobox"
           aria-autocomplete="list"
+          aria-haspopup="listbox"
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-activedescendant={activeOption ? `${listboxId}-${activeOption.placeId}` : undefined}
+          aria-describedby={error ? errorId : undefined}
+          aria-invalid={Boolean(error)}
           autoComplete="off"
+          autoCapitalize="words"
+          enterKeyHint="search"
+          spellCheck={false}
           className={cn(
             "search-field-input pr-12",
             isOpen && "border-[#156d95] ring-4 ring-[#156d95]/10",
             error && "border-rose-300 ring-4 ring-rose-500/10",
           )}
           placeholder={placeholder}
+          title={value || placeholder}
           value={value}
           onChange={(event) => {
             onValueChange(event.target.value);
             setIsOpen(true);
-            setHighlightedIndexState(0);
+            setHighlightedIndexState(-1);
           }}
           onClick={() => setIsOpen(true)}
           onFocus={() => setIsOpen(true)}
@@ -224,19 +244,49 @@ export function LocationCombobox({
         </div>
 
         {isOpen ? (
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white/96 shadow-[0_22px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-            <div id={listboxId} role="listbox" className="max-h-72 space-y-1 overflow-y-auto p-2">
+          <div
+            className={cn(
+              "search-floating-panel",
+              getComboboxPanelPositionClasses(placement),
+            )}
+          >
+            <div
+              id={listboxId}
+              role="listbox"
+              className="search-floating-scroll space-y-1"
+              style={{ maxHeight }}
+            >
               {loadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-amber-200 bg-amber-50/85 px-4 py-4 text-sm leading-6 text-amber-800">
                   {loadError || "Unable to load location suggestions right now."} Press Enter to search this text directly.
                 </div>
               ) : loadState === "idle" ? (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
-                  {EMPTY_HINT}
+                <div className="rounded-[0.95rem] border border-slate-200/90 bg-slate-50/90 px-4 py-3.5">
+                  <p className="text-sm font-medium text-slate-900">
+                    {selectedPlaceId && value.trim()
+                      ? "Current location is ready to search."
+                      : "Start typing to search nearby."}
+                  </p>
+                  <p
+                    id={helperId}
+                    className="mt-1 text-[0.82rem] leading-5 text-slate-500"
+                  >
+                    {EMPTY_HINT}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2 text-[0.72rem] text-slate-500">
+                    {["Queens, NY", "32751", "CVS Orlando"].map((example) => (
+                      <span
+                        key={example}
+                        className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1"
+                      >
+                        {example}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ) : loadState === "loading" && !visibleOptions.length ? (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
-                  Searching locations...
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
+                  Searching locations…
                 </div>
               ) : visibleOptions.length ? (
                 visibleOptions.map((option, index) => {
@@ -251,7 +301,7 @@ export function LocationCombobox({
                       role="option"
                       aria-selected={isSelected}
                       className={cn(
-                        "flex w-full items-start justify-between gap-4 rounded-[1rem] border px-3 py-3 text-left transition-colors duration-150",
+                        "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
                         isHighlighted
                           ? "border-[#156d95]/18 bg-[#156d95]/8"
                           : "border-transparent hover:bg-slate-100/80",
@@ -266,12 +316,12 @@ export function LocationCombobox({
                           <span className="break-words text-sm font-medium leading-5 text-slate-900">
                             {option.primaryText}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                             {option.typeLabel}
                           </span>
                         </div>
                         {option.secondaryText ? (
-                          <p className="mt-1 break-words text-xs leading-5 text-slate-500">
+                          <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
                             {option.secondaryText}
                           </p>
                         ) : null}
@@ -280,7 +330,7 @@ export function LocationCombobox({
                   );
                 })
               ) : (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   No live suggestions yet. Press Enter to search this text directly.
                 </div>
               )}
@@ -288,7 +338,11 @@ export function LocationCombobox({
           </div>
         ) : null}
       </div>
-      {error ? <p className="text-sm leading-6 text-rose-600">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="search-field-error">
+          {error}
+        </p>
+      ) : null}
     </label>
   );
 }

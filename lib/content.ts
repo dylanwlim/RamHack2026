@@ -1,4 +1,5 @@
 import { searchScenarios } from "./search-options";
+import { surfaceNames } from "./surface-labels";
 
 export type FeaturedSearch = {
   id: string;
@@ -8,18 +9,20 @@ export type FeaturedSearch = {
   description: string;
 };
 
-export const featuredSearches: FeaturedSearch[] = searchScenarios.map((scenario) => ({
-  id: scenario.id,
-  label: scenario.label,
-  medication: scenario.medication,
-  location: scenario.location,
-  description: scenario.description,
-}));
+export const featuredSearches: FeaturedSearch[] = searchScenarios.map(
+  (scenario) => ({
+    id: scenario.id,
+    label: scenario.label,
+    medication: scenario.medication,
+    location: scenario.location,
+    description: scenario.description,
+  }),
+);
 
 export const workflowShowcase = [
   {
     id: "patient",
-    title: "Pharmacy Finder keeps the first call path tight.",
+    title: `${surfaceNames.patient} keeps the first call path tight.`,
     summary:
       "Search a medication and location to load the nearby list, one access read, and the next question to ask.",
     bullets: [
@@ -32,7 +35,7 @@ export const workflowShowcase = [
   },
   {
     id: "prescriber",
-    title: "Medication Lookup keeps the evidence trail intact.",
+    title: `${surfaceNames.prescriber} keeps the evidence trail intact.`,
     summary:
       "Start with the medication itself when the question is shortage context, manufacturer breadth, recall activity, or earlier alternative planning.",
     bullets: [
@@ -60,7 +63,8 @@ export const workflowShowcase = [
 
 export const homeFaqs = [
   {
-    question: "Does PharmaPath know whether a pharmacy has the medication in stock right now?",
+    question:
+      "Does PharmaPath know whether a pharmacy has the medication in stock right now?",
     answer:
       "No. PharmaPath can show a live nearby pharmacy list and medication access context, but stock still has to be confirmed directly with the pharmacy.",
   },

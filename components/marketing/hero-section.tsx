@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, MapPin, ShieldCheck, Stethoscope } from "lucide-react";
 import { featuredSearches } from "@/lib/content";
 import { motionEase, motionTiming } from "@/lib/motion";
+import { openSurfaceLabels } from "@/lib/surface-labels";
 
 function buildSearchHref(medication: string, location: string) {
   const params = new URLSearchParams({
@@ -26,14 +27,21 @@ export function HeroSection() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: motionTiming.hero, ease: motionEase.emphasis }}
+            transition={{
+              duration: motionTiming.hero,
+              ease: motionEase.emphasis,
+            }}
             className="surface-panel col-span-12 flex min-h-[34rem] flex-col justify-between rounded-[2.5rem] bg-[#e9e9e9] p-8 sm:p-10 lg:col-span-6 lg:p-14"
           >
             <div>
               <motion.span
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: motionEase.emphasis, delay: 0.6 }}
+                transition={{
+                  duration: 0.4,
+                  ease: motionEase.emphasis,
+                  delay: 0.6,
+                }}
                 className="eyebrow-label gap-1 text-slate-500"
               >
                 Nearby search + medication context
@@ -43,24 +51,19 @@ export function HeroSection() {
                 Find the closest pharmacy worth calling first.
               </h1>
               <p className="mt-6 max-w-[32rem] text-lg leading-7 text-[#404040]">
-                PharmaPath finds nearby pharmacies, adds medication access context, and stays
-                explicit about what it can and can&apos;t confirm.
+                PharmaPath finds nearby pharmacies, adds medication access
+                context, and stays explicit about what it can and can&apos;t
+                confirm.
               </p>
             </div>
 
             <div className="mt-10">
               <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/patient"
-                  className="action-button-primary"
-                >
-                  Open Pharmacy Finder
+                <Link href="/patient" className="action-button-primary">
+                  {openSurfaceLabels.patient}
                 </Link>
-                <Link
-                  href="/prescriber"
-                  className="action-button-secondary"
-                >
-                  Open Medication Lookup
+                <Link href="/prescriber" className="action-button-secondary">
+                  {openSurfaceLabels.prescriber}
                 </Link>
               </div>
 
@@ -81,7 +84,11 @@ export function HeroSection() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: motionTiming.hero, ease: motionEase.emphasis, delay: 0.2 }}
+            transition={{
+              duration: motionTiming.hero,
+              ease: motionEase.emphasis,
+              delay: 0.2,
+            }}
             className="surface-panel relative col-span-12 overflow-hidden rounded-[2.5rem] bg-[radial-gradient(circle_at_top_left,_rgba(57,150,211,0.28),_transparent_32%),linear-gradient(180deg,#ffffff_0%,#f4f8fb_100%)] p-8 sm:p-10 lg:col-span-6 lg:p-12"
           >
             <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(111,196,185,0.25),_transparent_58%)]" />
@@ -101,14 +108,22 @@ export function HeroSection() {
                 <motion.div
                   initial={{ opacity: 0, y: 20, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: motionTiming.reveal, ease: motionEase.card, delay: 0.15 }}
+                  transition={{
+                    duration: motionTiming.reveal,
+                    ease: motionEase.card,
+                    delay: 0.15,
+                  }}
                   className="ml-auto max-w-[18rem] rounded-[1.5rem] border border-black/5 bg-white/88 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl"
                 >
                   <div className="flex items-center gap-3">
                     <MapPin className="h-5 w-5 text-[#156d95]" />
                     <div>
-                      <p className="text-sm text-slate-500">Nearby pharmacies</p>
-                      <p className="text-lg font-medium text-[#202020]">Live nearby search</p>
+                      <p className="text-sm text-slate-500">
+                        Nearby pharmacies
+                      </p>
+                      <p className="text-lg font-medium text-[#202020]">
+                        Live nearby search
+                      </p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-slate-600">
@@ -119,41 +134,55 @@ export function HeroSection() {
                 <motion.div
                   initial={{ opacity: 0, y: 20, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: motionTiming.reveal, ease: motionEase.card, delay: 0.25 }}
+                  transition={{
+                    duration: motionTiming.reveal,
+                    ease: motionEase.card,
+                    delay: 0.25,
+                  }}
                   className="max-w-[19rem] rounded-[1.5rem] border border-slate-900/10 bg-slate-950 p-6 text-white shadow-[0_8px_32px_rgba(15,23,42,0.16)]"
                 >
                   <div className="flex items-center gap-3">
                     <Stethoscope className="h-5 w-5 text-sky-300" />
                     <div>
-                      <p className="text-sm text-slate-300">Medication context</p>
-                      <p className="text-lg font-medium">Reference-based access info</p>
+                      <p className="text-sm text-slate-300">
+                        Medication context
+                      </p>
+                      <p className="text-lg font-medium">
+                        Reference-based access info
+                      </p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-slate-300">
-                    Shortages, formulation breadth, manufacturer spread, and recall context in
-                    plain language.
+                    Shortages, formulation breadth, manufacturer spread, and
+                    recall context in plain language.
                   </p>
                 </motion.div>
 
                 <motion.div
                   initial={{ opacity: 0, y: 20, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: motionTiming.reveal, ease: motionEase.card, delay: 0.35 }}
+                  transition={{
+                    duration: motionTiming.reveal,
+                    ease: motionEase.card,
+                    delay: 0.35,
+                  }}
                   className="ml-10 max-w-[20rem] rounded-[1.5rem] border border-emerald-200/60 bg-emerald-50/92 p-5 shadow-[0_8px_32px_rgba(16,185,129,0.08)]"
                 >
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="h-5 w-5 text-emerald-700" />
                     <div>
                       <p className="text-sm text-emerald-700/70">Always</p>
-                      <p className="text-lg font-medium text-emerald-900">Call to confirm stock</p>
+                      <p className="text-lg font-medium text-emerald-900">
+                        Call to confirm stock
+                      </p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-emerald-900/80">
-                    Nearby discovery is live. Inventory confirmation is still manual.
+                    Nearby discovery is live. Inventory confirmation is still
+                    manual.
                   </p>
                 </motion.div>
               </div>
-
             </div>
           </motion.div>
         </div>

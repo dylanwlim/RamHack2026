@@ -11,6 +11,10 @@ import {
   type KeyboardEvent,
 } from "react";
 import {
+  getComboboxPanelPositionClasses,
+  useComboboxPanelLayout,
+} from "@/components/search/combobox-shared";
+import {
   searchMedicationIndex,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
@@ -25,6 +29,7 @@ type MedicationComboboxProps = {
   onSelect: (option: MedicationSearchOption) => void;
   emptyMessage: string;
   error?: string | null;
+  className?: string;
 };
 
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -38,9 +43,11 @@ export function MedicationCombobox({
   onSelect,
   emptyMessage,
   error,
+  className,
 }: MedicationComboboxProps) {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
+  const errorId = `${inputId}-error`;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const deferredValue = useDeferredValue(value);
   const [isOpen, setIsOpen] = useState(false);
@@ -70,8 +77,9 @@ export function MedicationCombobox({
       return selectedIndex;
     }
 
-    return Math.min(highlightedIndexState, visibleOptions.length - 1);
+      return Math.min(highlightedIndexState, visibleOptions.length - 1);
   }, [highlightedIndexState, selectedOptionId, visibleOptions]);
+  const { placement, maxHeight } = useComboboxPanelLayout(wrapperRef, isOpen);
 
   useEffect(() => {
     if (!isOpen) {
@@ -167,23 +175,29 @@ export function MedicationCombobox({
   };
 
   return (
-    <label className="space-y-2">
-      <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</span>
+    <label className={cn("search-field-stack", className)}>
+      <span className="search-field-label">{label}</span>
       <div ref={wrapperRef} className="relative">
         <input
           id={inputId}
           role="combobox"
           aria-autocomplete="list"
+          aria-haspopup="listbox"
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-activedescendant={activeOption ? `${listboxId}-${activeOption.id}` : undefined}
+          aria-describedby={error ? errorId : undefined}
+          aria-invalid={Boolean(error)}
           autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
           className={cn(
             "search-field-input pr-12",
             isOpen && "border-[#156d95] ring-4 ring-[#156d95]/10",
             error && "border-rose-300 ring-4 ring-rose-500/10",
           )}
           placeholder={placeholder}
+          title={value || placeholder}
           value={value}
           onChange={(event) => {
             onValueChange(event.target.value);
@@ -205,15 +219,25 @@ export function MedicationCombobox({
         </div>
 
         {isOpen ? (
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white/96 shadow-[0_22px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-            <div id={listboxId} role="listbox" className="max-h-72 space-y-1 overflow-y-auto p-2">
+          <div
+            className={cn(
+              "search-floating-panel",
+              getComboboxPanelPositionClasses(placement),
+            )}
+          >
+            <div
+              id={listboxId}
+              role="listbox"
+              className="search-floating-scroll space-y-1"
+              style={{ maxHeight }}
+            >
               {loadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
                   {loadError || "Unable to load medication matches right now."}
                 </div>
               ) : loadState === "loading" && !visibleOptions.length ? (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
-                  Loading medication matches...
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
+                  Loading medication matches…
                 </div>
               ) : visibleOptions.length ? (
                 visibleOptions.map((option, index) => {
@@ -228,7 +252,7 @@ export function MedicationCombobox({
                       role="option"
                       aria-selected={isSelected}
                       className={cn(
-                        "flex w-full items-start justify-between gap-4 rounded-[1rem] border px-3 py-3 text-left transition-colors duration-150",
+                        "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
                         isHighlighted
                           ? "border-[#156d95]/18 bg-[#156d95]/8"
                           : "border-transparent hover:bg-slate-100/80",
@@ -242,23 +266,25 @@ export function MedicationCombobox({
                       }}
                     >
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-slate-900">
+                        <div className="flex flex-wrap items-start gap-2">
+                          <span className="min-w-0 flex-1 break-words text-sm font-medium leading-5 text-slate-900">
                             {option.label}
                           </span>
                           {option.badge ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                               {option.badge}
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">{option.description}</p>
+                        <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
+                          {option.description}
+                        </p>
                       </div>
                     </button>
                   );
                 })
               ) : (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   {emptyMessage}
                 </div>
               )}
@@ -266,7 +292,11 @@ export function MedicationCombobox({
           </div>
         ) : null}
       </div>
-      {error ? <p className="text-sm leading-6 text-rose-600">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="search-field-error">
+          {error}
+        </p>
+      ) : null}
     </label>
   );
 }

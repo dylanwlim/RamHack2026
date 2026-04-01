@@ -22,12 +22,12 @@
     "validate": "npm run lint && npm run typecheck && npm test && npm run build && npm run cloudflare:build",
     "medications:build-assets": "node scripts/medications/build-runtime-assets.mjs",
     "medications:sync": "node scripts/medications/sync-openfda-index.mjs",
-    "cloudflare:build": "npm run medications:build-assets && opennextjs-cloudflare build",
-    "cloudflare:preview": "npm run cloudflare:build && opennextjs-cloudflare preview",
+    "cloudflare:build": "npx @opennextjs/cloudflare build",
+    "cloudflare:preview": "npm run cloudflare:build && npx @opennextjs/cloudflare preview",
     "cloudflare:deploy": "node scripts/cloudflare/deploy-with-notification.mjs production",
-    "cloudflare:deploy:raw": "npm run cloudflare:build && opennextjs-cloudflare deploy",
+    "cloudflare:deploy:raw": "npm run cloudflare:build && npx @opennextjs/cloudflare deploy",
     "cloudflare:upload": "node scripts/cloudflare/deploy-with-notification.mjs preview",
-    "cloudflare:upload:raw": "npm run cloudflare:build && opennextjs-cloudflare upload",
+    "cloudflare:upload:raw": "npm run cloudflare:build && npx @opennextjs/cloudflare upload",
     "cloudflare:typegen": "wrangler types --env-interface CloudflareEnv types/cloudflare-env.d.ts"
   },
   "dependencies": {

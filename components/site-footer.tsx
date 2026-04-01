@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { SiteBrand } from "@/components/site-brand";
+import { surfaceNames } from "@/lib/surface-labels";
 
 const footerSections = [
   {
     title: "Product",
     links: [
-      { label: "Pharmacy Finder", href: "/patient" },
+      { label: surfaceNames.patient, href: "/patient" },
       { label: "Pharmacy Results", href: "/patient/results" },
-      { label: "Medication Lookup", href: "/prescriber" },
+      { label: surfaceNames.prescriber, href: "/prescriber" },
     ],
   },
   {
@@ -26,9 +27,7 @@ const footerSections = [
   },
   {
     title: "Support",
-    links: [
-      { label: "Contact Us", href: "/contact" },
-    ],
+    links: [{ label: "Contact Us", href: "/contact" }],
   },
 ];
 
@@ -39,9 +38,13 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 mb-12 md:grid-cols-5">
           <div className="col-span-2">
             <div className="mb-4">
-              <SiteBrand className="mb-2" wordmarkClassName="text-2xl font-medium" />
+              <SiteBrand
+                className="mb-2"
+                wordmarkClassName="text-2xl font-medium"
+              />
               <p className="max-w-xs text-sm leading-5 text-[#666666]">
-                Live nearby pharmacy search with medication access context. Guidance is meant to support better calls, not guarantee stock.
+                Live nearby pharmacy search with medication access context.
+                Guidance is meant to support better calls, not guarantee stock.
               </p>
             </div>
           </div>

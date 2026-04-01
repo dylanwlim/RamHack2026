@@ -8,6 +8,7 @@ const {
   buildCandidateContexts,
   buildDrugIntelligencePayload,
   buildSearchPhrases,
+  pickFeaturedMatch,
 } = require("../lib/server/openfda-normalize");
 
 test("buildSearchPhrases keeps the raw query and release-aware lookup fallbacks", () => {
@@ -92,6 +93,31 @@ test("buildCandidateContexts groups listings by application number", () => {
   assert.deepEqual(matches[0].strengths, ["10 mg", "20 mg"]);
 });
 
+test("buildCandidateContexts keeps active ingredient aliases available for downstream shortage matching", () => {
+  const ndcPayload = {
+    results: [
+      {
+        application_number: "NDA000002",
+        brand_name: "SignalMed",
+        generic_name: "complex ingredient blend",
+        labeler_name: "Beta Labs",
+        dosage_form: "INJECTION",
+        route: ["SUBCUTANEOUS"],
+        active_ingredients: [{ name: "SEMAGLUTIDE", strength: "0.25 mg/0.5 mL" }],
+        product_ndc: "22222-222",
+        listing_expiration_date: "20991231",
+        finished: true,
+        product_type: "HUMAN PRESCRIPTION DRUG",
+      },
+    ],
+  };
+
+  const approvalsPayload = { results: [] };
+  const matches = buildCandidateContexts("SignalMed", ndcPayload, approvalsPayload);
+
+  assert.ok(matches[0].genericNames.includes("Semaglutide"));
+});
+
 test("buildDrugIntelligencePayload labels shortage-driven cases as higher friction", () => {
   const ndcPayload = {
     meta: { last_updated: "20260327" },
@@ -156,4 +182,21 @@ test("buildDrugIntelligencePayload labels shortage-driven cases as higher fricti
 
   assert.equal(payload.matches[0].access_signal.level, "higher-friction");
   assert.equal(payload.featured_match_id, payload.matches[0].id);
+});
+
+test("pickFeaturedMatch keeps the highest query-relevance match first", () => {
+  const featured = pickFeaturedMatch([
+    {
+      id: "brand-shell",
+      active_listing_count: 6,
+      evidence: { shortages: { active_count: 0 } },
+    },
+    {
+      id: "shortage-backed",
+      active_listing_count: 2,
+      evidence: { shortages: { active_count: 3 } },
+    },
+  ]);
+
+  assert.equal(featured.id, "brand-shell");
 });

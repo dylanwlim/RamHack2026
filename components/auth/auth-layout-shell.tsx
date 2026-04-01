@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ShieldCheck, Stethoscope, Users } from "lucide-react";
 import { SiteBrand } from "@/components/site-brand";
+import { combinedSurfaceLabel } from "@/lib/surface-labels";
 
 function Logo() {
   return <SiteBrand />;
@@ -22,7 +23,7 @@ const stats = [
 
 const features = [
   { icon: ShieldCheck, label: "Trust-weighted reports" },
-  { icon: Stethoscope, label: "Pharmacy Finder + Medication Lookup" },
+  { icon: Stethoscope, label: combinedSurfaceLabel },
   { icon: Users, label: "Contributor profiles" },
 ];
 
@@ -54,7 +55,9 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
                     .join("")}
                 </div>
                 <div>
-                  <p className="font-medium text-slate-950">{testimonial.author}</p>
+                  <p className="font-medium text-slate-950">
+                    {testimonial.author}
+                  </p>
                   <p className="text-sm text-slate-600">
                     {testimonial.role} at {testimonial.company}
                   </p>
@@ -65,7 +68,9 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
             <div className="flex gap-8 border-t border-slate-200 pt-8">
               {stats.map((stat) => (
                 <div key={stat.label} className="max-w-[9rem]">
-                  <p className="text-2xl font-bold text-slate-950">{stat.value}</p>
+                  <p className="text-2xl font-bold text-slate-950">
+                    {stat.value}
+                  </p>
                   <p className="text-sm text-slate-600">{stat.label}</p>
                 </div>
               ))}
@@ -74,7 +79,10 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
 
           <div className="flex gap-6">
             {features.map((feature) => (
-              <div key={feature.label} className="flex items-center gap-2 text-slate-600">
+              <div
+                key={feature.label}
+                className="flex items-center gap-2 text-slate-600"
+              >
                 <feature.icon className="h-4 w-4" />
                 <span className="text-sm">{feature.label}</span>
               </div>

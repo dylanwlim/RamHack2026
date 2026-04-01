@@ -11,10 +11,14 @@ import {
   resolveLocationQuery,
 } from "@/lib/locations/client";
 import {
+  searchMedicationIndex,
   resolveMedicationOption,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
-import { buildMedicationQueryLabel } from "@/lib/medications/selection";
+import {
+  buildMedicationQueryLabel,
+  inferMatchedStrength,
+} from "@/lib/medications/selection";
 import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +29,7 @@ type PharmacySearchFormProps = {
   initialRadiusMiles?: number;
   initialSortBy?: "best_match" | "distance" | "rating";
   initialOnlyOpenNow?: boolean;
+  initialSelectedStrength?: string;
   action?: string;
   compact?: boolean;
   submitLabel?: string;
@@ -89,6 +94,7 @@ export function PharmacySearchForm({
   initialRadiusMiles = 5,
   initialSortBy = "best_match",
   initialOnlyOpenNow = false,
+  initialSelectedStrength = "",
   action = "/patient/results",
   compact = false,
   submitLabel = "Search live nearby pharmacies",
@@ -116,10 +122,11 @@ export function PharmacySearchForm({
 
   useEffect(() => {
     let cancelled = false;
+    const resolvedInitialStrength = initialSelectedStrength.trim();
 
     setMedicationOption(null);
     setMedication(initialMedication);
-    setSelectedStrength("");
+    setSelectedStrength(resolvedInitialStrength);
     setMedicationError(null);
     setStrengthError(null);
 
@@ -131,24 +138,39 @@ export function PharmacySearchForm({
 
     void resolveMedicationOption(initialMedication)
       .then((option) => {
+        if (cancelled || option) {
+          return option;
+        }
+
+        return searchMedicationIndex(initialMedication, { limit: 1 }).then(
+          (response) => response.results[0] || null,
+        );
+      })
+      .then((option) => {
         if (cancelled || !option) {
           return;
         }
 
         setMedicationOption(option);
         setMedication(option.label);
-        setSelectedStrength(option.matchedStrength || (option.strengths.length === 1 ? option.strengths[0].value : ""));
+        setSelectedStrength(
+          resolvedInitialStrength ||
+            option.matchedStrength ||
+            inferMatchedStrength(initialMedication, option.strengths) ||
+            (option.strengths.length === 1 ? option.strengths[0].value : ""),
+        );
       })
       .catch(() => {
         if (!cancelled) {
           setMedication(initialMedication);
+          setSelectedStrength(resolvedInitialStrength);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [initialMedication]);
+  }, [initialMedication, initialSelectedStrength]);
 
   useEffect(() => {
     const nextLocationSelection = createLocationSelection(initialLocation, initialLocationPlaceId);
@@ -198,6 +220,15 @@ export function PharmacySearchForm({
     ) {
       setMedicationOption(null);
       setSelectedStrength("");
+      return;
+    }
+
+    if (
+      !medicationOption &&
+      selectedStrength &&
+      nextValue.trim().toLowerCase() !== medication.trim().toLowerCase()
+    ) {
+      setSelectedStrength("");
     }
   };
 
@@ -214,9 +245,15 @@ export function PharmacySearchForm({
   };
 
   return (
-    <div className={cn("surface-panel rounded-[2rem] p-5 sm:p-6", className)}>
+    <div
+      className={cn(
+        "surface-panel rounded-[1.8rem] p-4 sm:p-5 xl:p-6",
+        compact && "rounded-[1.7rem] p-4 sm:p-5",
+        className,
+      )}
+    >
       <form
-        className="space-y-4"
+        className={cn("space-y-4", compact && "space-y-3.5")}
         onSubmit={async (event) => {
           event.preventDefault();
           setIsResolvingSearch(true);
@@ -233,7 +270,17 @@ export function PharmacySearchForm({
           }
 
           const [medicationResult, locationResult] = await Promise.allSettled([
-            medicationOption ? Promise.resolve(medicationOption) : resolveMedicationOption(normalizedMedication),
+            medicationOption
+              ? Promise.resolve(medicationOption)
+              : resolveMedicationOption(normalizedMedication).then((option) => {
+                  if (option) {
+                    return option;
+                  }
+
+                  return searchMedicationIndex(normalizedMedication, { limit: 1 }).then(
+                    (response) => response.results[0] || null,
+                  );
+                }),
             resolveLocationQuery({
               query: normalizedLocation,
               placeId: locationSelection?.placeId,
@@ -249,6 +296,7 @@ export function PharmacySearchForm({
             const resolvedStrength =
               selectedStrength ||
               resolvedMedication?.matchedStrength ||
+              inferMatchedStrength(normalizedMedication, resolvedMedication?.strengths || []) ||
               (resolvedMedication?.strengths.length === 1 ? resolvedMedication.strengths[0].value : "");
 
             setMedicationError(
@@ -309,10 +357,11 @@ export function PharmacySearchForm({
           }
         }}
       >
-        <div className="grid gap-3 lg:grid-cols-[1.15fr_0.8fr_1fr]">
+        <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(10.25rem,0.82fr)_minmax(0,1fr)]">
           <MedicationCombobox
+            className="sm:col-span-2 lg:col-span-1"
             label="Medication"
-            placeholder="Search medication options"
+            placeholder="Search medication"
             value={medication}
             selectedOptionId={medicationOption?.id || null}
             onValueChange={handleMedicationInputChange}
@@ -325,11 +374,12 @@ export function PharmacySearchForm({
               setMedicationError(null);
               setStrengthError(null);
             }}
-            emptyMessage="No medication options match that search yet."
+            emptyMessage="No medication matches yet. Try a brand, generic, or strength."
             error={medicationError}
           />
 
           <MedicationStrengthField
+            className="sm:col-span-1"
             option={medicationOption}
             value={selectedStrength}
             onChange={(nextValue) => {
@@ -337,11 +387,19 @@ export function PharmacySearchForm({
               setStrengthError(null);
             }}
             error={strengthError}
+            showWhenEmpty
+            resolvedValue={!medicationOption ? selectedStrength : null}
+            helperText={
+              !medicationOption && selectedStrength
+                ? "Selected presentation from the current search."
+                : undefined
+            }
           />
 
           <LocationCombobox
+            className="sm:col-span-1"
             label="Location"
-            placeholder="Search city, ZIP, address, pharmacy, or landmark"
+            placeholder="City, ZIP, or address"
             value={location}
             selectedPlaceId={locationSelection?.placeId || null}
             sessionToken={locationSessionToken}
@@ -357,14 +415,9 @@ export function PharmacySearchForm({
           />
         </div>
 
-        <div
-          className={cn(
-            "grid gap-3",
-            compact ? "sm:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_1fr_auto]" : "sm:grid-cols-[1fr_1fr_auto]",
-          )}
-        >
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Radius</span>
+        <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.76fr)_minmax(0,0.96fr)_minmax(0,1.04fr)_auto] lg:items-end">
+          <label className="search-field-stack">
+            <span className="search-field-label">Radius</span>
             <select
               className="search-select-control"
               value={radiusMiles}
@@ -377,8 +430,8 @@ export function PharmacySearchForm({
             </select>
           </label>
 
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Sort</span>
+          <label className="search-field-stack">
+            <span className="search-field-label">Sort</span>
             <select
               className="search-select-control"
               value={sortBy}
@@ -392,36 +445,33 @@ export function PharmacySearchForm({
             </select>
           </label>
 
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Availability</span>
-            <span className="search-toggle-control">
+          <label className="search-field-stack sm:col-span-2 lg:col-span-1">
+            <span className="search-field-label">Availability</span>
+            <span className="search-toggle-control cursor-pointer">
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
+                className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
                 checked={onlyOpenNow}
                 onChange={(event) => setOnlyOpenNow(event.target.checked)}
               />
-              Open now only
+              <span className="min-w-0">Open now only</span>
             </span>
           </label>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-sm leading-6 text-slate-600">
-            Nearby pharmacies come from a live search. Stock still needs a direct call.
-          </p>
           <button
             type="submit"
             disabled={isPending || isResolvingSearch}
-            className="action-button-primary relative z-40 whitespace-nowrap px-4 py-3.5 text-sm disabled:cursor-wait disabled:opacity-70 sm:self-start"
+            className="action-button-primary relative z-40 order-6 min-h-[3.35rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70 sm:col-span-2 lg:order-none lg:col-span-1 lg:justify-self-end"
           >
-            {isPending || isResolvingSearch ? "Loading..." : submitLabel}
+            {isPending || isResolvingSearch ? "Loading…" : submitLabel}
           </button>
+          <p className="order-5 max-w-[42rem] text-[0.82rem] leading-5 text-slate-500 sm:col-span-2 lg:order-none lg:col-span-3 lg:pr-4">
+            Nearby pharmacies come from a live search. Stock still needs a direct call before pickup or transfer.
+          </p>
         </div>
       </form>
 
       {showSamples ? (
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {featuredSearches.map((search) => (
             <button
               key={search.id}

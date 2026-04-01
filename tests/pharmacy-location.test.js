@@ -4,6 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  autocompleteLocationSuggestions,
   getSearchInput,
   resolveLocationInput,
 } = require("../lib/server/pharmacy-search");
@@ -215,6 +216,104 @@ test("resolveLocationInput resolves bare ZIP input with postal-code constrained 
     assert.equal(location.state, "NY");
     assert.equal(location.postal_code, "10019");
     assert.equal(location.resolution_source, "geocode");
+  });
+});
+
+test("autocompleteLocationSuggestions prioritizes exact ZIP matches over street-number noise", async () => {
+  await withMockedFetch(async (url) => {
+    const requestUrl = new URL(url);
+
+    if (requestUrl.pathname.endsWith("/geocode/json")) {
+      assert.equal(requestUrl.searchParams.get("address"), "32751");
+      assert.equal(requestUrl.searchParams.get("components"), "postal_code:32751|country:US");
+
+      return createJsonResponse({
+        status: "OK",
+        results: [
+          {
+            place_id: "zip-32751",
+            formatted_address: "Maitland, FL 32751, USA",
+            geometry: {
+              location: {
+                lat: 28.6306,
+                lng: -81.3656,
+              },
+            },
+            address_components: [
+              {
+                long_name: "Maitland",
+                short_name: "Maitland",
+                types: ["locality", "political"],
+              },
+              {
+                long_name: "Florida",
+                short_name: "FL",
+                types: ["administrative_area_level_1", "political"],
+              },
+              {
+                long_name: "32751",
+                short_name: "32751",
+                types: ["postal_code"],
+              },
+              {
+                long_name: "United States",
+                short_name: "US",
+                types: ["country", "political"],
+              },
+            ],
+            types: ["postal_code"],
+          },
+        ],
+      });
+    }
+
+    if (requestUrl.pathname.endsWith("/autocomplete/json")) {
+      assert.equal(requestUrl.searchParams.get("input"), "32751");
+
+      return createJsonResponse({
+        status: "OK",
+        predictions: [
+          {
+            place_id: "noise-1",
+            description: "32751 Kensington Ct, Frankford, DE, USA",
+            structured_formatting: {
+              main_text: "32751 Kensington Ct",
+              secondary_text: "Frankford, DE, USA",
+            },
+            types: ["street_address"],
+          },
+          {
+            place_id: "zip-google",
+            description: "32751, Maitland, FL, USA",
+            structured_formatting: {
+              main_text: "32751",
+              secondary_text: "Maitland, FL, USA",
+            },
+            types: ["postal_code"],
+          },
+          {
+            place_id: "noise-2",
+            description: "32751 Watchtower Drive, Selbyville, DE, USA",
+            structured_formatting: {
+              main_text: "32751 Watchtower Drive",
+              secondary_text: "Selbyville, DE, USA",
+            },
+            types: ["street_address"],
+          },
+        ],
+      });
+    }
+
+    throw new Error(`Unexpected Google URL: ${requestUrl.toString()}`);
+  }, async () => {
+    const suggestions = await autocompleteLocationSuggestions("32751", "test-google-key", {
+      limit: 8,
+    });
+
+    assert.equal(suggestions[0].primary_text, "32751");
+    assert.equal(suggestions[0].type_label, "ZIP");
+    assert.ok(suggestions.every((suggestion) => suggestion.place_id !== "noise-1"));
+    assert.ok(suggestions.every((suggestion) => suggestion.place_id !== "noise-2"));
   });
 });
 

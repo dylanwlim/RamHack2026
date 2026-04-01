@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ComponentType } from "react";
-import { Clock3, LoaderCircle, MapPin, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import {
+  Clock3,
+  LoaderCircle,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import type { CrowdReportRecord } from "@/lib/crowd-signal/model";
 import { getTrustTier } from "@/lib/crowd-signal/scoring";
@@ -25,7 +32,10 @@ function formatRelative(value: Date | null) {
     return "Pending";
   }
 
-  const diffHours = Math.max(1, Math.round((Date.now() - value.getTime()) / (1000 * 60 * 60)));
+  const diffHours = Math.max(
+    1,
+    Math.round((Date.now() - value.getTime()) / (1000 * 60 * 60)),
+  );
   if (diffHours < 24) {
     return `${diffHours}h ago`;
   }
@@ -33,6 +43,9 @@ function formatRelative(value: Date | null) {
   const diffDays = Math.round(diffHours / 24);
   return `${diffDays}d ago`;
 }
+
+const recentSearchesEmptyMessage =
+  "Recent searches will appear here after you run a signed-in search.";
 
 function MetricCard({
   icon,
@@ -100,35 +113,52 @@ export function ProfilePageClient() {
           <div>
             <span className="eyebrow-label">Contributor profile</span>
             <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.4rem]">
-              Keep your account, trust level, and reporting history in one place.
+              Keep your account, trust level, and reporting history in one
+              place.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Your influence on the crowd signal grows gradually with contribution history, then
-              plateaus so no single user can dominate the estimate forever.
+              Your influence on the crowd signal grows gradually with
+              contribution history, then plateaus so no single user can dominate
+              the estimate forever.
             </p>
           </div>
 
           <div className="surface-panel rounded-[2rem] p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-sm uppercase tracking-[0.18em] text-slate-500">Account</div>
+                <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
+                  Account
+                </div>
                 <h2 className="mt-3 text-2xl tracking-tight text-slate-950">
-                  {profile?.displayName || user?.displayName || "PharmaPath User"}
+                  {profile?.displayName ||
+                    user?.displayName ||
+                    "PharmaPath User"}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{profile?.email || user?.email}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {profile?.email || user?.email}
+                </p>
               </div>
-              <Link href="/settings" className="action-button-secondary text-sm">
+              <Link
+                href="/settings"
+                className="action-button-secondary text-sm"
+              >
                 Edit settings
               </Link>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-[1.4rem] border border-slate-200 bg-white px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Trust tier</div>
-                <div className="mt-2 text-lg text-slate-950">{trustTier.label}</div>
+                <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                  Trust tier
+                </div>
+                <div className="mt-2 text-lg text-slate-950">
+                  {trustTier.label}
+                </div>
               </div>
               <div className="rounded-[1.4rem] border border-slate-200 bg-white px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Default location</div>
+                <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                  Default location
+                </div>
                 <div className="mt-2 text-lg text-slate-950">
                   {profile?.defaultLocationLabel || "Not set yet"}
                 </div>
@@ -141,18 +171,33 @@ export function ProfilePageClient() {
       <section className="px-4 pb-24 sm:px-6 lg:px-8">
         <div className="site-shell space-y-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard icon={UserRound} label="Display name" value={profile?.displayName || "Unavailable"} />
+            <MetricCard
+              icon={UserRound}
+              label="Display name"
+              value={profile?.displayName || "Unavailable"}
+            />
             <MetricCard
               icon={Clock3}
               label="Member since"
-              value={formatDate(profile?.createdAt || (user?.metadata.creationTime ? new Date(user.metadata.creationTime) : null))}
+              value={formatDate(
+                profile?.createdAt ||
+                  (user?.metadata.creationTime
+                    ? new Date(user.metadata.creationTime)
+                    : null),
+              )}
             />
             <MetricCard
               icon={Sparkles}
               label="Contributions"
-              value={String(profile?.contributionCount || contributions.length || 0)}
+              value={String(
+                profile?.contributionCount || contributions.length || 0,
+              )}
             />
-            <MetricCard icon={ShieldCheck} label="Trust level" value={trustTier.shortLabel} />
+            <MetricCard
+              icon={ShieldCheck}
+              label="Trust level"
+              value={trustTier.shortLabel}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
@@ -161,23 +206,35 @@ export function ProfilePageClient() {
                 <span className="eyebrow-label">Profile details</span>
                 <div className="mt-5 space-y-4 text-base leading-7 text-slate-700">
                   <div className="rounded-[1.4rem] border border-slate-200 bg-white px-5 py-4">
-                    <div className="text-sm uppercase tracking-[0.16em] text-slate-500">Email</div>
-                    <div className="mt-2 text-slate-950">{profile?.email || user?.email || "Unavailable"}</div>
+                    <div className="text-sm uppercase tracking-[0.16em] text-slate-500">
+                      Email
+                    </div>
+                    <div className="mt-2 text-slate-950">
+                      {profile?.email || user?.email || "Unavailable"}
+                    </div>
                   </div>
                   <div className="rounded-[1.4rem] border border-slate-200 bg-white px-5 py-4">
-                    <div className="text-sm uppercase tracking-[0.16em] text-slate-500">Location</div>
+                    <div className="text-sm uppercase tracking-[0.16em] text-slate-500">
+                      Location
+                    </div>
                     <div className="mt-2 text-slate-950">
-                      {[profile?.city, profile?.state].filter(Boolean).join(", ") ||
+                      {[profile?.city, profile?.state]
+                        .filter(Boolean)
+                        .join(", ") ||
                         profile?.zipCode ||
                         profile?.defaultLocationLabel ||
                         "Not set yet"}
                     </div>
                   </div>
                   <div className="rounded-[1.4rem] border border-slate-200 bg-white px-5 py-4">
-                    <div className="text-sm uppercase tracking-[0.16em] text-slate-500">Contributor alias</div>
+                    <div className="text-sm uppercase tracking-[0.16em] text-slate-500">
+                      Contributor alias
+                    </div>
                     <div className="mt-2 text-slate-950">
                       {profile?.publicContributorAlias
-                        ? profile?.contributorAlias || profile?.displayName || "Public alias enabled"
+                        ? profile?.contributorAlias ||
+                          profile?.displayName ||
+                          "Public alias enabled"
                         : "Private by default"}
                     </div>
                   </div>
@@ -195,7 +252,9 @@ export function ProfilePageClient() {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-lg tracking-tight text-slate-950">{search.medication}</div>
+                            <div className="text-lg tracking-tight text-slate-950">
+                              {search.medication}
+                            </div>
                             <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
                               <MapPin className="h-4 w-4 text-[#156d95]" />
                               {search.location}
@@ -210,7 +269,7 @@ export function ProfilePageClient() {
                   </div>
                 ) : (
                   <p className="mt-5 text-base leading-7 text-slate-600">
-                    Recent searches will appear here after you run a signed-in search.
+                    {recentSearchesEmptyMessage}
                   </p>
                 )}
               </div>
@@ -248,12 +307,16 @@ export function ProfilePageClient() {
                             {report.medicationQuery}
                           </p>
                           {report.note ? (
-                            <p className="mt-2 text-sm leading-6 text-slate-500">“{report.note}”</p>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                              “{report.note}”
+                            </p>
                           ) : null}
                         </div>
                         <div className="text-right text-sm text-slate-500">
                           <div>{formatRelative(report.createdAt)}</div>
-                          <div className="mt-1">{formatDate(report.createdAt)}</div>
+                          <div className="mt-1">
+                            {formatDate(report.createdAt)}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -261,8 +324,9 @@ export function ProfilePageClient() {
                 </div>
               ) : (
                 <p className="mt-5 text-base leading-7 text-slate-600">
-                  You have not submitted any crowd reports yet. Once you report a pharmacy result,
-                  it will show up here with timing and medication context.
+                  You have not submitted any crowd reports yet. Once you report
+                  a pharmacy result, it will show up here with timing and
+                  medication context.
                 </p>
               )}
             </div>

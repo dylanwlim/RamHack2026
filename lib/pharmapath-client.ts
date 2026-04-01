@@ -152,27 +152,11 @@ export type DrugIntelligenceResponse = {
     evidence: {
       shortages: {
         active_count: number;
-        items: Array<{
-          status: string;
-          normalizedStatus?: string;
-          presentation?: string;
-          companyName?: string;
-          shortageReason?: string;
-          availability?: string;
-          updateDate?: string | null;
-          updateLabel?: string;
-        }>;
+        items: DrugShortageItem[];
       };
       recalls: {
         recent_count: number;
-        items: Array<{
-          classification?: string;
-          status?: string;
-          reason?: string;
-          productDescription?: string;
-          reportDateLabel?: string;
-          recallingFirm?: string;
-        }>;
+        items: DrugRecallItem[];
       };
       approvals: {
         sponsor_name?: string;
@@ -190,6 +174,26 @@ export type DrugIntelligenceResponse = {
       };
     };
   }>;
+};
+
+type DrugShortageItem = {
+  status: string;
+  presentation?: string;
+  availability?: string;
+  shortageReason?: string;
+  updateLabel?: string;
+  normalizedStatus?: string;
+  companyName?: string;
+  updateDate?: string | null;
+};
+
+type DrugRecallItem = {
+  classification?: string;
+  status?: string;
+  reason?: string;
+  productDescription?: string;
+  reportDateLabel?: string;
+  recallingFirm?: string;
 };
 
 export type HealthResponse = {
@@ -271,7 +275,9 @@ function buildPharmacyCacheKey(filters: PharmacySearchFilters) {
   })}`;
 }
 
-function buildPharmacyPayload(filters: PharmacySearchFilters): PharmacySearchFilters {
+function buildPharmacyPayload(
+  filters: PharmacySearchFilters,
+): PharmacySearchFilters {
   return {
     medication: sanitizeText(filters.medication),
     location: sanitizeText(filters.location),
@@ -292,7 +298,10 @@ export function createPharmaPathClient({
       return readCache<DrugIntelligenceResponse>(buildDrugCacheKey(query));
     },
 
-    async getDrugIntelligence(query: string, { force = false }: { force?: boolean } = {}) {
+    async getDrugIntelligence(
+      query: string,
+      { force = false }: { force?: boolean } = {},
+    ) {
       const normalizedQuery = sanitizeText(query);
 
       if (!normalizedQuery) {
@@ -300,7 +309,9 @@ export function createPharmaPathClient({
       }
 
       if (!force) {
-        const cached = readCache<DrugIntelligenceResponse>(buildDrugCacheKey(normalizedQuery));
+        const cached = readCache<DrugIntelligenceResponse>(
+          buildDrugCacheKey(normalizedQuery),
+        );
         if (cached) {
           return cached;
         }
@@ -319,7 +330,10 @@ export function createPharmaPathClient({
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(payload, "Unable to load medication intelligence right now."),
+          getErrorMessage(
+            payload,
+            "Unable to load medication intelligence right now.",
+          ),
         );
       }
 
@@ -362,7 +376,12 @@ export function createPharmaPathClient({
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(getErrorMessage(payload, "Unable to search nearby pharmacies right now."));
+        throw new Error(
+          getErrorMessage(
+            payload,
+            "Unable to search nearby pharmacies right now.",
+          ),
+        );
       }
 
       writeCache(cacheKey, payload);
@@ -379,7 +398,9 @@ export function createPharmaPathClient({
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(getErrorMessage(payload, "Unable to load service status."));
+        throw new Error(
+          getErrorMessage(payload, "Unable to load service status."),
+        );
       }
 
       return payload as HealthResponse;

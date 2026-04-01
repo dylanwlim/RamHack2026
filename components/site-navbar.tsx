@@ -6,12 +6,13 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { SiteBrand } from "@/components/site-brand";
+import { surfaceNames } from "@/lib/surface-labels";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/" },
-  { label: "Pharmacy Finder", href: "/patient" },
-  { label: "Medication Lookup", href: "/prescriber" },
+  { label: surfaceNames.patient, href: "/patient" },
+  { label: surfaceNames.prescriber, href: "/prescriber" },
   { label: "Methodology", href: "/methodology" },
   { label: "Contact", href: "/contact" },
 ];
@@ -44,7 +45,9 @@ export function SiteNavbar() {
     <nav
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        isScrolled ? "bg-white/95 shadow-sm backdrop-blur-md" : "bg-transparent",
+        isScrolled
+          ? "bg-white/95 shadow-sm backdrop-blur-md"
+          : "bg-transparent",
       )}
     >
       <div className="site-shell">
@@ -56,7 +59,8 @@ export function SiteNavbar() {
               const isHomeAnchor = item.href.startsWith("/#");
               const isRouteItem = isHomeAnchor
                 ? pathname === "/"
-                : item.href === pathname || pathname.startsWith(`${item.href}/`);
+                : item.href === pathname ||
+                  pathname.startsWith(`${item.href}/`);
 
               return (
                 <Link
@@ -83,7 +87,10 @@ export function SiteNavbar() {
                   </span>
                   Profile
                 </Link>
-                <Link href="/settings" className="action-button-secondary text-sm">
+                <Link
+                  href="/settings"
+                  className="action-button-secondary text-sm"
+                >
                   Settings
                 </Link>
                 <button
@@ -123,7 +130,9 @@ export function SiteNavbar() {
       <div
         className={cn(
           "overflow-hidden border-t border-slate-200 bg-white/95 backdrop-blur-md transition-[max-height,opacity] duration-300 ease-out md:hidden",
-          isOpen ? "max-h-[70vh] opacity-100" : "pointer-events-none max-h-0 opacity-0",
+          isOpen
+            ? "max-h-[70vh] opacity-100"
+            : "pointer-events-none max-h-0 opacity-0",
         )}
       >
         <div className="site-shell flex flex-col gap-2 py-4">
