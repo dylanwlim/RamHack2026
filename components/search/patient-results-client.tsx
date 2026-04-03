@@ -40,6 +40,8 @@ const pharmacyCardShellClass =
   "rounded-[1.4rem] border border-emerald-200/80 bg-white/96 shadow-[0_14px_32px_rgba(34,197,94,0.06)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-emerald-300/85 hover:shadow-[0_16px_36px_rgba(34,197,94,0.08)]";
 const pharmacyActionButtonClass =
   "inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]";
+const pharmacyActionButtonCompactClass =
+  "inline-flex min-h-8 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[0.88rem] font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]";
 
 function ResultDistanceChip({
   distanceMiles,
@@ -78,24 +80,59 @@ function PharmacyActionRow({
   pharmacy: PharmacyResult;
   compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <div className="mt-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <PharmacyPhoneAction
+            pharmacy={pharmacy}
+            className={pharmacyActionButtonCompactClass}
+          />
+          {pharmacy.google_maps_url ? (
+            <PharmacyMapActionCompact href={pharmacy.google_maps_url} />
+          ) : null}
+        </div>
+        <p className="text-[0.78rem] leading-5 text-slate-500">
+          Inventory still needs a direct call.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex flex-wrap items-center gap-2.5 ${compact ? "mt-3" : "mt-4"}`}>
-      <PharmacyPhoneAction
-        pharmacy={pharmacy}
-        className={pharmacyActionButtonClass}
-      />
-      {pharmacy.google_maps_url ? (
-        <PharmacyMapAction href={pharmacy.google_maps_url} />
-      ) : null}
-      <div
-        className={`inline-flex items-center gap-2 text-slate-500 ${
-          compact ? "text-[0.86rem]" : "text-sm"
-        }`}
-      >
+    <div className="mt-4 space-y-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <PharmacyPhoneAction
+          pharmacy={pharmacy}
+          className={pharmacyActionButtonClass}
+        />
+        {pharmacy.google_maps_url ? (
+          <PharmacyMapAction href={pharmacy.google_maps_url} />
+        ) : null}
+      </div>
+      <div className="inline-flex items-center gap-2 text-sm text-slate-500">
         <PhoneCall className="h-4 w-4" />
         Inventory still needs a direct call.
       </div>
     </div>
+  );
+}
+
+function PharmacyMapActionCompact({
+  href,
+}: {
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={pharmacyActionButtonCompactClass}
+    >
+      <ExternalLink className="h-4 w-4" />
+      <span>View map</span>
+    </a>
   );
 }
 
@@ -444,12 +481,13 @@ export function PatientResultsClient({
 
           <PharmacySearchForm
             className="justify-self-stretch"
-            initialMedication={query}
+            initialMedication={resolvedMedicationLabel}
             initialLocation={location}
             initialLocationPlaceId={locationPlaceId || undefined}
             initialRadiusMiles={radiusMiles}
             initialSortBy={sortBy}
             initialOnlyOpenNow={onlyOpenNow}
+            initialSelectedStrength={resolvedMedicationStrength}
             compact
             submitLabel="Refresh nearby search"
           />
@@ -655,7 +693,7 @@ export function PatientResultsClient({
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-4 xl:grid-cols-2 xl:items-start">
+                  <div className="mt-4 space-y-4">
                     <MedicationContextDetails
                       match={featuredMatch}
                       dataFreshness={drugData!.data_freshness}
@@ -696,7 +734,7 @@ export function PatientResultsClient({
                     {visibleExtras.map((result, resultIndex) => (
                       <div
                         key={`${result.name}-${result.address}`}
-                        className={`${pharmacyCardShellClass} p-4`}
+                        className={`${pharmacyCardShellClass} p-3.5`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
@@ -714,11 +752,11 @@ export function PatientResultsClient({
                           <PharmacyAvailabilityMeta result={result} compact />
                         </div>
 
-                        <p className="mt-3 line-clamp-2 text-[0.92rem] leading-6 text-slate-600">
+                        <p className="mt-2.5 line-clamp-2 text-[0.88rem] leading-5 text-slate-600">
                           {result.match_reason}
                         </p>
 
-                        <div className="mt-3">
+                        <div className="mt-2.5">
                           <CrowdSignalCard
                             medicationQuery={query}
                             medicationContext={pharmacyData?.medication_profile}

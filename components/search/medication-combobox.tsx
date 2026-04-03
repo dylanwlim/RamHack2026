@@ -13,6 +13,7 @@ import {
 import {
   getMedicationSearchPreview,
   normalizeMedicationSearchQuery,
+  prewarmMedicationSearch,
   searchMedicationIndex,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
@@ -26,6 +27,7 @@ type MedicationComboboxProps = {
   onValueChange: (value: string) => void;
   onSelect: (option: MedicationSearchOption) => void;
   emptyMessage: string;
+  helperText?: string | null;
   error?: string | null;
   className?: string;
 };
@@ -40,11 +42,13 @@ export function MedicationCombobox({
   onValueChange,
   onSelect,
   emptyMessage,
+  helperText,
   error,
   className,
 }: MedicationComboboxProps) {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
+  const helperId = `${inputId}-helper`;
   const errorId = `${inputId}-error`;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -72,6 +76,10 @@ export function MedicationCombobox({
 
       return Math.min(highlightedIndexState, visibleOptions.length - 1);
   }, [highlightedIndexState, selectedOptionId, visibleOptions]);
+
+  useEffect(() => {
+    void prewarmMedicationSearch();
+  }, []);
 
   useEffect(() => {
     if (!isOpen || !isSearchable) {
@@ -114,7 +122,7 @@ export function MedicationCombobox({
             setLoadState(preview?.results.length ? "ready" : "error");
           });
         });
-    }, hasExactPreview ? 0 : preview?.results.length ? 90 : 140);
+    }, hasExactPreview ? 0 : preview?.results.length ? 60 : 100);
 
     startTransition(() => {
       if (preview?.results.length) {
@@ -158,6 +166,9 @@ export function MedicationCombobox({
   }, [highlightedIndex, isOpen, listboxId, visibleOptions]);
 
   const activeOption = visibleOptions[highlightedIndex] || null;
+  const describedBy = [helperText ? helperId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(" ");
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
@@ -204,7 +215,7 @@ export function MedicationCombobox({
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-activedescendant={activeOption ? `${listboxId}-${activeOption.id}` : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={describedBy || undefined}
           aria-invalid={Boolean(error)}
           autoComplete="off"
           autoCapitalize="none"
@@ -223,7 +234,10 @@ export function MedicationCombobox({
             setHighlightedIndexState(0);
           }}
           onClick={() => setIsOpen(true)}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            void prewarmMedicationSearch();
+            setIsOpen(true);
+          }}
           onKeyDown={handleKeyDown}
         />
 
@@ -242,7 +256,7 @@ export function MedicationCombobox({
               id={listboxId}
               role="listbox"
               className="search-floating-scroll space-y-1"
-              style={{ maxHeight: 320 }}
+              style={{ maxHeight: 296 }}
             >
               {effectiveLoadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
@@ -290,7 +304,7 @@ export function MedicationCombobox({
                         role="option"
                         aria-selected={isSelected}
                         className={cn(
-                          "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
+                          "flex w-full items-start justify-between gap-3 rounded-[0.9rem] border px-3 py-2.5 text-left transition-colors duration-150",
                           isHighlighted
                             ? "border-[#156d95]/18 bg-[#156d95]/8"
                             : "border-transparent hover:bg-slate-100/80",
@@ -314,7 +328,7 @@ export function MedicationCombobox({
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
+                          <p className="mt-1 break-words text-[0.72rem] leading-5 text-slate-500">
                             {option.description}
                           </p>
                         </div>
@@ -331,11 +345,18 @@ export function MedicationCombobox({
           </div>
         ) : null}
       </div>
-      {error ? (
-        <p id={errorId} className="search-field-error">
-          {error}
-        </p>
-      ) : null}
+      <div className="search-field-helper-slot">
+        {helperText ? (
+          <p id={helperId} className="search-field-helper line-clamp-2">
+            {helperText}
+          </p>
+        ) : null}
+        {error ? (
+          <p id={errorId} className="search-field-error">
+            {error}
+          </p>
+        ) : null}
+      </div>
     </label>
   );
 }

@@ -21,15 +21,15 @@ export default function PharmacyFinderPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-6 pt-22 sm:px-6 lg:px-8">
+        <section className="px-4 pb-4 pt-20 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-7 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start lg:gap-7 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:gap-9">
             <div className="max-w-[30rem] pt-1 sm:max-w-[32rem]">
               <span className="eyebrow-label">{surfaceNames.patient}</span>
-              <h1 className="mt-5 max-w-[27rem] text-[2.4rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.8rem] lg:max-w-[28rem] xl:text-[3.05rem]">
+              <h1 className="mt-[1.125rem] max-w-[26rem] text-[2.35rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.72rem] lg:max-w-[27rem] xl:text-[2.95rem]">
                 Search a medication and location without pretending the stock is
                 guaranteed.
               </h1>
-              <p className="mt-4 max-w-[28rem] text-[1.02rem] leading-7 text-slate-600 sm:text-[1.08rem]">
+              <p className="mt-3.5 max-w-[27rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.05rem]">
                 Pharmacy Finder keeps the live nearby list and medication
                 context separate so the first call stays clear.
               </p>
@@ -43,7 +43,7 @@ export default function PharmacyFinderPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <section className="px-4 pb-14 sm:px-6 lg:px-8">
           <div className="site-shell">
             <ExampleScenarioGrid
               mode="patient"

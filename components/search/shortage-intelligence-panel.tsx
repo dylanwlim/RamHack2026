@@ -362,15 +362,15 @@ function AccessMeter({ score }: { score: number }) {
   const markerStyle = meterMarkerStyle(score);
 
   return (
-    <div className="mt-3.5">
+    <div className="mt-3">
       <div className="relative overflow-visible rounded-full">
-        <div className="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500" />
+        <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500" />
         <span
-          className="absolute top-1/2 h-4 w-4 rounded-full border-2 border-white bg-slate-950 shadow-[0_6px_14px_rgba(15,23,42,0.18)]"
+          className="absolute top-1/2 h-3.5 w-3.5 rounded-full border-2 border-white bg-slate-950 shadow-[0_6px_14px_rgba(15,23,42,0.18)]"
           style={markerStyle}
         />
       </div>
-      <div className="mt-2 flex items-center justify-between text-[0.62rem] uppercase tracking-[0.16em] text-slate-500">
+      <div className="mt-1.5 flex items-center justify-between text-[0.6rem] uppercase tracking-[0.16em] text-slate-500">
         <span className="pr-3">Lower friction</span>
         <span className="pl-3 text-right">Higher friction</span>
       </div>
@@ -384,7 +384,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Dose coverage</span>
       <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
         {rows.slice(0, 4).map((row) => {
@@ -398,26 +398,21 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
           return (
             <div
               key={row.label}
-              className={`rounded-[1rem] border px-3.5 py-3 ${toneClass}`}
+              className={`rounded-[0.95rem] border px-3 py-2.5 ${toneClass}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold">{row.label}</span>
-                <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+                <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em]">
                   {row.availabilityPercent}%
                 </span>
               </div>
-              <p className="mt-1.5 text-[0.74rem] leading-5 opacity-80">
+              <p className="mt-1 text-[0.72rem] leading-5 opacity-80">
                 {row.availableCount} producing / {row.totalCount} total matching entries
               </p>
             </div>
           );
         })}
       </div>
-      {rows.length > 4 ? (
-        <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
-          Showing the strongest four coverage signals for quick scanning.
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -433,7 +428,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Manufacturer status</span>
       <div className="mt-3 divide-y divide-slate-100">
         {visibleRows.map((row) => (
@@ -443,7 +438,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-semibold text-slate-950">{row.name}</h3>
                 {row.lastUpdate ? (
-                  <span className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                  <span className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
                     {row.lastUpdate}
                   </span>
                 ) : null}
@@ -453,7 +448,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
                   {row.strengths.map((strength) => (
                     <span
                       key={`${row.name}-${strength}`}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600"
+                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.64rem] text-slate-600"
                     >
                       {strength}
                     </span>
@@ -461,7 +456,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
                 </div>
               ) : null}
             </div>
-            <span className={`text-xs font-semibold uppercase tracking-[0.16em] ${row.statusTextClass}`}>
+            <span className={`text-[0.66rem] font-semibold uppercase tracking-[0.16em] ${row.statusTextClass}`}>
               {row.statusLabel}
             </span>
           </div>
@@ -492,7 +487,7 @@ function RecallActivityCard({
   }
 
   return (
-    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Recent recall activity</span>
       <div className="mt-3 space-y-2.5">
         {(showAll ? items : items.slice(0, 3)).map((recall, index) => {
@@ -502,9 +497,9 @@ function RecallActivityCard({
           return (
             <details
               key={`${recall.productDescription ?? "recall"}-${index}`}
-              className="group rounded-[1rem] border border-amber-200/80 bg-white/92"
+              className="group rounded-[1rem] border border-slate-200 bg-white/92"
             >
-              <summary className="cursor-pointer list-none px-3.5 py-3.5">
+              <summary className="cursor-pointer list-none px-3.5 py-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     {recall.productDescription ? (
@@ -512,7 +507,7 @@ function RecallActivityCard({
                         {recall.productDescription}
                       </div>
                     ) : null}
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">
                       {classification ? (
                         <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-semibold text-amber-900">
                           {classification}
@@ -525,12 +520,12 @@ function RecallActivityCard({
                       {preview}
                     </p>
                   </div>
-                  <span className="text-xs font-medium text-[#156d95]">
-                    Expand
+                  <span className="text-[0.72rem] font-medium text-[#156d95]">
+                    Details
                   </span>
                 </div>
               </summary>
-              <div className="border-t border-amber-100 px-3.5 py-3 text-sm leading-6 text-slate-700">
+              <div className="border-t border-slate-100 px-3.5 py-3 text-sm leading-6 text-slate-700">
                 <p>{preview}</p>
                 {recall.status ? (
                   <p className="mt-2 text-[0.82rem] text-slate-500">
@@ -561,24 +556,21 @@ function PatientMeaningCard({ items }: { items: string[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">What this means for you</span>
-      <div className="mt-3 space-y-2.5">
+      <div className="mt-3 divide-y divide-slate-100">
         {items.map((item) => {
           const tone = classifyPatientInsight(item);
 
           return (
-            <div
-              key={item}
-              className="flex gap-3 rounded-[1rem] border border-slate-200/85 bg-white/92 px-3.5 py-3 text-sm leading-6 text-slate-700"
-            >
+            <div key={item} className="flex gap-3 py-3 first:pt-0 last:pb-0">
               <span
-                className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.72rem] font-semibold ${tone.iconClass}`}
+                className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.66rem] font-semibold ${tone.iconClass}`}
                 aria-hidden
               >
                 {tone.icon}
               </span>
-              <p>{item}</p>
+              <p className="text-sm leading-6 text-slate-700">{item}</p>
             </div>
           );
         })}
@@ -646,7 +638,7 @@ function SnapshotFooter({
 }) {
   if (isDemoMatch) {
     return (
-      <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-3.5 text-[0.74rem] leading-5 text-amber-950">
+      <div className="rounded-[1.1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-[0.74rem] leading-5 text-amber-950">
         <strong>Demo medication context only.</strong> {note || "This isolated fictional medication data stays separate from the live catalog."}
       </div>
     );
@@ -658,7 +650,7 @@ function SnapshotFooter({
       : "This medication view uses public shortage, recall, and listing records to support planning. Local inventory, wholesaler allocation, and payer constraints still need separate verification.";
 
   return (
-    <div className="rounded-[1.25rem] border border-slate-200 bg-white/72 px-4 py-3.5 text-[0.8rem] leading-6 text-slate-600">
+    <div className="rounded-[1.1rem] border border-slate-200 bg-white/72 px-4 py-3 text-[0.78rem] leading-6 text-slate-600">
       {body}
     </div>
   );
@@ -704,7 +696,7 @@ function buildIntelligenceContext({
   };
 }
 
-function SnapshotMetaChip({
+function SnapshotStat({
   label,
   value,
 }: {
@@ -712,9 +704,13 @@ function SnapshotMetaChip({
   value: string;
 }) {
   return (
-    <div className="rounded-full border border-white/75 bg-white/76 px-3 py-1.5 text-[0.76rem] leading-5 text-slate-700">
-      <span className="font-semibold text-slate-900">{value}</span>{" "}
-      <span className="text-slate-500">{label}</span>
+    <div className="rounded-[0.95rem] border border-white/75 bg-white/74 px-3 py-2.5">
+      <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </div>
+      <div className="mt-1 text-[0.96rem] font-semibold leading-5 text-slate-900">
+        {value}
+      </div>
     </div>
   );
 }
@@ -745,23 +741,19 @@ export function MedicationAccessSnapshotCard({
       label: "active shortage entries",
       value: String(context.snapshot.activeItems.length),
     },
-    context.snapshot.durationDays
-      ? {
-          label: "running duration",
-          value: formatDuration(context.snapshot.durationDays),
-        }
-      : null,
-    context.snapshot.lastUpdateLabel !== "Unavailable"
-      ? {
-          label: "latest update",
-          value: context.snapshot.lastUpdateLabel,
-        }
-      : null,
-  ].filter(Boolean) as Array<{ label: string; value: string }>;
+    {
+      label: "running duration",
+      value: formatDuration(context.snapshot.durationDays),
+    },
+    {
+      label: "latest update",
+      value: context.snapshot.lastUpdateLabel,
+    },
+  ];
 
   return (
     <div
-      className={`surface-panel rounded-[1.6rem] border p-4 sm:p-5 ${context.snapshot.band.panelClass} ${context.snapshot.band.borderClass}`}
+      className={`surface-panel rounded-[1.55rem] border p-4 sm:p-5 ${context.snapshot.band.panelClass} ${context.snapshot.band.borderClass}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="eyebrow-label">
@@ -776,7 +768,7 @@ export function MedicationAccessSnapshotCard({
         ) : null}
       </div>
 
-      <div className="mt-3 rounded-[1rem] border border-white/70 bg-white/72 px-4 py-3">
+      <div className="mt-3 rounded-[0.95rem] border border-white/70 bg-white/72 px-3.5 py-3">
         <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
           Context shown
         </div>
@@ -788,7 +780,7 @@ export function MedicationAccessSnapshotCard({
             Matched family: {match.display_name}
           </div>
         ) : null}
-        <p className="mt-1 text-[0.78rem] leading-5 text-slate-600">
+        <p className="mt-1 text-[0.76rem] leading-5 text-slate-600">
           {context.familyContextNote}
         </p>
       </div>
@@ -798,12 +790,12 @@ export function MedicationAccessSnapshotCard({
           <div className={`text-[1.45rem] font-bold tracking-tight ${context.snapshot.band.textClass}`}>
             {context.snapshot.band.label}
           </div>
-          <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-700">
+          <p className="mt-1 max-w-xl text-sm leading-6 text-slate-700">
             {context.snapshot.band.summary}
           </p>
         </div>
         <div
-          className={`rounded-full border px-3 py-1.5 text-sm font-semibold tabular-nums ${context.snapshot.band.badgeClass}`}
+          className={`rounded-full border px-3 py-1 text-[0.92rem] font-semibold tabular-nums ${context.snapshot.band.badgeClass}`}
         >
           {context.snapshot.score}/100
         </div>
@@ -811,20 +803,18 @@ export function MedicationAccessSnapshotCard({
 
       <AccessMeter score={context.snapshot.score} />
 
-      {metaItems.length ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {metaItems.map((item) => (
-            <SnapshotMetaChip key={item.label} label={item.label} value={item.value} />
-          ))}
-        </div>
-      ) : null}
+      <div className="mt-3.5 grid gap-2 sm:grid-cols-3">
+        {metaItems.map((item) => (
+          <SnapshotStat key={item.label} label={item.label} value={item.value} />
+        ))}
+      </div>
 
       {context.snapshot.primaryReason ? (
-        <div className="mt-3 rounded-[1rem] border border-white/70 bg-white/72 px-3.5 py-3">
+        <div className="mt-3 rounded-[0.95rem] border border-white/70 bg-white/72 px-3.5 py-2.5">
           <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
-            Primary shortage reason
+            Shortage driver
           </div>
-          <p className="mt-1.5 text-sm font-medium leading-6 text-slate-900">
+          <p className="mt-1 text-sm font-medium leading-6 text-slate-900">
             {context.snapshot.primaryReason}
           </p>
         </div>
@@ -860,22 +850,31 @@ export function MedicationContextDetails({
   });
 
   return (
-    <>
+    <div className="space-y-4">
       {variant === "patient" ? (
         <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
       ) : (
         <ActiveShortageEntriesCard items={context.snapshot.activeItems} />
       )}
 
+      {context.snapshot.doseAvailability.length || context.snapshot.manufacturerRows.length ? (
+        <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+          {context.snapshot.doseAvailability.length ? (
+            <DoseAvailabilityCard rows={context.snapshot.doseAvailability} />
+          ) : null}
+          {context.snapshot.manufacturerRows.length ? (
+            <ManufacturerStatusCard rows={context.snapshot.manufacturerRows} />
+          ) : null}
+        </div>
+      ) : null}
+
       <RecallActivityCard items={match.evidence.recalls.items} />
-      <DoseAvailabilityCard rows={context.snapshot.doseAvailability} />
-      <ManufacturerStatusCard rows={context.snapshot.manufacturerRows} />
       <SnapshotFooter
         isDemoMatch={context.isDemoMatch}
         variant={variant}
         note={match.demo_context?.note}
       />
-    </>
+    </div>
   );
 }
 

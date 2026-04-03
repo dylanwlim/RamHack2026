@@ -338,11 +338,13 @@ export function LocationCombobox({
           </div>
         ) : null}
       </div>
-      {error ? (
-        <p id={errorId} className="search-field-error">
-          {error}
-        </p>
-      ) : null}
+      <div className="search-field-helper-slot">
+        {error ? (
+          <p id={errorId} className="search-field-error">
+            {error}
+          </p>
+        ) : null}
+      </div>
     </label>
   );
 }

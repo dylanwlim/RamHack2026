@@ -166,7 +166,7 @@
   }
 
   .search-field-helper-slot {
-    @apply grid gap-1;
+    @apply grid min-h-[1.2rem] content-start gap-1;
   }
 
   .search-field-helper {
@@ -208,11 +208,11 @@
   }
 
   .search-inline-panel {
-    @apply overflow-hidden rounded-[1.25rem] border border-slate-200/95 bg-white/98 shadow-[0_16px_40px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/5 backdrop-blur-xl;
+    @apply overflow-hidden rounded-[1.15rem] border border-slate-200/95 bg-white/98 shadow-[0_14px_32px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/5 backdrop-blur-xl;
   }
 
   .search-floating-scroll {
-    @apply overflow-y-auto p-2;
+    @apply overflow-y-auto p-1.5;
     scrollbar-width: thin;
     scrollbar-color: rgba(100, 116, 139, 0.6) transparent;
   }

@@ -258,17 +258,25 @@ export function PharmacySearchForm({
       setLocationSelection(null);
     }
   };
+  const medicationSupportText =
+    medicationOption?.demoOnly
+      ? `Simulated demo medication · ${medicationOption.simulatedUserCount || 0} seeded demo users`
+      : Array.from(
+          new Set(
+            [medicationOption?.formulation, medicationOption?.dosageForm].filter(Boolean),
+          ),
+        ).join(" · ") || null;
 
   return (
     <div
       className={cn(
-        "surface-panel rounded-[1.8rem] p-4 sm:p-5 xl:p-6",
-        compact && "rounded-[1.7rem] p-4 sm:p-5",
+        "surface-panel rounded-[1.7rem] p-4 sm:p-[1.125rem] xl:p-5",
+        compact && "rounded-[1.6rem] p-3.5 sm:p-4",
         className,
       )}
     >
       <form
-        className={cn("space-y-3", compact && "space-y-2.5")}
+        className={cn("space-y-2.5", compact && "space-y-2")}
         onSubmit={async (event) => {
           event.preventDefault();
           setIsResolvingSearch(true);
@@ -371,13 +379,14 @@ export function PharmacySearchForm({
           }
         }}
       >
-        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(10.25rem,0.82fr)_minmax(0,1fr)]">
+        <div className="grid items-start gap-x-3.5 gap-y-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.24fr)_minmax(12rem,0.8fr)_minmax(0,1fr)]">
           <MedicationCombobox
             className="sm:col-span-2 lg:col-span-1"
             label="Medication"
             placeholder="Search medication"
             value={medication}
             selectedOptionId={medicationOption?.id || null}
+            helperText={medicationSupportText}
             onValueChange={handleMedicationInputChange}
             onSelect={(option) => {
               setMedicationOption(option);
@@ -429,7 +438,7 @@ export function PharmacySearchForm({
           />
         </div>
 
-        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,0.92fr)_minmax(0,1fr)_auto] lg:items-end">
+        <div className="grid gap-x-3.5 gap-y-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,0.92fr)_minmax(0,1fr)_auto] lg:items-end">
           <label className="search-field-stack">
             <span className="search-field-label">Radius</span>
             <select
@@ -478,14 +487,14 @@ export function PharmacySearchForm({
           >
             {isPending || isResolvingSearch ? "Loading…" : submitLabel}
           </button>
-          <p className="order-5 max-w-[42rem] text-[0.8rem] leading-5 text-slate-500 sm:col-span-2 lg:order-none lg:col-span-3 lg:pr-4">
+          <p className="order-5 max-w-[40rem] text-[0.78rem] leading-5 text-slate-500 sm:col-span-2 lg:order-none lg:col-span-3 lg:pr-4">
             Nearby pharmacies come from a live search. Stock still needs a direct call before pickup or transfer.
           </p>
         </div>
       </form>
 
       {showSamples ? (
-        <div className="mt-2.5 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {featuredSearches.map((search) => (
             <button
               key={search.id}

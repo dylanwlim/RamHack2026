@@ -98,6 +98,15 @@ export function CrowdSignalCard({
   );
   const likelihoodDisplay = resolvedSummary.reportCount ? `${resolvedSummary.likelihood}%` : "No data";
   const hasCrowdData = resolvedSummary.reportCount > 0;
+  const compactSummaryClass = compact ? "text-[0.84rem] leading-5" : "text-sm leading-6";
+  const reportLink = status !== "authenticated" ? (
+    <Link
+      href={`/login?next=${encodeURIComponent(nextPath)}`}
+      className="text-[#156d95]"
+    >
+      Log in to report
+    </Link>
+  ) : null;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -138,7 +147,12 @@ export function CrowdSignalCard({
   }
 
   return (
-    <div className={cn("rounded-[1.35rem] border border-slate-200 bg-white/92 p-3.5", compact && "p-3")}>
+    <div
+      className={cn(
+        "rounded-[1.25rem] border border-slate-200 bg-white/92 p-3.5",
+        compact && "rounded-[1.15rem] px-3 py-2.5",
+      )}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-500">
@@ -153,7 +167,7 @@ export function CrowdSignalCard({
         </div>
 
         <div className="flex items-center gap-2">
-          {status === "authenticated" ? (
+          {status === "authenticated" && !compact ? (
             <AuthButton
               type="button"
               variant="outline"
@@ -172,21 +186,28 @@ export function CrowdSignalCard({
       </div>
 
       {!hasCrowdData ? (
-        <>
-          <p className={cn("mt-2.5 text-sm leading-6 text-slate-600", compact && "text-[0.9rem]")}>
-            Not enough contributor reports have been submitted for this pharmacy and medication yet.
+        <div className="mt-2.5 space-y-1.5">
+          <p className={cn("text-slate-600", compactSummaryClass)}>
+            No contributor reports have surfaced for this pharmacy and medication yet.
           </p>
-          <p className="mt-1.5 text-[0.78rem] leading-5 text-slate-500">
-            Sparse samples stay conservative. Direct pharmacy confirmation still matters before routing someone to pick up a prescription.
-          </p>
-        </>
+          {!compact ? (
+            <p className="text-[0.78rem] leading-5 text-slate-500">
+              Use the live nearby result as routing guidance, then confirm availability directly with the pharmacy.
+            </p>
+          ) : null}
+        </div>
       ) : (
         <>
-          <p className={cn("mt-2.5 text-sm leading-6 text-slate-600", compact && "text-[0.9rem]")}>
+          <p className={cn("mt-2.5 text-slate-600", compactSummaryClass, compact && "line-clamp-2")}>
             {resolvedSummary.explanation}
           </p>
 
-          <div className={cn("mt-3 grid gap-2", compact ? "sm:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4")}>
+          <div
+            className={cn(
+              "mt-2.5 grid gap-2",
+              compact ? "grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3",
+            )}
+          >
             <MiniMetric compact={compact} label="Likelihood" value={likelihoodDisplay} />
             <MiniMetric
               compact={compact}
@@ -194,14 +215,14 @@ export function CrowdSignalCard({
               value={String(resolvedSummary.reportCount)}
             />
             <MiniMetric compact={compact} label="Freshness" value={resolvedSummary.freshnessNote} />
-            {!compact ? (
-              <MiniMetric compact={compact} label="Consensus" value={resolvedSummary.agreementDisplay} />
-            ) : null}
+            {!compact ? <MiniMetric compact={compact} label="Consensus" value={resolvedSummary.agreementDisplay} /> : null}
           </div>
 
-          <p className="mt-2.5 text-[0.74rem] leading-5 text-slate-500">
-            Crowd reports are weighted by contributor history and recency, and sparse samples stay conservative. Direct pharmacy confirmation is still recommended before sending someone to pick up a prescription.
-          </p>
+          {!compact ? (
+            <p className="mt-2.5 text-[0.74rem] leading-5 text-slate-500">
+              Crowd reports are weighted by contributor history and recency. Direct pharmacy confirmation is still recommended before sending someone to pick up a prescription.
+            </p>
+          ) : null}
         </>
       )}
 
@@ -214,19 +235,25 @@ export function CrowdSignalCard({
       {feedback ? <p className="mt-2.5 text-sm text-emerald-700">{feedback}</p> : null}
       {error ? <p className="mt-2.5 text-sm text-rose-700">{error}</p> : null}
 
-      {status !== "authenticated" ? (
+      {status !== "authenticated" || compact ? (
         <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-          <span>{hasCrowdData ? "Want to improve this signal?" : "Want to improve this signal?"}</span>
-          <Link
-            href={`/login?next=${encodeURIComponent(nextPath)}`}
-            className="text-[#156d95]"
-          >
-            Log in to report
-          </Link>
+          {compact ? (
+            <>
+              <span className="text-[0.8rem]">
+                {hasCrowdData ? "Have a fresher read?" : "Want to improve this signal?"}
+              </span>
+              {reportLink}
+            </>
+          ) : status !== "authenticated" ? (
+            <>
+              <span>Want to improve this signal?</span>
+              {reportLink}
+            </>
+          ) : null}
         </div>
       ) : null}
 
-      {isOpen && status === "authenticated" && firebaseReady ? (
+      {isOpen && status === "authenticated" && firebaseReady && !compact ? (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3.5 rounded-[1.15rem] border border-slate-200 bg-slate-50/70 p-3.5">
           <div className="grid gap-2 sm:grid-cols-2">
             {CROWD_REPORT_TYPES.map((type) => (

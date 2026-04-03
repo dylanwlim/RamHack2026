@@ -10,24 +10,69 @@ import type {
 const MEDICATION_SEARCH_CACHE_LIMIT = 48;
 const MEDICATION_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 const MEDICATION_SELECTION_CACHE_LIMIT = 96;
+const MEDICATION_SELECTION_CACHE_TTL_MS = 30 * 60 * 1000;
+const MEDICATION_SEARCH_STORAGE_KEY = "pharmapath:medications:search:v2";
+const MEDICATION_SELECTION_STORAGE_KEY = "pharmapath:medications:selection:v2";
+const RELEASE_TOKEN_EXPANSIONS = new Map([
+  ["xr", "extended release"],
+  ["er", "extended release"],
+  ["xl", "extended release"],
+  ["sr", "extended release"],
+  ["ir", "immediate release"],
+  ["dr", "delayed release"],
+  ["odt", "orally disintegrating"],
+]);
 const medicationSearchCache = new Map<
   string,
   { storedAt: number; payload: MedicationSearchResponse }
 >();
 const medicationSearchInFlight = new Map<string, Promise<MedicationSearchResponse>>();
 const medicationSelectionCache = new Map<string, MedicationSearchOption>();
+let medicationCacheHydrated = false;
+let medicationSearchPrewarmPromise: Promise<MedicationSearchResponse> | null = null;
 
 function sanitizeText(value = "") {
   return String(value).trim();
 }
 
+function canUseSessionStorage() {
+  return typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
+}
+
+function expandMedicationQueryTokens(value: string) {
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .flatMap((token) => {
+      const expansion = RELEASE_TOKEN_EXPANSIONS.get(token);
+      return expansion ? expansion.split(" ") : [token];
+    })
+    .join(" ");
+}
+
+function createMedicationTokenSignature(value: string) {
+  return Array.from(
+    new Set(
+      normalizeMedicationSearchQuery(value)
+        .split(" ")
+        .filter(Boolean),
+    ),
+  )
+    .sort()
+    .join("|");
+}
+
 export function normalizeMedicationSearchQuery(value: string) {
-  return sanitizeText(value)
+  const normalized = sanitizeText(value)
     .toLowerCase()
     .replace(/\s*\/\s*/g, "/")
     .replace(/[^\p{L}\p{N}%/+.,-]+/gu, " ")
+    .replace(/,/g, " ")
+    .replace(/-/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  return expandMedicationQueryTokens(normalized);
 }
 
 function buildSearchableMedicationText(option: MedicationSearchOption) {
@@ -59,6 +104,7 @@ function scoreMedicationOptionLocally(
   }
 
   const queryTokens = normalizedQuery.split(" ").filter(Boolean);
+  const querySignature = createMedicationTokenSignature(normalizedQuery);
   const aliasCandidates = [
     option.label,
     option.value,
@@ -78,6 +124,11 @@ function scoreMedicationOptionLocally(
 
     if (alias === normalizedQuery) {
       bestScore = Math.min(bestScore, 0);
+      return;
+    }
+
+    if (querySignature && createMedicationTokenSignature(alias) === querySignature) {
+      bestScore = Math.min(bestScore, 4);
       return;
     }
 
@@ -144,7 +195,109 @@ function trimSelectionCache() {
   }
 }
 
-function rememberMedicationSelection(option: MedicationSearchOption) {
+function readPersistedEntries<T>(
+  storageKey: string,
+): Record<string, { storedAt: number; payload: T }> {
+  if (!canUseSessionStorage()) {
+    return {};
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(storageKey);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw) as Record<
+      string,
+      { storedAt?: number; payload?: T }
+    >;
+    const entries = Object.entries(parsed).filter(
+      ([, entry]) => Boolean(entry?.storedAt && entry.payload),
+    );
+
+    return Object.fromEntries(
+      entries.map(([key, entry]) => [
+        key,
+        { storedAt: entry.storedAt as number, payload: entry.payload as T },
+      ]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function writePersistedEntries<T>(
+  storageKey: string,
+  entries: Array<[string, { storedAt: number; payload: T }]>,
+) {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(storageKey, JSON.stringify(Object.fromEntries(entries)));
+  } catch {
+    return;
+  }
+}
+
+function persistMedicationSelectionCache() {
+  writePersistedEntries(
+    MEDICATION_SELECTION_STORAGE_KEY,
+    Array.from(medicationSelectionCache.entries())
+      .slice(-MEDICATION_SELECTION_CACHE_LIMIT)
+      .map(([key, payload]) => [key, { storedAt: Date.now(), payload }] as const),
+  );
+}
+
+function persistMedicationSearchCache() {
+  writePersistedEntries(
+    MEDICATION_SEARCH_STORAGE_KEY,
+    Array.from(medicationSearchCache.entries())
+      .filter(([, entry]) => Date.now() - entry.storedAt <= MEDICATION_SEARCH_CACHE_TTL_MS)
+      .slice(-MEDICATION_SEARCH_CACHE_LIMIT),
+  );
+}
+
+function hydrateMedicationCaches() {
+  if (medicationCacheHydrated || !canUseSessionStorage()) {
+    return;
+  }
+
+  medicationCacheHydrated = true;
+  const now = Date.now();
+
+  const persistedSearchEntries = Object.entries(
+    readPersistedEntries<MedicationSearchResponse>(MEDICATION_SEARCH_STORAGE_KEY),
+  )
+    .filter(([, entry]) => now - entry.storedAt <= MEDICATION_SEARCH_CACHE_TTL_MS)
+    .sort((left, right) => left[1].storedAt - right[1].storedAt);
+
+  persistedSearchEntries.forEach(([cacheKey, entry]) => {
+    medicationSearchCache.set(cacheKey, entry);
+    entry.payload.results.forEach((option) => rememberMedicationSelection(option, false));
+  });
+
+  const persistedSelectionEntries = Object.entries(
+    readPersistedEntries<MedicationSearchOption>(MEDICATION_SELECTION_STORAGE_KEY),
+  )
+    .filter(([, entry]) => now - entry.storedAt <= MEDICATION_SELECTION_CACHE_TTL_MS)
+    .sort((left, right) => left[1].storedAt - right[1].storedAt);
+
+  persistedSelectionEntries.forEach(([key, entry]) => {
+    medicationSelectionCache.set(key, entry.payload);
+    trimSelectionCache();
+  });
+
+  persistMedicationSearchCache();
+  persistMedicationSelectionCache();
+}
+
+function rememberMedicationSelection(
+  option: MedicationSearchOption,
+  persist = true,
+) {
   const baseOption = {
     ...option,
     matchedStrength: option.matchedStrength
@@ -186,10 +339,15 @@ function rememberMedicationSelection(option: MedicationSearchOption) {
       trimSelectionCache();
     });
   });
+
+  if (persist) {
+    persistMedicationSelectionCache();
+  }
 }
 
 function rememberMedicationSelectionsFromResponse(payload: MedicationSearchResponse) {
-  payload.results.forEach((option) => rememberMedicationSelection(option));
+  payload.results.forEach((option) => rememberMedicationSelection(option, false));
+  persistMedicationSelectionCache();
 }
 
 function buildCacheKey(query: string, exact: boolean, limit: number) {
@@ -214,6 +372,7 @@ function rememberMedicationSearch(
   cacheKey: string,
   payload: MedicationSearchResponse,
 ) {
+  hydrateMedicationCaches();
   medicationSearchCache.delete(cacheKey);
   medicationSearchCache.set(cacheKey, {
     storedAt: Date.now(),
@@ -221,14 +380,14 @@ function rememberMedicationSearch(
   });
   rememberMedicationSelectionsFromResponse(payload);
 
-  if (medicationSearchCache.size <= MEDICATION_SEARCH_CACHE_LIMIT) {
-    return;
+  if (medicationSearchCache.size > MEDICATION_SEARCH_CACHE_LIMIT) {
+    const oldestKey = medicationSearchCache.keys().next().value;
+    if (oldestKey) {
+      medicationSearchCache.delete(oldestKey);
+    }
   }
 
-  const oldestKey = medicationSearchCache.keys().next().value;
-  if (oldestKey) {
-    medicationSearchCache.delete(oldestKey);
-  }
+  persistMedicationSearchCache();
 }
 
 function withAbortSignal<T>(promise: Promise<T>, signal?: AbortSignal) {
@@ -310,6 +469,7 @@ async function fetchMedicationSearch(
     signal?: AbortSignal;
   } = {},
 ) {
+  hydrateMedicationCaches();
   const normalizedQuery = normalizeMedicationSearchQuery(query);
   const cacheKey = buildCacheKey(normalizedQuery, exact, limit);
   const cached = medicationSearchCache.get(cacheKey);
@@ -322,6 +482,7 @@ async function fetchMedicationSearch(
 
   if (cached) {
     medicationSearchCache.delete(cacheKey);
+    persistMedicationSearchCache();
   }
 
   let inFlight = medicationSearchInFlight.get(cacheKey);
@@ -350,6 +511,7 @@ export function getCachedMedicationSelection(
   query: string,
   selectedStrength?: string | null,
 ) {
+  hydrateMedicationCaches();
   const normalizedQuery = normalizeMedicationSearchQuery(query);
   const normalizedStrength = normalizeStrengthValue(selectedStrength || "");
   const lookupKeys = [
@@ -377,6 +539,7 @@ export function getMedicationSearchPreview(
   query: string,
   { limit = 8 }: { limit?: number } = {},
 ) {
+  hydrateMedicationCaches();
   const normalizedQuery = normalizeMedicationSearchQuery(query);
 
   if (!normalizedQuery) {
@@ -437,13 +600,41 @@ export function getMedicationSearchPreview(
 }
 
 export async function resolveMedicationOption(query: string) {
+  hydrateMedicationCaches();
   const cachedSelection = getCachedMedicationSelection(query);
   if (cachedSelection) {
     return cachedSelection;
   }
 
-  const response = await fetchMedicationSearch(query, { exact: true, limit: 1 });
-  return response.results[0] || null;
+  const exactResponse = await fetchMedicationSearch(query, { exact: true, limit: 1 });
+  const exactOption = exactResponse.results[0] || null;
+
+  if (exactOption) {
+    return exactOption;
+  }
+
+  const fallbackResponse = await fetchMedicationSearch(query, { limit: 2 });
+  return fallbackResponse.results.length === 1 ? fallbackResponse.results[0] : null;
+}
+
+export function prewarmMedicationSearch() {
+  hydrateMedicationCaches();
+  const featuredCacheKey = buildCacheKey("", false, 8);
+  const cached = medicationSearchCache.get(featuredCacheKey);
+
+  if (cached && Date.now() - cached.storedAt <= MEDICATION_SEARCH_CACHE_TTL_MS) {
+    return Promise.resolve(cached.payload);
+  }
+
+  if (medicationSearchPrewarmPromise) {
+    return medicationSearchPrewarmPromise;
+  }
+
+  medicationSearchPrewarmPromise = fetchMedicationSearch("", { limit: 8 }).finally(() => {
+    medicationSearchPrewarmPromise = null;
+  });
+
+  return medicationSearchPrewarmPromise;
 }
 
 export type { MedicationSearchOption };

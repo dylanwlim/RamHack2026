@@ -32,30 +32,14 @@ export function MedicationStrengthField({
 
   const strengths = option?.strengths || [];
   const hasMultipleStrengths = strengths.length > 1;
-  const defaultHelper = option
-    ? option.demoOnly
-      ? `Simulated demo medication • ${option.simulatedUserCount || 0} seeded demo users`
-      : Array.from(new Set([option.formulation, option.dosageForm].filter(Boolean))).join(" • ")
-    : null;
-  const helper = helperText ?? defaultHelper;
-  const showInlineHelper = Boolean(helper && !error && (option || displayValue));
+  const helper = helperText ?? null;
+  const describedBy = [helper ? helperId : null, error ? `${helperId}-error` : null]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <label className={cn("search-field-stack", className)}>
-      <div className="flex min-h-5 items-center justify-between gap-3">
-        <span className="search-field-label">Strength</span>
-        {showInlineHelper ? (
-          <span
-            id={helperId}
-            className={cn(
-              "text-right text-[0.72rem] leading-5 text-slate-500",
-              !option && !displayValue && "text-slate-400",
-            )}
-          >
-            {helper}
-          </span>
-        ) : null}
-      </div>
+      <span className="search-field-label">Strength</span>
       {option ? (
         <select
           className={cn(
@@ -63,7 +47,7 @@ export function MedicationStrengthField({
             error && "border-rose-300 ring-4 ring-rose-500/10",
           )}
           value={value}
-          aria-describedby={helper ? helperId : undefined}
+          aria-describedby={describedBy || undefined}
           onChange={(event) => onChange(event.target.value)}
         >
           {hasMultipleStrengths ? <option value="">Select strength</option> : null}
@@ -75,7 +59,7 @@ export function MedicationStrengthField({
         </select>
       ) : displayValue ? (
         <div
-          aria-describedby={helper ? helperId : undefined}
+          aria-describedby={describedBy || undefined}
           aria-readonly="true"
           className={cn(
             "search-select-control flex items-center bg-slate-50/85 pr-4 text-slate-900",
@@ -93,28 +77,30 @@ export function MedicationStrengthField({
           )}
           value=""
           disabled
-          aria-describedby={helper ? helperId : undefined}
+          aria-describedby={describedBy || undefined}
           onChange={() => undefined}
         >
           <option value="">Select strength</option>
         </select>
       )}
-      {!showInlineHelper || error ? (
-        <div className="search-field-helper-slot">
-          {!showInlineHelper && helper ? (
-            <p
-              id={helperId}
-              className={cn(
-                "search-field-helper",
-                !option && !displayValue && "text-slate-400",
-              )}
-            >
-              {helper}
-            </p>
-          ) : null}
-          {error ? <p className="search-field-error">{error}</p> : null}
-        </div>
-      ) : null}
+      <div className="search-field-helper-slot">
+        {helper ? (
+          <p
+            id={helperId}
+            className={cn(
+              "search-field-helper line-clamp-2",
+              !option && !displayValue && "text-slate-400",
+            )}
+          >
+            {helper}
+          </p>
+        ) : null}
+        {error ? (
+          <p id={`${helperId}-error`} className="search-field-error">
+            {error}
+          </p>
+        ) : null}
+      </div>
     </label>
   );
 }

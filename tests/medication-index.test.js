@@ -10,6 +10,7 @@ const {
 } = require("../lib/medications/normalize");
 const {
   getMedicationSnapshot,
+  resolveMedicationOption,
   searchMedicationOptions,
 } = require("../lib/medications/index-store");
 
@@ -120,8 +121,8 @@ test("medication snapshot preserves canonical aliases for brand, generic, ingred
   const record = snapshot.records[0];
 
   assert.equal(record.displayLabel, "Adderall 20 mg");
-  assert.ok(record.aliases.includes("Adderall XR 20 mg"));
   assert.ok(record.aliases.includes("Adderall 20 mg"));
+  assert.ok(record.aliases.includes("Adderall"));
   assert.ok(record.aliases.includes("Amphetamine Aspartate"));
   assert.ok(record.aliases.includes("44444-444"));
   assert.equal(record.workflowCategory, "controlled_stimulant");
@@ -157,13 +158,39 @@ test("exact medication search resolves full query labels that include strength a
   assert.equal(results[0].matchedStrength, "1.7 mg/0.75 ml");
 });
 
+test("exact medication search resolves modified-release query aliases that normalize to the same token set", async () => {
+  const { results } = await searchMedicationOptions(
+    "Adderall XR 20 mg capsule, extended release",
+    {
+      exact: true,
+      limit: 3,
+    },
+  );
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].label, "Adderall Extended-Release Capsule");
+  assert.equal(results[0].matchedStrength, "20 mg");
+});
+
+test("medication resolver returns the canonical option for modified-release query aliases", async () => {
+  const result = await resolveMedicationOption(
+    "Adderall XR 20 mg capsule, extended release",
+  );
+
+  assert.ok(result);
+  assert.equal(result.label, "Adderall Extended-Release Capsule");
+  assert.equal(result.matchedStrength, "20 mg");
+});
+
 test("medication search groups real catalog strengths under one selectable option", async () => {
   const { results } = await searchMedicationOptions("Adderall", {
     limit: 5,
   });
 
-  const adderallEr = results.find((result) => result.label === "Adderall ER");
-  const adderallIr = results.find((result) => result.label === "Adderall IR");
+  const adderallEr = results.find(
+    (result) => result.label === "Adderall Extended-Release Capsule",
+  );
+  const adderallIr = results.find((result) => result.label === "Adderall Tablet");
 
   assert.ok(adderallEr);
   assert.ok(adderallIr);
@@ -210,7 +237,7 @@ test("medication search falls back to the snapshot when generated search assets 
     });
 
     assert.ok(results.length > 0);
-    assert.ok(results.some((result) => result.label === "Adderall IR"));
+    assert.ok(results.some((result) => result.label === "Adderall Tablet"));
   } finally {
     fs.readFile = originalReadFile;
     delete require.cache[indexStorePath];
@@ -247,7 +274,7 @@ test("medication search falls back when protected preview assets return 401", as
     });
 
     assert.ok(results.length > 0);
-    assert.ok(results.some((result) => result.label === "Adderall IR"));
+    assert.ok(results.some((result) => result.label === "Adderall Tablet"));
   } finally {
     fs.readFile = originalReadFile;
     global.fetch = originalFetch;
