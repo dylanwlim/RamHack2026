@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.18.0",
+    "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "firebase": "^12.11.0",
     "framer-motion": "^12.4.10",

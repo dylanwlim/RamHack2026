@@ -1,6 +1,7 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Figtree, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${figtree.variable} ${geistMono.variable} font-sans antialiased`}>
         <AppProviders>{children}</AppProviders>
+        <Analytics />
       </body>
     </html>
   );
