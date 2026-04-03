@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "npm run medications:build-assets && node --test tests/*.test.js",
+    "test:burst": "node scripts/burst-traffic-smoke.mjs",
     "validate": "npm run lint && npm run typecheck && npm test && npm run build && npm run cloudflare:build",
     "medications:build-assets": "node scripts/medications/build-runtime-assets.mjs",
     "medications:sync": "node scripts/medications/sync-openfda-index.mjs",
