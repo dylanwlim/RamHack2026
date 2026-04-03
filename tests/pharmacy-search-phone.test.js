@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { searchNearbyPharmacies } = require("../api/_lib/pharmacy-search");
+const { searchNearbyPharmacies } = require("../lib/server/pharmacy-search");
 
 function createJsonResponse(payload, status = 200) {
   return {
