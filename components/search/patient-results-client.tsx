@@ -530,6 +530,29 @@ function PharmacyPhoneAction({
   );
 }
 
+function PharmacyAvailabilityMeta({
+  pharmacy,
+  compact = false,
+}: {
+  pharmacy: PharmacySearchResponse["results"][number];
+  compact?: boolean;
+}) {
+  const detailClassName = compact ? "text-xs text-slate-500" : "text-sm text-slate-500";
+
+  return (
+    <div className={`flex flex-wrap items-center gap-2 ${compact ? "text-xs" : "text-sm"} text-slate-600`}>
+      <span className="flat-chip">{pharmacy.hours_status_label}</span>
+      {pharmacy.hours_detail_label ? (
+        <span className={detailClassName}>{pharmacy.hours_detail_label}</span>
+      ) : null}
+      {pharmacy.rating ? (
+        <span className="flat-chip">Rating {pharmacy.rating.toFixed(1)}</span>
+      ) : null}
+      <span className="flat-chip">{pharmacy.review_label}</span>
+    </div>
+  );
+}
+
 export function PatientResultsClient() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query")?.trim() || "";
@@ -873,22 +896,8 @@ export function PatientResultsClient() {
                           </div>
                         </div>
 
-                        <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-600">
-                          <span className="flat-chip">
-                            {pharmacyData.recommended.open_now === true
-                              ? "Open now"
-                              : pharmacyData.recommended.open_now === false
-                                ? "Closed now"
-                                : "Hours unavailable"}
-                          </span>
-                          {pharmacyData.recommended.rating ? (
-                            <span className="flat-chip">
-                              Rating {pharmacyData.recommended.rating.toFixed(1)}
-                            </span>
-                          ) : null}
-                          <span className="flat-chip">
-                            {pharmacyData.recommended.review_label}
-                          </span>
+                        <div className="mt-5">
+                          <PharmacyAvailabilityMeta pharmacy={pharmacyData.recommended} />
                         </div>
 
                         <p className="mt-5 text-base leading-7 text-slate-700">
@@ -970,6 +979,9 @@ export function PatientResultsClient() {
                                     {formatMiles(result.distance_miles)}
                                   </div>
                                 </div>
+                                <div className="mt-3">
+                                  <PharmacyAvailabilityMeta pharmacy={result} compact />
+                                </div>
                                 <p className="mt-3 text-sm leading-6 text-slate-600">{result.match_reason}</p>
                                 <div className="mt-3">
                                   <CrowdSignalCard
@@ -989,14 +1001,14 @@ export function PatientResultsClient() {
                                   <div className="mt-3 flex flex-wrap items-center gap-3">
                                     <PharmacyPhoneAction
                                       pharmacy={result}
-                                      className="inline-flex items-center gap-2 text-sm font-medium text-[#156d95]"
+                                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
                                     />
                                     {result.google_maps_url ? (
                                       <a
                                         href={result.google_maps_url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex items-center gap-2 text-sm text-[#156d95]"
+                                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
                                       >
                                         View map
                                         <ExternalLink className="h-4 w-4" />

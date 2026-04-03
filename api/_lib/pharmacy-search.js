@@ -420,6 +420,274 @@ function buildPhoneLink(phoneNumber) {
   return dialableNumber ? `tel:${dialableNumber}` : null;
 }
 
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+function parseGoogleTimeValue(timeValue) {
+  const normalizedValue = sanitizeText(timeValue);
+
+  if (!normalizedValue || !/^\d{3,4}$/.test(normalizedValue)) {
+    return null;
+  }
+
+  const paddedValue = normalizedValue.padStart(4, "0");
+  const hours = Number(paddedValue.slice(0, 2));
+  const minutes = Number(paddedValue.slice(2, 4));
+
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours > 23 || minutes > 59) {
+    return null;
+  }
+
+  return { hours, minutes, totalMinutes: hours * 60 + minutes, raw: paddedValue };
+}
+
+function formatGoogleTimeLabel(timeValue) {
+  const parsedTime = parseGoogleTimeValue(timeValue);
+
+  if (!parsedTime) {
+    return null;
+  }
+
+  const suffix = parsedTime.hours >= 12 ? "PM" : "AM";
+  const normalizedHours = parsedTime.hours % 12 || 12;
+
+  if (parsedTime.minutes === 0) {
+    return `${normalizedHours} ${suffix}`;
+  }
+
+  return `${normalizedHours}:${String(parsedTime.minutes).padStart(2, "0")} ${suffix}`;
+}
+
+function getPlaceLocalDate(utcOffsetMinutes) {
+  if (!Number.isFinite(utcOffsetMinutes)) {
+    return null;
+  }
+
+  const nowUtcMs = Date.now();
+  return new Date(nowUtcMs + utcOffsetMinutes * 60_000);
+}
+
+function normalizeWeekdayText(weekdayText) {
+  if (!Array.isArray(weekdayText)) {
+    return [];
+  }
+
+  return weekdayText
+    .map((entry) => sanitizeText(entry))
+    .filter(Boolean)
+    .map((entry) => entry.replace(/\s*[–-]\s*/g, " – "));
+}
+
+function stripWeekdayLabel(weekdayText) {
+  const normalizedText = sanitizeText(weekdayText);
+
+  if (!normalizedText) {
+    return null;
+  }
+
+  const separatorIndex = normalizedText.indexOf(":");
+  return separatorIndex >= 0 ? normalizedText.slice(separatorIndex + 1).trim() : normalizedText;
+}
+
+function getTodayHoursLabel(weekdayText, localDayIndex) {
+  if (!Number.isInteger(localDayIndex)) {
+    return null;
+  }
+
+  const normalizedWeekdayText = normalizeWeekdayText(weekdayText);
+
+  if (!normalizedWeekdayText.length) {
+    return null;
+  }
+
+  const weekdayName = WEEKDAY_NAMES[localDayIndex];
+  const todayLine = normalizedWeekdayText.find((entry) => entry.startsWith(`${weekdayName}:`));
+
+  return stripWeekdayLabel(todayLine);
+}
+
+function buildHoursPeriodWindow(period) {
+  const openDay = Number.isInteger(period?.open?.day) ? period.open.day : null;
+  const closeDay = Number.isInteger(period?.close?.day) ? period.close.day : null;
+  const openTime = parseGoogleTimeValue(period?.open?.time);
+  const closeTime = parseGoogleTimeValue(period?.close?.time);
+
+  if (
+    openDay === null ||
+    closeDay === null ||
+    !openTime ||
+    !closeTime ||
+    openDay < 0 ||
+    openDay > 6 ||
+    closeDay < 0 ||
+    closeDay > 6
+  ) {
+    return null;
+  }
+
+  const weekMinutes = 7 * 24 * 60;
+  const startMinutes = openDay * 24 * 60 + openTime.totalMinutes;
+  let endMinutes = closeDay * 24 * 60 + closeTime.totalMinutes;
+
+  if (endMinutes <= startMinutes) {
+    endMinutes += weekMinutes;
+  }
+
+  return {
+    openDay,
+    startMinutes,
+    endMinutes,
+    openTime: openTime.raw,
+    closeTime: closeTime.raw,
+  };
+}
+
+function resolveHoursPeriodDetails(periods, localDayIndex, localTimeMinutes) {
+  if (!Number.isInteger(localDayIndex) || !Number.isInteger(localTimeMinutes) || !Array.isArray(periods)) {
+    return null;
+  }
+
+  const weekMinutes = 7 * 24 * 60;
+  const currentMinutes = localDayIndex * 24 * 60 + localTimeMinutes;
+  const windows = periods.map(buildHoursPeriodWindow).filter(Boolean);
+
+  if (!windows.length) {
+    return null;
+  }
+
+  let activeWindow = null;
+  let nextWindow = null;
+
+  for (const window of windows) {
+    if (
+      (currentMinutes >= window.startMinutes && currentMinutes < window.endMinutes) ||
+      (currentMinutes + weekMinutes >= window.startMinutes &&
+        currentMinutes + weekMinutes < window.endMinutes)
+    ) {
+      activeWindow = window;
+    }
+
+    const nextStartMinutes =
+      window.startMinutes > currentMinutes ? window.startMinutes : window.startMinutes + weekMinutes;
+
+    if (!nextWindow || nextStartMinutes < nextWindow.absoluteStartMinutes) {
+      nextWindow = {
+        ...window,
+        absoluteStartMinutes: nextStartMinutes,
+      };
+    }
+  }
+
+  if (activeWindow) {
+    return {
+      closingTimeLabel: formatGoogleTimeLabel(activeWindow.closeTime),
+      nextOpenLabel: null,
+    };
+  }
+
+  if (!nextWindow) {
+    return null;
+  }
+
+  const dayOffset =
+    Math.floor(nextWindow.absoluteStartMinutes / (24 * 60)) -
+    Math.floor(currentMinutes / (24 * 60));
+  const openingTimeLabel = formatGoogleTimeLabel(nextWindow.openTime);
+
+  if (!openingTimeLabel) {
+    return null;
+  }
+
+  if (dayOffset <= 0) {
+    return {
+      closingTimeLabel: null,
+      nextOpenLabel: openingTimeLabel,
+    };
+  }
+
+  if (dayOffset === 1) {
+    return {
+      closingTimeLabel: null,
+      nextOpenLabel: `tomorrow ${openingTimeLabel}`,
+    };
+  }
+
+  return {
+    closingTimeLabel: null,
+    nextOpenLabel: `${WEEKDAY_NAMES[nextWindow.openDay]} ${openingTimeLabel}`,
+  };
+}
+
+function extractPlaceHoursDetails(result, fallbackOpenNow = null) {
+  const openingHours = result?.opening_hours;
+  const detailOpenNow =
+    typeof openingHours?.open_now === "boolean"
+      ? openingHours.open_now
+      : typeof fallbackOpenNow === "boolean"
+        ? fallbackOpenNow
+        : null;
+  const utcOffsetMinutes = Number.isFinite(result?.utc_offset)
+    ? result.utc_offset
+    : Number.isFinite(result?.utc_offset_minutes)
+      ? result.utc_offset_minutes
+      : null;
+  const placeLocalDate = getPlaceLocalDate(utcOffsetMinutes);
+  const localDayIndex = placeLocalDate ? placeLocalDate.getUTCDay() : null;
+  const localTimeMinutes = placeLocalDate
+    ? placeLocalDate.getUTCHours() * 60 + placeLocalDate.getUTCMinutes()
+    : null;
+  const todayHoursLabel = getTodayHoursLabel(openingHours?.weekday_text, localDayIndex);
+  const periodDetails = resolveHoursPeriodDetails(openingHours?.periods, localDayIndex, localTimeMinutes);
+  const isTwentyFourHours = typeof todayHoursLabel === "string" && /open 24 hours/i.test(todayHoursLabel);
+
+  if (detailOpenNow === true) {
+    return {
+      open_now: true,
+      hours_status_label: "Open now",
+      hours_detail_label: periodDetails?.closingTimeLabel
+        ? `Closes ${periodDetails.closingTimeLabel}`
+        : isTwentyFourHours
+          ? "Open 24 hours"
+          : todayHoursLabel
+            ? `Today: ${todayHoursLabel}`
+            : null,
+    };
+  }
+
+  if (detailOpenNow === false) {
+    return {
+      open_now: false,
+      hours_status_label: "Closed now",
+      hours_detail_label: periodDetails?.nextOpenLabel
+        ? `Opens ${periodDetails.nextOpenLabel}`
+        : todayHoursLabel
+          ? `Today: ${todayHoursLabel}`
+          : null,
+    };
+  }
+
+  if (todayHoursLabel) {
+    return {
+      open_now: null,
+      hours_status_label: "Hours today",
+      hours_detail_label: todayHoursLabel,
+    };
+  }
+
+  return {
+    open_now: detailOpenNow,
+    hours_status_label: "Hours unavailable",
+    hours_detail_label: null,
+  };
+}
+
 function extractPlacePhoneDetails(result) {
   const formattedPhoneNumber = sanitizeText(result?.formatted_phone_number);
   const internationalPhoneNumber = sanitizeText(result?.international_phone_number);
@@ -445,8 +713,6 @@ function normalizePlace(place, center) {
     user_ratings_total: Number.isFinite(place.user_ratings_total)
       ? place.user_ratings_total
       : null,
-    open_now:
-      typeof place.opening_hours?.open_now === "boolean" ? place.opening_hours.open_now : null,
     place_id: place.place_id || null,
     google_maps_url: buildGoogleMapsUrl(place),
     coordinates:
@@ -459,6 +725,7 @@ function normalizePlace(place, center) {
     phone_number: null,
     international_phone_number: null,
     phone_link: null,
+    ...extractPlaceHoursDetails(place),
   };
 }
 
@@ -849,7 +1116,7 @@ async function getPlacePhoneDetails(placeId, apiKey, { sessionToken } = {}) {
   const result = await requestPlaceDetails(
     placeId,
     apiKey,
-    "formatted_phone_number,international_phone_number,place_id",
+    "formatted_phone_number,international_phone_number,opening_hours,place_id,utc_offset",
     {
       sessionToken,
       missingPlaceMessage: "A Google place ID is required to look up pharmacy contact details.",
@@ -858,7 +1125,10 @@ async function getPlacePhoneDetails(placeId, apiKey, { sessionToken } = {}) {
     },
   );
 
-  return extractPlacePhoneDetails(result);
+  return {
+    ...extractPlacePhoneDetails(result),
+    ...extractPlaceHoursDetails(result),
+  };
 }
 
 async function hydratePlacePhoneDetails(place, apiKey) {

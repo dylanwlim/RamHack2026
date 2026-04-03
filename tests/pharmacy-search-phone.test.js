@@ -26,109 +26,164 @@ async function withMockedFetch(mockFetch, callback) {
   }
 }
 
-test("searchNearbyPharmacies enriches shortlisted results with Google phone details", async () => {
+async function withMockedNow(nowMs, callback) {
+  const originalNow = Date.now;
+  Date.now = () => nowMs;
+
+  try {
+    await callback();
+  } finally {
+    Date.now = originalNow;
+  }
+}
+
+test("searchNearbyPharmacies enriches shortlisted results with Google phone details and hours", async () => {
   const detailRequests = [];
 
-  await withMockedFetch(async (url) => {
-    const requestUrl = new URL(url);
+  await withMockedNow(Date.UTC(2026, 3, 6, 18, 30, 0), async () => {
+    await withMockedFetch(async (url) => {
+      const requestUrl = new URL(url);
 
-    if (requestUrl.pathname.endsWith("/nearbysearch/json")) {
-      assert.equal(requestUrl.searchParams.get("type"), "pharmacy");
-      assert.equal(requestUrl.searchParams.get("keyword"), "pharmacy");
+      if (requestUrl.pathname.endsWith("/nearbysearch/json")) {
+        assert.equal(requestUrl.searchParams.get("type"), "pharmacy");
+        assert.equal(requestUrl.searchParams.get("keyword"), "pharmacy");
 
-      return createJsonResponse({
-        status: "OK",
-        results: [
-          {
-            place_id: "pharmacy-1",
-            name: "Best Pharmacy",
-            vicinity: "1 Main St, Brooklyn, NY",
-            geometry: {
-              location: {
-                lat: 40.001,
-                lng: -73,
+        return createJsonResponse({
+          status: "OK",
+          results: [
+            {
+              place_id: "pharmacy-1",
+              name: "Best Pharmacy",
+              vicinity: "1 Main St, Brooklyn, NY",
+              geometry: {
+                location: {
+                  lat: 40.001,
+                  lng: -73,
+                },
+              },
+              opening_hours: {
+                open_now: true,
+              },
+              rating: 4.8,
+              user_ratings_total: 220,
+            },
+            {
+              place_id: "pharmacy-2",
+              name: "Backup Pharmacy",
+              vicinity: "9 Main St, Brooklyn, NY",
+              geometry: {
+                location: {
+                  lat: 40.01,
+                  lng: -73,
+                },
+              },
+              opening_hours: {
+                open_now: false,
+              },
+              rating: 4.1,
+              user_ratings_total: 48,
+            },
+          ],
+        });
+      }
+
+      if (requestUrl.pathname.endsWith("/details/json")) {
+        detailRequests.push(requestUrl);
+        assert.equal(
+          requestUrl.searchParams.get("fields"),
+          "formatted_phone_number,international_phone_number,opening_hours,place_id,utc_offset",
+        );
+
+        const placeId = requestUrl.searchParams.get("place_id");
+
+        if (placeId === "pharmacy-1") {
+          return createJsonResponse({
+            status: "OK",
+            result: {
+              place_id: "pharmacy-1",
+              formatted_phone_number: "(212) 555-0100",
+              international_phone_number: "+1 212-555-0100",
+              utc_offset: 0,
+              opening_hours: {
+                open_now: true,
+                periods: [
+                  {
+                    open: { day: 1, time: "0900" },
+                    close: { day: 1, time: "2100" },
+                  },
+                ],
+                weekday_text: [
+                  "Monday: 9:00 AM – 9:00 PM",
+                  "Tuesday: 9:00 AM – 9:00 PM",
+                  "Wednesday: 9:00 AM – 9:00 PM",
+                  "Thursday: 9:00 AM – 9:00 PM",
+                  "Friday: 9:00 AM – 9:00 PM",
+                  "Saturday: 10:00 AM – 6:00 PM",
+                  "Sunday: Closed",
+                ],
               },
             },
-            opening_hours: {
-              open_now: true,
-            },
-            rating: 4.8,
-            user_ratings_total: 220,
-          },
-          {
-            place_id: "pharmacy-2",
-            name: "Backup Pharmacy",
-            vicinity: "9 Main St, Brooklyn, NY",
-            geometry: {
-              location: {
-                lat: 40.01,
-                lng: -73,
+          });
+        }
+
+        if (placeId === "pharmacy-2") {
+          return createJsonResponse({
+            status: "OK",
+            result: {
+              place_id: "pharmacy-2",
+              international_phone_number: "+1 212-555-0199",
+              utc_offset: 0,
+              opening_hours: {
+                open_now: false,
+                periods: [
+                  {
+                    open: { day: 2, time: "0900" },
+                    close: { day: 2, time: "1800" },
+                  },
+                ],
+                weekday_text: [
+                  "Monday: Closed",
+                  "Tuesday: 9:00 AM – 6:00 PM",
+                  "Wednesday: 9:00 AM – 6:00 PM",
+                  "Thursday: 9:00 AM – 6:00 PM",
+                  "Friday: 9:00 AM – 6:00 PM",
+                  "Saturday: Closed",
+                  "Sunday: Closed",
+                ],
               },
             },
-            opening_hours: {
-              open_now: false,
-            },
-            rating: 4.1,
-            user_ratings_total: 48,
-          },
-        ],
+          });
+        }
+      }
+
+      throw new Error(`Unexpected Google URL: ${requestUrl.toString()}`);
+    }, async () => {
+      const result = await searchNearbyPharmacies({
+        medication: "Adderall XR 20 mg",
+        medicationProfileKey: "controlled_stimulant",
+        center: {
+          lat: 40,
+          lng: -73,
+        },
+        radiusMiles: 5,
+        onlyOpenNow: false,
+        apiKey: "test-google-key",
+        sortBy: "distance",
       });
-    }
 
-    if (requestUrl.pathname.endsWith("/details/json")) {
-      detailRequests.push(requestUrl);
-      assert.equal(
-        requestUrl.searchParams.get("fields"),
-        "formatted_phone_number,international_phone_number,place_id",
-      );
-
-      const placeId = requestUrl.searchParams.get("place_id");
-
-      if (placeId === "pharmacy-1") {
-        return createJsonResponse({
-          status: "OK",
-          result: {
-            place_id: "pharmacy-1",
-            formatted_phone_number: "(212) 555-0100",
-            international_phone_number: "+1 212-555-0100",
-          },
-        });
-      }
-
-      if (placeId === "pharmacy-2") {
-        return createJsonResponse({
-          status: "OK",
-          result: {
-            place_id: "pharmacy-2",
-            international_phone_number: "+1 212-555-0199",
-          },
-        });
-      }
-    }
-
-    throw new Error(`Unexpected Google URL: ${requestUrl.toString()}`);
-  }, async () => {
-    const result = await searchNearbyPharmacies({
-      medication: "Adderall XR 20 mg",
-      medicationProfileKey: "controlled_stimulant",
-      center: {
-        lat: 40,
-        lng: -73,
-      },
-      radiusMiles: 5,
-      onlyOpenNow: false,
-      apiKey: "test-google-key",
-      sortBy: "distance",
+      assert.equal(result.results.length, 2);
+      assert.equal(result.recommended?.name, "Best Pharmacy");
+      assert.equal(result.recommended?.phone_number, "(212) 555-0100");
+      assert.equal(result.recommended?.international_phone_number, "+1 212-555-0100");
+      assert.equal(result.recommended?.phone_link, "tel:+12125550100");
+      assert.equal(result.recommended?.hours_status_label, "Open now");
+      assert.equal(result.recommended?.hours_detail_label, "Closes 9 PM");
+      assert.equal(result.results[1].phone_number, "+1 212-555-0199");
+      assert.equal(result.results[1].international_phone_number, "+1 212-555-0199");
+      assert.equal(result.results[1].phone_link, "tel:+12125550199");
+      assert.equal(result.results[1].hours_status_label, "Closed now");
+      assert.equal(result.results[1].hours_detail_label, "Opens tomorrow 9 AM");
     });
-
-    assert.equal(result.results.length, 2);
-    assert.equal(result.recommended?.name, "Best Pharmacy");
-    assert.equal(result.recommended?.phone_number, "(212) 555-0100");
-    assert.equal(result.recommended?.international_phone_number, "+1 212-555-0100");
-    assert.equal(result.recommended?.phone_link, "tel:+12125550100");
-    assert.equal(result.results[1].phone_number, "+1 212-555-0199");
-    assert.equal(result.results[1].international_phone_number, "+1 212-555-0199");
-    assert.equal(result.results[1].phone_link, "tel:+12125550199");
   });
 
   assert.equal(detailRequests.length, 2);
@@ -188,5 +243,7 @@ test("searchNearbyPharmacies keeps results usable when Google has no phone detai
     assert.equal(result.recommended?.phone_number, null);
     assert.equal(result.recommended?.international_phone_number, null);
     assert.equal(result.recommended?.phone_link, null);
+    assert.equal(result.recommended?.hours_status_label, "Open now");
+    assert.equal(result.recommended?.hours_detail_label, null);
   });
 });

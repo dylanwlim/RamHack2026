@@ -65,17 +65,19 @@ export type PharmacySearchResponse = {
     real_signal: string;
     demo_boundary: string;
   };
-  results: Array<{
-    name: string;
-    address: string;
-    rating: number | null;
-    user_ratings_total: number | null;
-    open_now: boolean | null;
-    place_id: string | null;
-    google_maps_url: string | null;
-    phone_number: string | null;
-    international_phone_number: string | null;
-    phone_link: string | null;
+    results: Array<{
+      name: string;
+      address: string;
+      rating: number | null;
+      user_ratings_total: number | null;
+      open_now: boolean | null;
+      hours_status_label: string;
+      hours_detail_label: string | null;
+      place_id: string | null;
+      google_maps_url: string | null;
+      phone_number: string | null;
+      international_phone_number: string | null;
+      phone_link: string | null;
     distance_miles: number | null;
     business_status: string | null;
     review_label: string;
