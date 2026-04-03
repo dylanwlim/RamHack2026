@@ -202,3 +202,41 @@ test("medication search falls back to the snapshot when generated search assets 
     delete require.cache[indexStorePath];
   }
 });
+
+test("medication search falls back when protected preview assets return 401", async () => {
+  const originalReadFile = fs.readFile;
+  const originalFetch = global.fetch;
+  const indexStorePath = require.resolve("../lib/medications/index-store");
+
+  delete require.cache[indexStorePath];
+  fs.readFile = async (filePath, ...args) => {
+    const normalizedPath = path.normalize(String(filePath));
+
+    if (normalizedPath.includes(path.normalize(path.join("public", "medication-search")))) {
+      const error = new Error(`ENOENT: no such file or directory, open '${normalizedPath}'`);
+      error.code = "ENOENT";
+      throw error;
+    }
+
+    return originalReadFile.call(fs, filePath, ...args);
+  };
+  global.fetch = async () => ({
+    ok: false,
+    status: 401,
+  });
+
+  try {
+    const fallbackIndexStore = require("../lib/medications/index-store");
+    const { results } = await fallbackIndexStore.searchMedicationOptions("Adderall", {
+      limit: 2,
+      assetBaseUrl: "https://preview.example",
+    });
+
+    assert.ok(results.length > 0);
+    assert.ok(results.some((result) => result.label === "Adderall IR"));
+  } finally {
+    fs.readFile = originalReadFile;
+    global.fetch = originalFetch;
+    delete require.cache[indexStorePath];
+  }
+});
