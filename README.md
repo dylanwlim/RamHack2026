@@ -31,6 +31,10 @@ Those scenarios still depend on direct pharmacy confirmation and clinical judgme
 - App: [pharmapath.org](https://pharmapath.org)
 - Methodology: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
 
+## Operational Requirement
+
+- Live location autocomplete, location resolution, and nearby pharmacy search require the server-side `GOOGLE_API_KEY` environment variable in the deployed runtime.
+
 ## Contact
 
 - Email: [contact@pharmapath.org](mailto:contact@pharmapath.org)

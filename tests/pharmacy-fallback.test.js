@@ -31,10 +31,12 @@ test("pharmacy fallback response keeps the page renderable when live nearby sear
       formulation: "Immediate release",
     },
     "Live nearby pharmacy search is unavailable in this environment.",
+    "missing_google_api_key",
   );
 
   assert.equal(payload.status, "degraded");
   assert.equal(payload.degraded_reason, "Live nearby pharmacy search is unavailable in this environment.");
+  assert.equal(payload.degraded_code, "missing_google_api_key");
   assert.equal(payload.counts.total, 0);
   assert.equal(payload.recommended, null);
   assert.equal(payload.location.display_label, "Brooklyn, NY");

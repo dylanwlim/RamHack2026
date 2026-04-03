@@ -1,3 +1,4 @@
+# Required on Vercel for /api/locations/* and live nearby pharmacy search.
 GOOGLE_API_KEY=
 OPENFDA_API_KEY=
 RESEND_API_KEY=

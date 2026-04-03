@@ -12,6 +12,12 @@ const {
   buildUnavailableNearbyResponse,
   shouldDegradeNearbySearch,
 } = require("../../../../lib/server/nearby-search-fallback");
+const {
+  MISSING_GOOGLE_API_KEY_CODE,
+  getGoogleApiKey,
+  logGoogleApiConfigurationError,
+  logGoogleApiRequestError,
+} = require("../../../../lib/server/google-api-config");
 
 export const dynamic = "force-dynamic";
 
@@ -50,15 +56,25 @@ async function handleSearch(request) {
       return NextResponse.json({ error: "Location is required." }, { status: 400 });
     }
 
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = getGoogleApiKey();
     const medicationProfilePromise = resolveMedicationProfile(input.medication, { assetBaseUrl });
 
     if (!apiKey) {
+      logGoogleApiConfigurationError("pharmacies/search", {
+        medicationLength: input.medication.length,
+        locationLength: input.location.length,
+        hasLocationPlaceId: Boolean(input.locationPlaceId),
+        radiusMiles: input.radiusMiles,
+        sortBy: input.sortBy,
+        onlyOpenNow: input.onlyOpenNow,
+      });
+
       return NextResponse.json(
         buildUnavailableNearbyResponse(
           input,
           await medicationProfilePromise,
           "Live nearby pharmacy search is unavailable in this environment.",
+          MISSING_GOOGLE_API_KEY_CODE,
         ),
       );
     }
@@ -117,11 +133,21 @@ async function handleSearch(request) {
         throw error;
       }
 
+      logGoogleApiRequestError("pharmacies/search", error, {
+        medicationLength: input.medication.length,
+        locationLength: input.location.length,
+        hasLocationPlaceId: Boolean(input.locationPlaceId),
+        radiusMiles: input.radiusMiles,
+        sortBy: input.sortBy,
+        onlyOpenNow: input.onlyOpenNow,
+      });
+
       return NextResponse.json(
         buildUnavailableNearbyResponse(
           input,
           await medicationProfilePromise,
           "Live nearby pharmacy search is temporarily unavailable.",
+          error.code || null,
         ),
       );
     }

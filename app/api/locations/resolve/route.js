@@ -3,6 +3,12 @@ import { NextResponse } from "next/server";
 
 const require = createRequire(import.meta.url);
 const { resolveLocationInput } = require("../../../../lib/server/pharmacy-search");
+const {
+  createGoogleApiUnavailablePayload,
+  getGoogleApiKey,
+  logGoogleApiConfigurationError,
+  logGoogleApiRequestError,
+} = require("../../../../lib/server/google-api-config");
 
 export const dynamic = "force-dynamic";
 
@@ -21,28 +27,36 @@ async function readRequestBody(request) {
 }
 
 async function handleResolve(request) {
+  let query = "";
+  let placeId = "";
+  let sessionToken = "";
+
   try {
     const body = await readRequestBody(request);
-    const query =
+    query =
       (request.method === "GET"
         ? request.nextUrl.searchParams.get("q")
         : body.query || body.location) || "";
-    const placeId =
+    placeId =
       (request.method === "GET"
         ? request.nextUrl.searchParams.get("placeId")
         : body.placeId || body.locationPlaceId) || "";
-    const sessionToken =
+    sessionToken =
       (request.method === "GET"
         ? request.nextUrl.searchParams.get("sessionToken")
         : body.sessionToken) || "";
 
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = getGoogleApiKey();
 
     if (!apiKey) {
+      logGoogleApiConfigurationError("locations/resolve", {
+        queryLength: query.trim().length,
+        hasPlaceId: Boolean(placeId),
+        hasSessionToken: Boolean(sessionToken),
+      });
+
       return NextResponse.json(
-        {
-          error: "Location search is temporarily unavailable.",
-        },
+        createGoogleApiUnavailablePayload("Location search is temporarily unavailable."),
         { status: 503 },
       );
     }
@@ -65,12 +79,20 @@ async function handleResolve(request) {
       return NextResponse.json({
         status: "unresolved",
         error: error.message || "No location match was found for that search.",
+        code: error.code,
       });
     }
+
+    logGoogleApiRequestError("locations/resolve", error, {
+      queryLength: query.trim().length,
+      hasPlaceId: Boolean(placeId),
+      hasSessionToken: Boolean(sessionToken),
+    });
 
     return NextResponse.json(
       {
         error: error.message || "Unable to resolve that location right now.",
+        code: error.code || undefined,
       },
       { status: error.statusCode || 500 },
     );

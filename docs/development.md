@@ -21,5 +21,6 @@ Public documentation should help people understand the product first, while priv
 
 ## Notes
 
+- `GOOGLE_API_KEY` is required for location autocomplete, location resolution, and live nearby pharmacy search. On production hosting, set it as a server-side Vercel environment variable for every environment you deploy.
 - If you need access to the full local experience, request the required credentials from a maintainer.
 - Release operations and credential handling are maintained outside the public docs set.

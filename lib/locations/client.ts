@@ -48,8 +48,31 @@ type LocationResolveResponse = {
   location: ResolvedLocation;
 };
 
+const DIRECT_LOCATION_SEARCH_FALLBACK_CODES = new Set([
+  "missing_google_api_key",
+  "google_api_error",
+  "google_api_timeout",
+  "places_autocomplete_failed",
+  "place_details_failed",
+  "geocoding_failed",
+]);
+
 function sanitizeText(value = "") {
   return String(value).trim();
+}
+
+function getErrorCode(payload: unknown) {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "code" in payload &&
+    typeof payload.code === "string" &&
+    payload.code.trim()
+  ) {
+    return payload.code.trim();
+  }
+
+  return "";
 }
 
 function getErrorMessage(payload: unknown, fallback: string) {
@@ -64,6 +87,23 @@ function getErrorMessage(payload: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+export class LocationRequestError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "LocationRequestError";
+    this.code = sanitizeText(code) || undefined;
+  }
+}
+
+function createLocationRequestError(payload: unknown, fallback: string) {
+  return new LocationRequestError(
+    getErrorMessage(payload, fallback),
+    getErrorCode(payload),
+  );
 }
 
 export function createLocationSessionToken() {
@@ -113,7 +153,7 @@ export async function searchLocationSuggestions(
   const payload = (await response.json().catch(() => null)) as LocationSuggestionResponse | null;
 
   if (!response.ok) {
-    throw new Error(getErrorMessage(payload, "Unable to load location suggestions right now."));
+    throw createLocationRequestError(payload, "Unable to load location suggestions right now.");
   }
 
   return {
@@ -166,8 +206,16 @@ export async function resolveLocationQuery(
   const payload = (await response.json().catch(() => null)) as LocationResolveResponse | null;
 
   if (!response.ok || !payload?.location) {
-    throw new Error(getErrorMessage(payload, "Unable to resolve that location right now."));
+    throw createLocationRequestError(payload, "Unable to resolve that location right now.");
   }
 
   return payload.location;
+}
+
+export function canFallbackToDirectLocationSearch(error: unknown) {
+  if (!(error instanceof LocationRequestError)) {
+    return false;
+  }
+
+  return Boolean(error.code && DIRECT_LOCATION_SEARCH_FALLBACK_CODES.has(error.code));
 }

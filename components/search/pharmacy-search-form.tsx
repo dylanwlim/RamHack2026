@@ -7,6 +7,7 @@ import { MedicationCombobox } from "@/components/search/medication-combobox";
 import { MedicationStrengthField } from "@/components/search/medication-strength-field";
 import { featuredSearches } from "@/lib/content";
 import {
+  canFallbackToDirectLocationSearch,
   createLocationSessionToken,
   resolveLocationQuery,
 } from "@/lib/locations/client";
@@ -293,6 +294,9 @@ export function PharmacySearchForm({
               medicationResult.status === "fulfilled" ? medicationResult.value : null;
             const resolvedLocation =
               locationResult.status === "fulfilled" ? locationResult.value : null;
+            const canUseDirectLocationFallback =
+              locationResult.status === "rejected" &&
+              canFallbackToDirectLocationSearch(locationResult.reason);
             const resolvedStrength =
               selectedStrength ||
               resolvedMedication?.matchedStrength ||
@@ -314,7 +318,9 @@ export function PharmacySearchForm({
                 : null,
             );
             setLocationError(
-              locationResult.status === "rejected"
+              canUseDirectLocationFallback
+                ? null
+                : locationResult.status === "rejected"
                 ? locationResult.reason instanceof Error
                   ? locationResult.reason.message
                   : "Unable to resolve that location right now."
@@ -325,26 +331,28 @@ export function PharmacySearchForm({
 
             if (
               !resolvedMedication ||
-              !resolvedLocation ||
+              (!resolvedLocation && !canUseDirectLocationFallback) ||
               (resolvedMedication.strengths.length > 1 && !resolvedStrength)
             ) {
               return;
             }
 
+            const nextLocationLabel = resolvedLocation?.display_label || normalizedLocation;
+            const nextLocationPlaceId = resolvedLocation?.place_id || null;
             setMedicationOption(resolvedMedication);
             setMedication(resolvedMedication.label);
             setSelectedStrength(resolvedStrength);
             setLocationSelection(
-              createLocationSelection(resolvedLocation.display_label, resolvedLocation.place_id),
+              createLocationSelection(nextLocationLabel, nextLocationPlaceId),
             );
-            setLocation(resolvedLocation.display_label);
+            setLocation(nextLocationLabel);
             setLocationSessionToken(createLocationSessionToken());
             startTransition(() => {
               router.push(
                 buildResultsHref({
                   medication: buildMedicationQueryLabel(resolvedMedication, resolvedStrength),
-                  location: resolvedLocation.display_label,
-                  locationPlaceId: resolvedLocation.place_id,
+                  location: nextLocationLabel,
+                  locationPlaceId: nextLocationPlaceId,
                   radiusMiles,
                   sortBy,
                   onlyOpenNow,
