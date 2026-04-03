@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 
 :root {
+  --navbar-height: 5rem;
   --background: oklch(0.99 0.004 95);
   --foreground: oklch(0.18 0.02 255);
   --card: oklch(1 0 0);
@@ -67,6 +68,7 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--navbar-height) + 1rem);
   }
 
   body {
@@ -111,6 +113,17 @@
 
   .eyebrow-label {
     @apply inline-flex h-5 items-center gap-1.5 px-1.5 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-slate-500;
+  }
+
+  .eyebrow-link {
+    @apply cursor-pointer rounded-full no-underline transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-black/[0.03] active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10;
+    transition-timing-function: var(--ease-button);
+    text-decoration: none;
+  }
+
+  .eyebrow-link:hover,
+  .eyebrow-link:focus-visible {
+    color: inherit;
   }
 
   .surface-panel {

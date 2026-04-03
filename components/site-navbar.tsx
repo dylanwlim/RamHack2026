@@ -51,7 +51,7 @@ export function SiteNavbar() {
       )}
     >
       <div className="site-shell">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-[var(--navbar-height)] items-center justify-between">
           <SiteBrand />
 
           <div className="hidden items-center gap-2 md:flex">
